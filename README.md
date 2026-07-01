@@ -55,6 +55,18 @@
 
 <p align="center"><sub>飞书文档资产库 —— 刷新索引后，按类型/空间/负责人浏览你可访问的资产，一键「生成 HTML / 分析」。<b>示例数据</b></sub></p>
 
+<p align="center"><img src="docs/assets/screen-localdir.svg" alt="本地目录（示例数据）" width="100%"></p>
+
+<p align="center"><sub>本地目录 —— 浏览本机文件（截图 / PDF / Word / PPT），可直接「识别 / 生成 HTML」纳入生产。<b>示例数据</b></sub></p>
+
+<p align="center"><img src="docs/assets/screen-summaries.svg" alt="历史总结（示例数据）" width="100%"></p>
+
+<p align="center"><sub>历史总结 —— 按周 / 月 / 年回顾动过的文档，AI 一键生成工作回顾，并按主题统计。<b>示例数据</b></sub></p>
+
+<p align="center"><img src="docs/assets/screen-org.svg" alt="组织架构图谱（虚构示例）" width="100%"></p>
+
+<p align="center"><sub>组织架构图谱 —— 基于通讯录的部门 / 人员关系可视化。<b>图为虚构部门与人数</b></sub></p>
+
 ---
 
 ## 🧩 八个内置 Agent

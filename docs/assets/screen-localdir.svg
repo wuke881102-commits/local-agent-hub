@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" role="img" aria-label="本地目录 (示例数据)">
+  <defs>
+    <style>
+      .t{font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+      .mut{fill:#8A968F} .dk{fill:#0F2A1C} .sub{fill:#5B6B62} .grn{fill:#00AA4F}
+      .card{fill:#fff;stroke:#E6EBE8;stroke-width:1.5}
+      .mono{font-family:monospace}
+    </style>
+  </defs>
+  <rect x="6" y="6" width="1428" height="888" rx="16" fill="#fff" stroke="#DDE3DF" stroke-width="1.5"/>
+  <rect x="6" y="6" width="1428" height="44" rx="16" fill="#F3F6F4"/><rect x="6" y="34" width="1428" height="16" fill="#F3F6F4"/>
+  <g><circle cx="34" cy="28" r="6" fill="#FF5F57"/><circle cx="56" cy="28" r="6" fill="#FEBC2E"/><circle cx="78" cy="28" r="6" fill="#28C840"/></g>
+  <rect x="520" y="17" width="400" height="24" rx="12" fill="#E7ECE9"/>
+  <text class="t mut" x="720" y="33" font-size="12" text-anchor="middle">127.0.0.1:8787 · 本地目录</text>
+  <rect x="7" y="50" width="1426" height="843" fill="#F4F7F5"/>
+
+  <!-- sidebar -->
+  <g transform="translate(7,50)">
+    <rect width="248" height="843" fill="#FBFCFC" stroke="#EAEFEC" stroke-width="1.5"/>
+    <rect x="22" y="22" width="40" height="40" rx="11" class="grn"/>
+    <text class="t" x="42" y="48" font-size="20" font-weight="800" fill="#fff" text-anchor="middle">本</text>
+    <text class="t dk" x="74" y="40" font-size="15" font-weight="800">本地 Agent 工作台</text>
+    <text class="t mut" x="74" y="57" font-size="10" letter-spacing="1">LOCAL AGENT HUB · v5.4</text>
+    <text class="t mut" x="24" y="96" font-size="11" letter-spacing="2">导航</text>
+    <g class="t sub" font-size="13.5">
+      <text x="30" y="128">⌂  工作台</text><text x="30" y="162">✧  任务场景</text><text x="30" y="196">≣  运行记录</text><text x="30" y="230">▤  飞书文档</text>
+    </g>
+    <rect x="14" y="246" width="220" height="34" rx="9" fill="#E8F7EE"/>
+    <text class="t grn" x="30" y="268" font-size="13.5" font-weight="700">▢  本地目录</text>
+    <g class="t sub" font-size="13.5"><text x="30" y="306">▦  历史总结</text><text x="30" y="340">⋔  组织架构</text></g>
+    <text class="t mut" x="24" y="380" font-size="11" letter-spacing="2">AGENTS</text>
+    <g class="t" font-size="13">
+      <g><circle cx="30" cy="406" r="5" fill="#22C55E"/><text class="dk" x="46" y="410">HTML 页面生成</text></g>
+      <g><circle cx="30" cy="436" r="5" fill="#3B82F6"/><text class="dk" x="46" y="440">文档地图</text></g>
+      <g><circle cx="30" cy="466" r="5" fill="#EC4899"/><text class="dk" x="46" y="470">摘要标签回填</text></g>
+      <g><circle cx="30" cy="496" r="5" fill="#F59E0B"/><text class="dk" x="46" y="500">知识治理</text></g>
+      <g><circle cx="30" cy="526" r="5" fill="#EAB308"/><text class="dk" x="46" y="530">多维表格分析</text></g>
+      <g><circle cx="30" cy="556" r="5" fill="#8B5CF6"/><text class="dk" x="46" y="560">PDF 识别</text></g>
+      <g><circle cx="30" cy="586" r="5" fill="#F97316"/><text class="dk" x="46" y="590">会议纪要</text></g>
+      <g><circle cx="30" cy="616" r="5" fill="#EF4444"/><text class="dk" x="46" y="620">协作分发</text></g>
+      <g><circle cx="30" cy="646" r="5" fill="#0EA5E9"/><text class="dk" x="46" y="650">自动化提炼</text></g>
+    </g>
+  </g>
+
+  <!-- main -->
+  <g transform="translate(255,50)">
+    <rect width="1178" height="52" fill="#FBFCFC" stroke="#EAEFEC" stroke-width="1.5"/>
+    <text class="t sub" x="36" y="32" font-size="13.5">☰   工作台  ›  本地目录</text>
+    <text class="t dk" x="36" y="98" font-size="24" font-weight="800">本地目录</text>
+    <text class="t sub" x="36" y="124" font-size="12.5">选一个本地目录浏览文件 · 文件可在「任务场景」里作为数据源生产</text>
+
+    <!-- banner 1 -->
+    <g transform="translate(36,142)">
+      <rect width="1106" height="54" rx="12" fill="#F0FAF4" stroke="#D8F0E2"/>
+      <text class="t sub" x="24" y="33" font-size="12.5">✧  想用这些文件生产内容？到「任务场景」选 内容生产 / PDF 识别 / 表格分析 / 协作分发，把数据来源切到「本地目录」。</text>
+      <rect x="944" y="13" width="138" height="28" rx="8" fill="#fff" stroke="#CFE7DA"/><text class="t sub" x="1013" y="31" font-size="12" text-anchor="middle">去任务场景  ›</text>
+    </g>
+    <!-- banner 2 -->
+    <g transform="translate(36,206)">
+      <rect width="1106" height="54" rx="12" fill="#EFF6FF" stroke="#DCE9FA"/>
+      <text class="t sub" x="24" y="33" font-size="12.5">⧉  想边工作边按 Enter 自动留痕、再定时提炼？请到「自动化提炼」——它的截图独立存放，不会出现在这里。</text>
+      <rect x="944" y="13" width="138" height="28" rx="8" fill="#fff" stroke="#CFE0F7"/><text class="t sub" x="1013" y="31" font-size="12" text-anchor="middle">去自动化提炼  ›</text>
+    </g>
+
+    <!-- dir bar -->
+    <g transform="translate(36,276)">
+      <rect class="card" width="1106" height="56" rx="12"/>
+      <text class="t dk" x="24" y="34" font-size="13.5">📁  <tspan class="mono" font-size="13">D:\示例文档</tspan></text>
+      <rect x="852" y="12" width="130" height="32" rx="9" fill="#fff" stroke="#E0E6E2"/><text class="t sub" x="917" y="33" font-size="12.5" text-anchor="middle">📁 选择目录…</text>
+      <rect x="994" y="12" width="88" height="32" rx="9" fill="#fff" stroke="#E0E6E2"/><text class="t sub" x="1038" y="33" font-size="12.5" text-anchor="middle">⟳ 刷新</text>
+    </g>
+
+    <!-- filter chips -->
+    <g transform="translate(36,350)" class="t" font-size="12.5">
+      <rect x="0" y="0" width="66" height="30" rx="15" fill="#1F2937"/><text x="33" y="20" fill="#fff" text-anchor="middle" font-weight="700">全部 6</text>
+      <rect x="78" y="0" width="78" height="30" rx="15" fill="#fff" stroke="#E0E6E2"/><circle cx="96" cy="15" r="4" fill="#8B5CF6"/><text x="118" y="20" class="sub">截图 1</text>
+      <rect x="168" y="0" width="74" height="30" rx="15" fill="#fff" stroke="#E0E6E2"/><circle cx="186" cy="15" r="4" fill="#EF4444"/><text x="208" y="20" class="sub">PDF 3</text>
+      <rect x="254" y="0" width="84" height="30" rx="15" fill="#fff" stroke="#E0E6E2"/><circle cx="272" cy="15" r="4" fill="#3B82F6"/><text x="296" y="20" class="sub">Word 1</text>
+      <rect x="350" y="0" width="74" height="30" rx="15" fill="#fff" stroke="#E0E6E2"/><circle cx="368" cy="15" r="4" fill="#F97316"/><text x="390" y="20" class="sub">PPT 1</text>
+    </g>
+
+    <!-- file list -->
+    <g transform="translate(36,396)" class="t">
+      <!-- row: h72 -->
+      <g><rect class="card" width="1106" height="72" rx="12"/>
+        <rect x="18" y="16" width="40" height="40" rx="9" fill="#EDE9FE"/><text x="38" y="41" font-size="15" text-anchor="middle" fill="#7C3AED">🖼</text>
+        <text class="dk" x="72" y="34" font-size="14" font-weight="600">示例截图.png</text>
+        <text class="sub" x="72" y="54" font-size="11.5"><tspan fill="#7C3AED" font-weight="700">截图</tspan> · 115 KB</text>
+        <text class="sub" x="1000" y="42" font-size="12.5">📄 生成 HTML</text>
+      </g>
+      <g transform="translate(0,84)"><rect class="card" width="1106" height="72" rx="12"/>
+        <rect x="18" y="16" width="40" height="40" rx="9" fill="#FFF1E6"/><text x="38" y="41" font-size="11" text-anchor="middle" fill="#EA580C" font-weight="700">PPT</text>
+        <text class="dk" x="72" y="34" font-size="14" font-weight="600">示例季度汇报.pptx</text>
+        <text class="sub" x="72" y="54" font-size="11.5"><tspan fill="#EA580C" font-weight="700">PPT</tspan> · 7.6 MB</text>
+        <text class="sub" x="1000" y="42" font-size="12.5">📄 生成 HTML</text>
+      </g>
+      <g transform="translate(0,168)"><rect class="card" width="1106" height="72" rx="12"/>
+        <rect x="18" y="16" width="40" height="40" rx="9" fill="#FEE2E2"/><text x="38" y="41" font-size="11" text-anchor="middle" fill="#DC2626" font-weight="700">PDF</text>
+        <text class="dk" x="72" y="34" font-size="14" font-weight="600">示例安全框架.pdf</text>
+        <text class="sub" x="72" y="54" font-size="11.5"><tspan fill="#DC2626" font-weight="700">PDF</tspan> · 1.2 MB</text>
+        <rect x="900" y="24" width="72" height="26" rx="7" fill="#E8F7EE"/><text class="grn" x="936" y="41" font-size="12" text-anchor="middle">⧉ 识别</text>
+        <text class="sub" x="1000" y="42" font-size="12.5">📄 生成 HTML</text>
+      </g>
+      <g transform="translate(0,252)"><rect class="card" width="1106" height="72" rx="12"/>
+        <rect x="18" y="16" width="40" height="40" rx="9" fill="#FEE2E2"/><text x="38" y="41" font-size="11" text-anchor="middle" fill="#DC2626" font-weight="700">PDF</text>
+        <text class="dk" x="72" y="34" font-size="14" font-weight="600">示例用户手册.pdf</text>
+        <text class="sub" x="72" y="54" font-size="11.5"><tspan fill="#DC2626" font-weight="700">PDF</tspan> · 780 KB</text>
+        <rect x="900" y="24" width="72" height="26" rx="7" fill="#E8F7EE"/><text class="grn" x="936" y="41" font-size="12" text-anchor="middle">⧉ 识别</text>
+        <text class="sub" x="1000" y="42" font-size="12.5">📄 生成 HTML</text>
+      </g>
+      <g transform="translate(0,336)"><rect class="card" width="1106" height="72" rx="12"/>
+        <rect x="18" y="16" width="40" height="40" rx="9" fill="#DBEAFE"/><text x="38" y="41" font-size="11" text-anchor="middle" fill="#2563EB" font-weight="700">DOC</text>
+        <text class="dk" x="72" y="34" font-size="14" font-weight="600">示例 API 文档.docx</text>
+        <text class="sub" x="72" y="54" font-size="11.5"><tspan fill="#2563EB" font-weight="700">Word</tspan> · 102 KB</text>
+        <text class="sub" x="1000" y="42" font-size="12.5">📄 生成 HTML</text>
+      </g>
+    </g>
+  </g>
+</svg>
