@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" role="img" aria-label="自动化提炼 (示例数据)">
+  <defs>
+    <style>
+      .t{font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+      .mut{fill:#8A968F} .dk{fill:#0F2A1C} .sub{fill:#5B6B62} .grn{fill:#00AA4F}
+      .card{fill:#fff;stroke:#E6EBE8;stroke-width:1.5}
+    </style>
+  </defs>
+  <rect x="6" y="6" width="1428" height="888" rx="16" fill="#fff" stroke="#DDE3DF" stroke-width="1.5"/>
+  <rect x="6" y="6" width="1428" height="44" rx="16" fill="#F3F6F4"/><rect x="6" y="34" width="1428" height="16" fill="#F3F6F4"/>
+  <g><circle cx="34" cy="28" r="6" fill="#FF5F57"/><circle cx="56" cy="28" r="6" fill="#FEBC2E"/><circle cx="78" cy="28" r="6" fill="#28C840"/></g>
+  <rect x="520" y="17" width="400" height="24" rx="12" fill="#E7ECE9"/>
+  <text class="t mut" x="720" y="33" font-size="12" text-anchor="middle">127.0.0.1:8787 · 自动化提炼</text>
+  <rect x="7" y="50" width="1426" height="843" fill="#F4F7F5"/>
+
+  <!-- sidebar -->
+  <g transform="translate(7,50)">
+    <rect width="248" height="843" fill="#FBFCFC" stroke="#EAEFEC" stroke-width="1.5"/>
+    <rect x="22" y="22" width="40" height="40" rx="11" class="grn"/>
+    <text class="t" x="42" y="48" font-size="20" font-weight="800" fill="#fff" text-anchor="middle">本</text>
+    <text class="t dk" x="74" y="40" font-size="15" font-weight="800">本地 Agent 工作台</text>
+    <text class="t mut" x="74" y="57" font-size="10" letter-spacing="1">LOCAL AGENT HUB · v5.4</text>
+    <text class="t mut" x="24" y="96" font-size="11" letter-spacing="2">导航</text>
+    <g class="t sub" font-size="13.5">
+      <text x="30" y="128">⌂  工作台</text><text x="30" y="162">✧  任务场景</text><text x="30" y="196">≣  运行记录</text>
+      <text x="30" y="230">▤  飞书文档</text><text x="30" y="264">▢  本地目录</text><text x="30" y="298">▦  历史总结</text><text x="30" y="332">⋔  组织架构</text>
+    </g>
+    <text class="t mut" x="24" y="374" font-size="11" letter-spacing="2">AGENTS</text>
+    <g class="t" font-size="13">
+      <g><circle cx="30" cy="400" r="5" fill="#22C55E"/><text class="dk" x="46" y="404">HTML 页面生成</text></g>
+      <g><circle cx="30" cy="430" r="5" fill="#3B82F6"/><text class="dk" x="46" y="434">文档地图</text></g>
+      <g><circle cx="30" cy="460" r="5" fill="#EC4899"/><text class="dk" x="46" y="464">摘要标签回填</text></g>
+      <g><circle cx="30" cy="490" r="5" fill="#F59E0B"/><text class="dk" x="46" y="494">知识治理</text></g>
+      <g><circle cx="30" cy="520" r="5" fill="#EAB308"/><text class="dk" x="46" y="524">多维表格分析</text></g>
+      <g><circle cx="30" cy="550" r="5" fill="#8B5CF6"/><text class="dk" x="46" y="554">PDF 识别</text></g>
+      <g><circle cx="30" cy="580" r="5" fill="#F97316"/><text class="dk" x="46" y="584">会议纪要</text></g>
+      <g><circle cx="30" cy="610" r="5" fill="#EF4444"/><text class="dk" x="46" y="614">协作分发</text></g>
+      <rect x="14" y="628" width="220" height="30" rx="8" fill="#E8F7EE"/>
+      <g><circle cx="30" cy="643" r="5" fill="#0EA5E9"/><text class="grn" x="46" y="647" font-weight="700">自动化提炼</text></g>
+    </g>
+  </g>
+
+  <!-- main -->
+  <g transform="translate(255,50)">
+    <rect width="1178" height="52" fill="#FBFCFC" stroke="#EAEFEC" stroke-width="1.5"/>
+    <text class="t sub" x="36" y="32" font-size="13.5">☰   工作台  ›  自动化提炼</text>
+
+    <text class="t dk" x="36" y="98" font-size="24" font-weight="800">自动化提炼</text>
+    <text class="t sub" x="36" y="124" font-size="12.5">工作中按 ENTER 自动留痕截图 · 每隔一段时间用大模型提炼这段时间的工作（说明 / 重点 / 操作 / 会议）</text>
+
+    <!-- status card -->
+    <g transform="translate(36,144)">
+      <rect class="card" width="1106" height="132" rx="14"/>
+      <rect x="24" y="24" width="48" height="48" rx="12" fill="#E8F7EE"/>
+      <text class="t grn" x="48" y="54" font-size="20" text-anchor="middle">▽</text>
+      <text class="t dk" x="90" y="46" font-size="16" font-weight="800">提炼进行中</text><circle cx="196" cy="41" r="5" fill="#22C55E"/>
+      <text class="t sub" x="90" y="70" font-size="12.5">已截 3 张 · 下次提炼 14:56 · 最长 10 小时</text>
+      <!-- freq toggle -->
+      <text class="t sub" x="560" y="52" font-size="12.5">提炼频率</text>
+      <rect x="628" y="34" width="270" height="34" rx="9" fill="#EEF2F0"/>
+      <text class="t sub" x="663" y="56" font-size="12" text-anchor="middle">5分钟</text>
+      <rect x="690" y="38" width="62" height="26" rx="7" fill="#fff" stroke="#E0E6E2"/><text class="t dk" x="721" y="56" font-size="12" font-weight="700" text-anchor="middle">15分钟</text>
+      <text class="t sub" x="786" y="56" font-size="12" text-anchor="middle">30分钟</text>
+      <text class="t sub" x="866" y="56" font-size="12" text-anchor="middle">60分钟</text>
+      <!-- buttons -->
+      <rect x="922" y="34" width="82" height="34" rx="9" fill="#EF4444"/><text class="t" x="963" y="56" font-size="12.5" font-weight="700" fill="#fff" text-anchor="middle">✕ 停止</text>
+      <rect x="1012" y="34" width="94" height="34" rx="9" fill="#fff" stroke="#E0E6E2"/><text class="t sub" x="1059" y="56" font-size="12.5" text-anchor="middle">✧ 立即提炼</text>
+      <!-- note -->
+      <rect x="24" y="86" width="1058" height="26" rx="8" fill="#F7FAF8"/>
+      <text class="t sub" x="38" y="103" font-size="11.5">◔ 这些截图只用于本场景的自动提炼，不会出现在「内容生成」的文件选择里，存放于应用私有目录。</text>
+    </g>
+
+    <!-- dir row -->
+    <g transform="translate(36,292)">
+      <rect class="card" width="1106" height="56" rx="12"/>
+      <text class="t sub" x="24" y="34" font-size="12.5">截图目录</text>
+      <rect x="92" y="16" width="420" height="24" rx="6" fill="#F3F6F4"/>
+      <text class="t sub" x="104" y="33" font-size="11.5" font-family="monospace">%LOCALAPPDATA%\Local Agent Hub\captures</text>
+      <text class="t sub" x="540" y="34" font-size="12.5">📁 打开文件夹</text>
+    </g>
+
+    <!-- recent shots row -->
+    <g transform="translate(36,364)">
+      <rect class="card" width="1106" height="56" rx="12"/>
+      <text class="t dk" x="24" y="34" font-size="13.5">›  最近截图（3）</text>
+      <text class="t mut" x="180" y="34" font-size="12">自 09:15 开始提炼以来</text>
+      <rect x="820" y="14" width="150" height="28" rx="8" fill="#EEF2F0"/>
+      <rect x="824" y="18" width="80" height="20" rx="6" fill="#fff" stroke="#E0E6E2"/><text class="t dk" x="864" y="32" font-size="11.5" font-weight="700" text-anchor="middle">本次会话</text>
+      <text class="t sub" x="940" y="32" font-size="11.5" text-anchor="middle">全部</text>
+      <text class="t sub" x="1000" y="34" font-size="12.5">🗑 清空截图</text>
+    </g>
+
+    <!-- digest section -->
+    <text class="t dk" x="36" y="452" font-size="15" font-weight="800">提炼记录 · 28</text>
+    <text class="t sub" x="1082" y="452" font-size="12.5" text-anchor="end">🗑 清空记录</text>
+    <g transform="translate(36,466)">
+      <rect class="card" width="1106" height="300" rx="14"/>
+      <rect x="0" y="0" width="4" height="300" rx="2" fill="#0EA5E9"/>
+      <text class="t dk" x="24" y="40" font-size="15" font-weight="800">10:30 ~ 10:45</text>
+      <rect x="196" y="26" width="86" height="22" rx="7" fill="#F3F6F4"/><text class="t sub" x="239" y="41" font-size="11" text-anchor="middle">2 张截图</text>
+      <rect x="294" y="26" width="96" height="22" rx="7" fill="#E8F7EE"/><text class="t grn" x="342" y="41" font-size="11" text-anchor="middle" font-weight="700">示例应用</text>
+      <text class="t dk" x="24" y="76" font-size="13">这段时间在整理示例项目的迭代计划，梳理了任务清单与优先级，并更新了示例需求文档。</text>
+      <!-- 重点 -->
+      <text class="t" x="24" y="116" font-size="13" font-weight="700" fill="#DB2777">✧ 重点</text>
+      <g class="t" font-size="12.5"><circle cx="30" cy="140" r="3" fill="#DB2777"/><text class="dk" x="44" y="144">确认下一迭代的范围与目标</text>
+        <circle cx="30" cy="166" r="3" fill="#DB2777"/><text class="dk" x="44" y="170">梳理任务优先级与负责人</text></g>
+      <!-- 操作 -->
+      <text class="t" x="560" y="116" font-size="13" font-weight="700" fill="#2563EB">⧉ 操作</text>
+      <g class="t" font-size="12.5"><circle cx="566" cy="140" r="3" fill="#2563EB"/><text class="dk" x="580" y="144">在示例看板里新建任务卡</text>
+        <circle cx="566" cy="166" r="3" fill="#2563EB"/><text class="dk" x="580" y="170">更新示例需求文档的验收标准</text></g>
+      <!-- dispatch -->
+      <line x1="20" y1="212" x2="1086" y2="212" stroke="#EEF2F0"/>
+      <text class="t sub" x="24" y="252" font-size="12.5">分发到群</text>
+      <rect x="92" y="234" width="360" height="34" rx="9" fill="#fff" stroke="#E0E6E2"/><text class="t mut" x="106" y="256" font-size="12.5">— 选择目标群 —</text><text class="t mut" x="438" y="256" font-size="11">▾</text>
+      <rect x="464" y="234" width="120" height="34" rx="9" fill="#8FD9AE"/><text class="t" x="524" y="256" font-size="12.5" font-weight="700" fill="#fff" text-anchor="middle">▷ 直接发送</text>
+    </g>
+  </g>
+</svg>

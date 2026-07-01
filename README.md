@@ -51,6 +51,10 @@
 
 <p align="center"><sub>工作台概览 —— 授权状态、索引进度、任务场景一览。<b>图中均为示例数据</b></sub></p>
 
+<p align="center"><img src="docs/assets/screen-docs.svg" alt="飞书文档资产库（示例数据）" width="100%"></p>
+
+<p align="center"><sub>飞书文档资产库 —— 刷新索引后，按类型/空间/负责人浏览你可访问的资产，一键「生成 HTML / 分析」。<b>示例数据</b></sub></p>
+
 ---
 
 ## 🧩 八个内置 Agent
@@ -136,6 +140,10 @@ flowchart LR
     D --> J[("digests.jsonl")]
     T -. "满 10 小时" .-> X["自动停止"]
 ```
+
+<p align="center"><img src="docs/assets/screen-autoextract.svg" alt="自动化提炼（示例数据）" width="100%"></p>
+
+<p align="center"><sub>自动化提炼 —— 提炼频率、开始时刻、10 小时自动停止，以及按窗口提炼出的「重点 / 操作」。<b>示例数据</b></sub></p>
 
 ---
 
