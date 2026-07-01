@@ -45,6 +45,14 @@
 
 ---
 
+## 🖥️ 界面一览
+
+<p align="center"><img src="docs/assets/screen-dashboard.svg" alt="工作台概览（示例数据）" width="100%"></p>
+
+<p align="center"><sub>工作台概览 —— 授权状态、索引进度、任务场景一览。<b>图中均为示例数据</b></sub></p>
+
+---
+
 ## 🧩 八个内置 Agent
 
 <p align="center"><img src="docs/assets/capabilities.svg" alt="八个内置 Agent" width="100%"></p>
@@ -88,6 +96,10 @@ flowchart LR
     E -->|确认| F["写回飞书<br/>新建文档"]
     E -->|下载| G["本地 HTML 文件"]
 ```
+
+<p align="center"><img src="docs/assets/screen-html.svg" alt="HTML 页面生成（示例数据）" width="100%"></p>
+
+<p align="center"><sub>「内容生产」：左侧选资产与模板，右侧实时预览 Agent 生成的页面。<b>示例数据</b></sub></p>
 
 ---
 

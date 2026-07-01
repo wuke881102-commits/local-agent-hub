@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" role="img" aria-label="HTML 页面生成 (示例数据)">
+  <defs>
+    <linearGradient id="hdr" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0E5A34"/><stop offset="1" stop-color="#00AA4F"/>
+    </linearGradient>
+    <style>
+      .t{font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+      .mut{fill:#8A968F} .dk{fill:#0F2A1C} .sub{fill:#5B6B62} .grn{fill:#00AA4F}
+      .card{fill:#fff;stroke:#E6EBE8;stroke-width:1.5}
+    </style>
+  </defs>
+  <rect x="6" y="6" width="1428" height="888" rx="16" fill="#fff" stroke="#DDE3DF" stroke-width="1.5"/>
+  <rect x="6" y="6" width="1428" height="44" rx="16" fill="#F3F6F4"/><rect x="6" y="34" width="1428" height="16" fill="#F3F6F4"/>
+  <g><circle cx="34" cy="28" r="6" fill="#FF5F57"/><circle cx="56" cy="28" r="6" fill="#FEBC2E"/><circle cx="78" cy="28" r="6" fill="#28C840"/></g>
+  <rect x="520" y="17" width="400" height="24" rx="12" fill="#E7ECE9"/>
+  <text class="t mut" x="720" y="33" font-size="12" text-anchor="middle">127.0.0.1:8787 · HTML 页面生成</text>
+  <rect x="7" y="50" width="1426" height="843" fill="#F4F7F5"/>
+
+  <!-- sidebar -->
+  <g transform="translate(7,50)">
+    <rect width="248" height="843" fill="#FBFCFC" stroke="#EAEFEC" stroke-width="1.5"/>
+    <rect x="22" y="22" width="40" height="40" rx="11" class="grn"/>
+    <text class="t" x="42" y="48" font-size="20" font-weight="800" fill="#fff" text-anchor="middle">本</text>
+    <text class="t dk" x="74" y="40" font-size="15" font-weight="800">本地 Agent 工作台</text>
+    <text class="t mut" x="74" y="57" font-size="10" letter-spacing="1">LOCAL AGENT HUB · v5.4</text>
+    <text class="t mut" x="24" y="96" font-size="11" letter-spacing="2">导航</text>
+    <g class="t sub" font-size="13.5">
+      <text x="30" y="128">⌂  工作台</text><text x="30" y="162">✧  任务场景</text><text x="30" y="196">≣  运行记录</text>
+      <text x="30" y="230">▤  飞书文档</text><text x="30" y="264">▢  本地目录</text><text x="30" y="298">▦  历史总结</text><text x="30" y="332">⋔  组织架构</text>
+    </g>
+    <text class="t mut" x="24" y="374" font-size="11" letter-spacing="2">AGENTS</text>
+    <g class="t" font-size="13">
+      <rect x="14" y="388" width="220" height="30" rx="8" fill="#E8F7EE"/>
+      <g><circle cx="30" cy="403" r="5" fill="#22C55E"/><text class="grn" x="46" y="407" font-weight="700">HTML 页面生成</text></g>
+      <g><circle cx="30" cy="434" r="5" fill="#3B82F6"/><text class="dk" x="46" y="438">文档地图</text></g>
+      <g><circle cx="30" cy="464" r="5" fill="#EC4899"/><text class="dk" x="46" y="468">摘要标签回填</text></g>
+      <g><circle cx="30" cy="494" r="5" fill="#F59E0B"/><text class="dk" x="46" y="498">知识治理</text></g>
+      <g><circle cx="30" cy="524" r="5" fill="#EAB308"/><text class="dk" x="46" y="528">多维表格分析</text></g>
+      <g><circle cx="30" cy="554" r="5" fill="#8B5CF6"/><text class="dk" x="46" y="558">PDF 识别</text></g>
+      <g><circle cx="30" cy="584" r="5" fill="#F97316"/><text class="dk" x="46" y="588">会议纪要</text></g>
+      <g><circle cx="30" cy="614" r="5" fill="#EF4444"/><text class="dk" x="46" y="618">协作分发</text></g>
+      <g><circle cx="30" cy="644" r="5" fill="#0EA5E9"/><text class="dk" x="46" y="648">自动化提炼</text></g>
+    </g>
+  </g>
+
+  <!-- main -->
+  <g transform="translate(255,50)">
+    <rect width="1178" height="52" fill="#FBFCFC" stroke="#EAEFEC" stroke-width="1.5"/>
+    <text class="t sub" x="36" y="32" font-size="13.5">☰   工作台  ›  内容生产  ›  HTML 页面生成</text>
+
+    <!-- config panel -->
+    <g transform="translate(28,72)" class="t">
+      <text class="dk" x="0" y="24" font-size="19" font-weight="800">HTML 页面生成</text>
+      <text class="sub" x="0" y="50" font-size="12">选 1–3 篇飞书资产与模板，按类型抽取</text>
+      <text class="sub" x="0" y="68" font-size="12">内容、合并后套入 Lumen-light 页面。</text>
+      <!-- source toggle -->
+      <rect x="0" y="84" width="330" height="38" rx="10" fill="#EEF2F0"/>
+      <rect x="4" y="88" width="161" height="30" rx="8" fill="#fff" stroke="#E0E6E2"/>
+      <text class="dk" x="84" y="108" font-size="12.5" font-weight="700" text-anchor="middle">◔ 飞书</text>
+      <text class="mut" x="247" y="108" font-size="12.5" text-anchor="middle">▢ 本地目录</text>
+      <!-- source doc -->
+      <text class="sub" x="0" y="148" font-size="12">来源文档</text><text class="mut" x="330" y="148" font-size="12" text-anchor="end">1/3</text>
+      <rect x="0" y="158" width="330" height="36" rx="9" fill="#fff" stroke="#E0E6E2"/>
+      <text class="mut" x="14" y="181" font-size="12.5">— 从飞书索引添加 —</text><text class="mut" x="312" y="181" font-size="11">▾</text>
+      <rect x="0" y="202" width="176" height="34" rx="9" fill="#fff" stroke="#E0E6E2"/>
+      <text class="mut" x="12" y="224" font-size="11.5">或粘贴文档 token / URL</text>
+      <rect x="184" y="202" width="60" height="34" rx="9" fill="#EEF2F0"/><text class="sub" x="214" y="224" font-size="12" text-anchor="middle">添加</text>
+      <!-- chosen doc chip -->
+      <rect x="0" y="246" width="330" height="30" rx="8" fill="#E8F7EE"/>
+      <text class="grn" x="14" y="266" font-size="12">📄 示例：企业知识库建设指南</text>
+      <!-- 版式 -->
+      <text class="sub" x="0" y="306" font-size="12">版式</text>
+      <rect x="0" y="316" width="161" height="52" rx="10" fill="#E8F7EE" stroke="#00AA4F" stroke-width="1.5"/>
+      <text class="dk" x="80" y="340" font-size="13" font-weight="700" text-anchor="middle">套模板</text><text class="mut" x="80" y="358" font-size="10.5" text-anchor="middle">规整稳定一致</text>
+      <rect x="169" y="316" width="161" height="52" rx="10" fill="#fff" stroke="#E0E6E2"/>
+      <text class="dk" x="249" y="340" font-size="13" font-weight="700" text-anchor="middle">自由版式</text><text class="mut" x="249" y="358" font-size="10.5" text-anchor="middle">AI 直出·丰富</text>
+      <!-- templates -->
+      <text class="sub" x="0" y="398" font-size="12">页面模板</text>
+      <rect x="0" y="408" width="330" height="46" rx="10" fill="#E8F7EE" stroke="#00AA4F" stroke-width="1.5"/>
+      <circle cx="22" cy="431" r="7" fill="none" stroke="#00AA4F" stroke-width="2"/><circle cx="22" cy="431" r="3.5" class="grn"/>
+      <text class="dk" x="40" y="428" font-size="13" font-weight="700">内部知识页</text><text class="mut" x="40" y="444" font-size="10.5">专题 Wiki / 制度说明 / FAQ</text>
+      <rect x="0" y="462" width="330" height="42" rx="10" fill="#fff" stroke="#E0E6E2"/>
+      <circle cx="22" cy="483" r="7" fill="none" stroke="#CBD3CE" stroke-width="2"/>
+      <text class="dk" x="40" y="480" font-size="13">项目展示页</text><text class="mut" x="40" y="495" font-size="10.5">项目介绍 / 阶段汇报 / 看板</text>
+      <rect x="0" y="512" width="330" height="42" rx="10" fill="#fff" stroke="#E0E6E2"/>
+      <circle cx="22" cy="533" r="7" fill="none" stroke="#CBD3CE" stroke-width="2"/>
+      <text class="dk" x="40" y="530" font-size="13">公告 / 活动页</text><text class="mut" x="40" y="545" font-size="10.5">活动方案 / 公告 / 通知</text>
+      <!-- buttons -->
+      <rect x="0" y="576" width="230" height="44" rx="11" class="grn"/>
+      <text class="t" x="115" y="603" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">✧ 生成 HTML 页面</text>
+      <rect x="240" y="576" width="90" height="44" rx="11" fill="#fff" stroke="#E0E6E2"/>
+      <text class="sub" x="285" y="603" font-size="13" text-anchor="middle">⇩ 下载</text>
+    </g>
+
+    <!-- preview -->
+    <g transform="translate(388,72)">
+      <rect width="762" height="748" rx="14" fill="#fff" stroke="#E6EBE8" stroke-width="1.5"/>
+      <!-- status strip -->
+      <rect x="14" y="14" width="150" height="26" rx="8" fill="#F3F6F4"/>
+      <text class="t sub" x="26" y="31" font-size="11.5">task t-8f21a0</text>
+      <rect x="128" y="17" width="34" height="20" rx="6" fill="#E8F7EE"/><text class="t grn" x="145" y="31" font-size="10.5" text-anchor="middle" font-weight="700">DONE</text>
+      <rect x="174" y="14" width="130" height="26" rx="8" fill="#F3F6F4"/><text class="t sub" x="186" y="31" font-size="11.5">📄 模板: 内部知识页</text>
+
+      <!-- generated page header -->
+      <g transform="translate(14,52)">
+        <rect width="734" height="176" rx="12" fill="url(#hdr)"/>
+        <text class="t" x="34" y="60" font-size="26" font-weight="800" fill="#fff">示例：企业知识库建设实践指南</text>
+        <text class="t" x="34" y="92" font-size="13" fill="#DFF6E8">一份用于演示的内部知识页：涵盖目标、流程、角色分工与落地要点，</text>
+        <text class="t" x="34" y="112" font-size="13" fill="#DFF6E8">页面由 Agent 套用 Lumen-light 设计系统自动生成。</text>
+        <g font-size="11" font-weight="600">
+          <rect x="34" y="130" width="96" height="26" rx="13" fill="#ffffff" fill-opacity="0.16"/><text x="82" y="147" fill="#fff" text-anchor="middle">👤 示例团队</text>
+          <rect x="138" y="130" width="150" height="26" rx="13" fill="#ffffff" fill-opacity="0.16"/><text x="213" y="147" fill="#fff" text-anchor="middle">更新 今天 15:49</text>
+          <rect x="296" y="130" width="110" height="26" rx="13" fill="#ffffff" fill-opacity="0.16"/><text x="351" y="147" fill="#fff" text-anchor="middle">INTERNAL_WIKI</text>
+          <rect x="414" y="130" width="90" height="26" rx="13" fill="#ffffff" fill-opacity="0.16"/><text x="459" y="147" fill="#fff" text-anchor="middle">#知识管理</text>
+          <rect x="512" y="130" width="76" height="26" rx="13" fill="#ffffff" fill-opacity="0.16"/><text x="550" y="147" fill="#fff" text-anchor="middle">#示例</text>
+        </g>
+      </g>
+
+      <!-- TOC -->
+      <g transform="translate(14,244)">
+        <rect width="734" height="150" rx="12" fill="#F7FAF8" stroke="#EAF0EC"/>
+        <text class="t sub" x="24" y="34" font-size="13" font-weight="700">目录</text>
+        <g class="t dk" font-size="13">
+          <text x="24" y="62">1 · 为什么需要统一知识库</text>
+          <text x="24" y="88">2 · 知识分层与目录规范</text>
+          <text x="24" y="114">3 · 采集、加工与写回流程</text>
+          <text x="390" y="62">4 · 角色分工与权限</text>
+          <text x="390" y="88">5 · 质量度量与治理</text>
+          <text x="390" y="114">6 · 落地清单与常见问题</text>
+        </g>
+      </g>
+
+      <!-- 核心要点 -->
+      <g transform="translate(14,410)">
+        <rect width="734" height="322" rx="12" class="card"/>
+        <rect x="0" y="20" width="4" height="20" rx="2" class="grn"/>
+        <text class="t dk" x="20" y="37" font-size="15" font-weight="800">核心要点</text>
+        <g class="t" font-size="13">
+          <circle cx="30" cy="72" r="3" class="grn"/><text class="dk" x="44" y="76">知识资产应可治理、可复用：统一目录 + 明确属主 + 定期复检。</text>
+          <circle cx="30" cy="104" r="3" class="grn"/><text class="dk" x="44" y="108">采集与加工在本地完成，涉及写回的动作均需人工确认。</text>
+          <circle cx="30" cy="136" r="3" class="grn"/><text class="dk" x="44" y="140">用统一设计系统产出页面，保证不同来源内容观感一致。</text>
+          <circle cx="30" cy="168" r="3" class="grn"/><text class="dk" x="44" y="172">度量优先：以「过期率 / 重复率 / 无主率」驱动治理动作。</text>
+        </g>
+        <rect x="20" y="196" width="694" height="106" rx="10" fill="#F7FAF8" stroke="#EAF0EC"/>
+        <text class="t sub" x="36" y="224" font-size="12.5" font-weight="700">示例数据表</text>
+        <g class="t" font-size="12">
+          <text class="mut" x="36" y="250">指标</text><text class="mut" x="300" y="250">当前</text><text class="mut" x="480" y="250">目标</text>
+          <text class="dk" x="36" y="274">文档过期率</text><text class="sub" x="300" y="274">18%</text><text class="grn" x="480" y="274">&lt; 10%</text>
+          <text class="dk" x="36" y="294">重复内容占比</text><text class="sub" x="300" y="294">7%</text><text class="grn" x="480" y="294">&lt; 5%</text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
