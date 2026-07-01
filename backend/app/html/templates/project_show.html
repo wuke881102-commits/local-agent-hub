@@ -1,0 +1,68 @@
+{% extends "lumen_base.html" %}
+
+{% block content %}
+  {% if p.metrics %}
+  <div class="card">
+    <h2>关键指标</h2>
+    <div class="metric-grid">
+      {% for m in p.metrics %}
+      <div class="metric">
+        <div class="label">{{ m.label | e }}</div>
+        <div class="value">{{ m.value | e }}</div>
+        {% if m.delta %}<div class="delta">{{ m.delta | e }}</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if p.outline %}
+  <div class="outline">
+    <div class="label">章节目录</div>
+    <ul>
+      {% for o in p.outline %}
+        <li class="lvl-{{ o.level | default(1) }}">{{ o.text | e }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% for s in p.sections or [] %}
+  <div class="card">
+    <h2>{{ s.heading | e }}</h2>
+    {{ s.body | md_block | safe }}
+  </div>
+  {% endfor %}
+
+  {% if p.milestones %}
+  <div class="card">
+    <h2>里程碑</h2>
+    <div class="timeline">
+      {% for m in p.milestones %}
+      <div class="timeline-item">
+        <div class="when">{{ m.when | e }}</div>
+        <div class="what">{{ m.what | md_inline | safe }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if p.highlights %}
+  <div class="card">
+    <h2>核心要点</h2>
+    <ul>
+      {% for h in p.highlights %}<li>{{ h | md_inline | safe }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if p.next_steps %}
+  <div class="card">
+    <h2>下一步建议</h2>
+    <ul>
+      {% for n in p.next_steps %}<li>{{ n | md_inline | safe }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "lumen_base.html" %}
+
+{% block content %}
+  {% if p.event_meta %}
+  <div class="card" style="background: var(--brand-50); border-color: var(--brand-100);">
+    <h2 style="color: var(--brand-700);">活动信息</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-4);">
+      {% if p.event_meta.when %}
+      <div>
+        <div style="font-family: var(--font-mono); font-size: var(--text-xs); text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.05em;">时间</div>
+        <div style="font-weight: 600; margin-top: 2px;">{{ p.event_meta.when | e }}</div>
+      </div>
+      {% endif %}
+      {% if p.event_meta.audience %}
+      <div>
+        <div style="font-family: var(--font-mono); font-size: var(--text-xs); text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.05em;">对象</div>
+        <div style="font-weight: 600; margin-top: 2px;">{{ p.event_meta.audience | e }}</div>
+      </div>
+      {% endif %}
+      {% if p.event_meta.contact %}
+      <div>
+        <div style="font-family: var(--font-mono); font-size: var(--text-xs); text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.05em;">联系人</div>
+        <div style="font-weight: 600; margin-top: 2px;">{{ p.event_meta.contact | e }}</div>
+      </div>
+      {% endif %}
+      {% if p.event_meta.location %}
+      <div>
+        <div style="font-family: var(--font-mono); font-size: var(--text-xs); text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.05em;">地点</div>
+        <div style="font-weight: 600; margin-top: 2px;">{{ p.event_meta.location | e }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% for s in p.sections or [] %}
+  <div class="card">
+    <h2>{{ s.heading | e }}</h2>
+    {{ s.body | md_block | safe }}
+  </div>
+  {% endfor %}
+
+  {% if p.steps %}
+  <div class="card">
+    <h2>流程</h2>
+    <div class="timeline">
+      {% for st in p.steps %}
+      <div class="timeline-item">
+        <div class="when">第 {{ loop.index }} 步</div>
+        <div class="what">{{ st | md_inline | safe }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if p.actions %}
+  <div class="actions">
+    {% for a in p.actions %}
+      <a class="btn btn-primary" href="{{ a.url | default('#') | e }}">{{ a.label | e }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if p.next_steps %}
+  <div class="card">
+    <h2>后续提醒</h2>
+    <ul>
+      {% for n in p.next_steps %}<li>{{ n | md_inline | safe }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+{% endblock %}

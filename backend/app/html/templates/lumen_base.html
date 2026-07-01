@@ -1,0 +1,295 @@
+{# Lumen-light 单文件 HTML 基础模板（遵循 Lumen-light DESIGN.md）。子模板 extends 此文件。 #}
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ p.title | default('内部文档') | e }}</title>
+  <style>
+    :root {
+      /* 品牌色阶 */
+      --brand-50:#E3F5EA; --brand-100:#C0E6D0; --brand-200:#90D4A8; --brand-300:#60C080;
+      --brand-400:#30AA60; --brand-500:#00AA4F; --brand-600:#008E43; --brand-700:#006845;
+      --brand-800:#005A3C; --brand-900:#004A30;
+      /* 辅助色 */
+      --accent-lime:#82BC00; --accent-emerald:#00D47B; --accent-forest:#228B22; --accent-mint:#38A169;
+      /* 语义色 */
+      --success:#10B050; --success-bg:rgba(16,176,80,0.12);
+      --warning:#F0A800; --warning-bg:rgba(240,168,0,0.12);
+      --error:#C83A3A;   --error-bg:rgba(200,58,58,0.12);
+      --info:#0095D4;    --info-bg:rgba(42,157,143,0.12);
+      /* 表面 */
+      --surface-page:#F9FAFC; --surface-elevated:#FFFFFF; --surface-container:#FFFFFF;
+      --surface-subtle:#F0F1F3; --surface-hover:#EDEEF0; --surface-active:#E5E7EB; --surface-inset:#F4F6F8;
+      /* 边框 */
+      --border-default:#DDE3EA; --border-subtle:#E8ECF0; --border-strong:#C5CCD3; --border-focus:#00AA4F;
+      /* 文字 */
+      --text-primary:#42464A; --text-secondary:#555B61; --text-tertiary:#737A82;
+      --text-disabled:#A6ADB5; --text-brand:#00AA4F; --text-inverse:#FFFFFF;
+      /* 字体 */
+      --font-sans:'Inter','PingFang SC','Noto Sans SC',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+      --font-mono:'JetBrains Mono','SF Mono','Menlo','Monaco','Consolas',monospace;
+      /* 字号 */
+      --text-5xl:60px; --text-4xl:44px; --text-3xl:34px; --text-2xl:26px; --text-xl:20px;
+      --text-lg:16px; --text-base:14px; --text-sm:13px; --text-xs:11px;
+      /* 间距 */
+      --space-0-5:2px; --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:20px;
+      --space-6:24px; --space-8:32px; --space-10:40px; --space-12:48px; --space-16:64px;
+      /* 圆角 */
+      --radius-xs:2px; --radius-sm:4px; --radius-md:6px; --radius-lg:8px;
+      --radius-xl:12px; --radius-2xl:16px; --radius-full:9999px;
+      /* 阴影 */
+      --shadow-sm:0 1px 3px rgba(0,0,0,0.08),0 0 0 1px rgba(0,0,0,0.03);
+      --shadow-md:0 4px 12px rgba(0,0,0,0.1),0 0 0 1px rgba(0,0,0,0.04);
+      --shadow-lg:0 8px 24px rgba(0,0,0,0.12),0 0 0 1px rgba(0,0,0,0.05);
+      /* 过渡 */
+      --t-fast:150ms cubic-bezier(0,0,0.2,1); --t-base:200ms cubic-bezier(0,0,0.2,1);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      font-size: var(--text-base);
+      color: var(--text-primary);
+      background: var(--surface-page);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+    }
+
+    /* ── 头部 Banner ── */
+    .hero {
+      position: relative; overflow: hidden;
+      background: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-600) 60%, var(--brand-700) 100%);
+      color: var(--text-inverse);
+      padding: var(--space-16) var(--space-8) var(--space-12);
+    }
+    .hero::before {
+      content: ""; position: absolute; top: -80px; right: -60px;
+      width: 280px; height: 280px; border-radius: 50%;
+      background: rgba(255, 255, 255, 0.10);
+    }
+    .hero::after {
+      content: ""; position: absolute; bottom: -120px; left: -40px;
+      width: 320px; height: 320px; border-radius: 50%;
+      background: rgba(130, 188, 0, 0.18);
+    }
+    .hero-inner { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; }
+    .hero h1 {
+      font-size: var(--text-3xl); font-weight: 700; line-height: 1.25;
+      letter-spacing: -0.01em; margin: 0 0 var(--space-4); color: #fff;
+    }
+    .hero .summary {
+      font-size: var(--text-lg); color: rgba(255, 255, 255, 0.92);
+      max-width: 780px; margin: 0;
+    }
+    .meta-row { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-5); align-items: center; }
+    .hero .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: var(--radius-md);
+      font-family: var(--font-mono); font-size: var(--text-xs); font-weight: 500;
+      letter-spacing: 0.02em; text-transform: uppercase; line-height: 1.6;
+      background: rgba(255, 255, 255, 0.15); color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.25); backdrop-filter: blur(6px);
+    }
+
+    /* ── 主内容区 ── */
+    .content { max-width: 1080px; margin: 0 auto; padding: var(--space-10) var(--space-8) var(--space-12); }
+
+    /* 徽章（内容区，语义色） */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
+      border-radius: var(--radius-md); font-family: var(--font-mono);
+      font-size: var(--text-xs); font-weight: 500; letter-spacing: 0.02em;
+      text-transform: uppercase; line-height: 1.6;
+      background: var(--surface-subtle); color: var(--text-secondary);
+      border: 1px solid var(--border-default);
+    }
+    .badge-brand   { background: var(--brand-50);   color: var(--brand-700); border-color: var(--brand-500); }
+    .badge-success { background: var(--success-bg); color: var(--success);   border-color: var(--success); }
+    .badge-warning { background: var(--warning-bg); color: #8C6500;          border-color: var(--warning); }
+    .badge-info    { background: var(--info-bg);    color: var(--info);       border-color: var(--info); }
+
+    /* 卡片 */
+    .card {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-2xl);
+      padding: var(--space-6);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: var(--space-6);
+      transition: box-shadow var(--t-base), transform var(--t-base);
+    }
+    .card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .card h2 {
+      font-size: var(--text-xl); font-weight: 600; color: var(--text-primary);
+      margin: 0 0 var(--space-4); display: flex; align-items: center; gap: var(--space-2);
+    }
+    .card h2::before {
+      content: ""; width: 4px; height: 18px; border-radius: var(--radius-full);
+      background: linear-gradient(180deg, var(--brand-400), var(--brand-600)); flex: none;
+    }
+    .card h3 { font-size: var(--text-lg); font-weight: 600; color: var(--text-primary); margin: var(--space-5) 0 var(--space-2); }
+    .card p { color: var(--text-secondary); margin: 0 0 var(--space-3); }
+    .card ul { margin: 0 0 var(--space-3); padding-left: var(--space-5); color: var(--text-secondary); }
+    .card ul li { margin-bottom: var(--space-2); }
+    .card ul li::marker { color: var(--brand-500); }
+    .card code {
+      font-family: var(--font-mono); font-size: 0.92em; padding: 1px 6px;
+      background: var(--surface-subtle); border-radius: var(--radius-md);
+    }
+    .card > *:last-child { margin-bottom: 0; }
+
+    /* 指标网格 */
+    .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-4); margin-top: var(--space-4); }
+    .metric {
+      background: var(--surface-elevated); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl); padding: var(--space-5);
+      transition: box-shadow var(--t-base), transform var(--t-base);
+    }
+    .metric:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .metric .label { font-size: var(--text-sm); color: var(--text-tertiary); margin-bottom: var(--space-2); }
+    .metric .value { font-size: var(--text-2xl); font-weight: 600; color: var(--text-primary); font-family: var(--font-mono); letter-spacing: -0.02em; }
+    .metric .delta { font-size: var(--text-xs); font-family: var(--font-mono); color: var(--brand-700); margin-top: var(--space-1); }
+
+    /* 目录 */
+    .outline { background: var(--surface-inset); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: var(--space-5); margin-bottom: var(--space-6); }
+    .outline .label { font-family: var(--font-mono); font-size: var(--text-xs); text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.05em; margin-bottom: var(--space-3); }
+    .outline ul { margin: 0; padding-left: var(--space-5); list-style: none; }
+    .outline li { color: var(--text-secondary); padding: 3px 0; font-size: var(--text-sm); }
+    .outline li.lvl-2 { padding-left: var(--space-3); }
+    .outline li.lvl-3 { padding-left: var(--space-6); color: var(--text-tertiary); }
+
+    /* 来源引用 / 页脚 */
+    .refs { margin-top: var(--space-10); padding-top: var(--space-6); border-top: 1px solid var(--border-subtle); }
+    .refs h3 { font-size: var(--text-base); color: var(--text-primary); margin: 0 0 var(--space-3); }
+    .refs ol { padding-left: var(--space-5); color: var(--text-secondary); font-size: var(--text-sm); }
+    .refs ol li { margin-bottom: var(--space-2); }
+    .refs a { color: var(--brand-700); text-decoration: none; }
+    .refs a:hover { text-decoration: underline; }
+
+    /* 生成说明 */
+    .gen-note {
+      margin-top: var(--space-6); padding: var(--space-4) var(--space-5);
+      background: var(--brand-50); border-left: 3px solid var(--brand-500);
+      border-radius: var(--radius-md); font-size: var(--text-sm); color: var(--brand-700);
+    }
+    .gen-note .label { font-family: var(--font-mono); text-transform: uppercase; font-size: var(--text-xs); letter-spacing: 0.05em; margin-bottom: 4px; }
+
+    /* 表格 */
+    table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); margin: var(--space-4) 0; }
+    th {
+      text-align: left; background: var(--surface-subtle); padding: 10px 12px;
+      font-family: var(--font-mono); font-size: var(--text-xs); font-weight: 500;
+      text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-tertiary);
+      border-bottom: 1px solid var(--border-default);
+    }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); }
+    tr:hover td { background: var(--surface-hover); }
+
+    /* 行动按钮 */
+    .actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+      border-radius: var(--radius-lg); padding: 8px 16px; font-size: var(--text-base);
+      font-weight: 500; border: 1px solid transparent; text-decoration: none; transition: all var(--t-base);
+    }
+    .btn-primary { background: var(--brand-500); color: var(--text-inverse); }
+    .btn-primary:hover { background: var(--brand-600); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .btn-secondary { background: var(--surface-elevated); border-color: var(--border-default); color: var(--text-primary); }
+    .btn-secondary:hover { background: var(--surface-hover); }
+
+    /* 时间线 */
+    .timeline { position: relative; padding-left: var(--space-6); }
+    .timeline::before { content: ""; position: absolute; left: 7px; top: 4px; bottom: 4px; width: 2px; background: var(--border-default); }
+    .timeline-item { position: relative; padding-bottom: var(--space-4); }
+    .timeline-item::before { content: ""; position: absolute; left: -22px; top: 7px; width: 10px; height: 10px; border-radius: 50%; background: var(--brand-500); box-shadow: 0 0 0 3px var(--brand-50); }
+    .timeline-item .when { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+    .timeline-item .what { color: var(--text-primary); margin-top: 2px; }
+
+    /* 图示（视觉描述块） */
+    .card blockquote {
+      margin: var(--space-3) 0; padding: var(--space-3) var(--space-4);
+      background: var(--surface-inset); border-left: 3px solid var(--brand-300);
+      border-radius: var(--radius-md); color: var(--text-secondary); font-size: var(--text-sm);
+    }
+
+    /* 图示摘录列表 */
+    .figure-list { margin: 0; padding-left: var(--space-5); color: var(--text-secondary); }
+    .figure-list li { margin-bottom: var(--space-2); padding-left: var(--space-1); }
+    .figure-list li::marker { color: var(--brand-500); font-family: var(--font-mono); font-size: var(--text-xs); }
+
+    .tag-row { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+
+    @media (max-width: 640px) {
+      .hero { padding: var(--space-10) var(--space-5) var(--space-8); }
+      .hero h1 { font-size: var(--text-2xl); }
+      .content { padding: var(--space-8) var(--space-5); }
+    }
+    @media print {
+      body { background: #fff; }
+      .hero { background: var(--brand-700) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .card:hover, .metric:hover { box-shadow: var(--shadow-sm); transform: none; }
+      .gen-note { background: #f7faf8; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <h1>{{ p.title | e }}</h1>
+      {% if p.summary %}<p class="summary">{{ p.summary | md_inline | safe }}</p>{% endif %}
+      <div class="meta-row">
+        {% if meta.source_space and meta.source_space != '—' %}<span class="badge">{{ meta.source_space | e }}</span>{% endif %}
+        {% if meta.owner and meta.owner != '—' %}<span class="badge">@{{ meta.owner | e }}</span>{% endif %}
+        {% if meta.updated and meta.updated != '—' %}<span class="badge">更新 {{ meta.updated | e }}</span>{% endif %}
+        {% if p.page_type %}<span class="badge">{{ p.page_type | upper | e }}</span>{% endif %}
+        {% for tag in p.tags or [] %}<span class="badge">#{{ tag | e }}</span>{% endfor %}
+      </div>
+    </div>
+  </header>
+
+  <main class="content">
+    {% block content %}{% endblock %}
+
+    {% if p.figures %}
+    <div class="card">
+      <h2>图示摘录</h2>
+      <p style="color:var(--text-tertiary);font-size:var(--text-sm);margin:-4px 0 var(--space-3);">
+        文档内 {{ p.figures | length }} 张配图的视觉识别要点（{{ meta.vision_model | default('gpt-4.1-mini') }} 自动生成，忠实保留每张图结论）。
+      </p>
+      <div class="figure-list">
+        {% for f in p.figures %}
+        <div style="margin:12px 0;padding:12px 14px;background:var(--surface-subtle);border-radius:var(--radius-lg)">
+          <div style="font-family:var(--font-mono);font-size:var(--text-xs);color:var(--text-tertiary);margin-bottom:6px">图 {{ loop.index }}</div>
+          <div>{{ f | md_block | safe }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if meta.refs %}
+    <div class="refs">
+      <h3>来源引用</h3>
+      <ol>
+        {% for r in meta.refs %}
+          <li>
+            {% if r.url %}<a href="{{ r.url | e }}" target="_blank" rel="noreferrer">{{ r.title | e }}</a>{% else %}{{ r.title | e }}{% endif %}
+            {% if r.note %} — <span style="color:var(--text-tertiary)">{{ r.note | e }}</span>{% endif %}
+          </li>
+        {% endfor %}
+      </ol>
+    </div>
+    {% endif %}
+
+    <div class="gen-note">
+      <div class="label">生成说明</div>
+      <div>
+        本页面由「{{ meta.agent_name | default('HTML 页面生成 Agent') }}」于 {{ meta.generated_at | e }} 基于飞书文档自动生成。
+        所有内容在写回飞书前需经用户确认。模板：{{ meta.template_name | e }}。
+      </div>
+    </div>
+  </main>
+</body>
+</html>

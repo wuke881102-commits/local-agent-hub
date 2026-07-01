@@ -1,0 +1,24 @@
+# HTML 模板到飞书文档类型的默认映射（PRD §5.4）。
+templates:
+  internal_wiki:
+    label: 内部知识页
+    use_when:
+      - 制度
+      - FAQ
+      - 知识导航
+      - Wiki
+
+  project:
+    label: 项目/产品展示页
+    use_when:
+      - 复盘
+      - 阶段汇报
+      - 项目介绍
+      - 产品说明
+
+  announcement:
+    label: 运营活动/公告页
+    use_when:
+      - 公告
+      - 活动方案
+      - 通知

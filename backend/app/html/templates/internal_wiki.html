@@ -1,0 +1,39 @@
+{% extends "lumen_base.html" %}
+
+{% block content %}
+  {% if p.outline %}
+  <div class="outline">
+    <div class="label">目录</div>
+    <ul>
+      {% for o in p.outline %}
+        <li class="lvl-{{ o.level | default(1) }}">{{ o.text | e }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if p.highlights %}
+  <div class="card">
+    <h2>核心要点</h2>
+    <ul>
+      {% for h in p.highlights %}<li>{{ h | md_inline | safe }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% for s in p.sections or [] %}
+  <div class="card">
+    <h2>{{ s.heading | e }}</h2>
+    {{ s.body | md_block | safe }}
+  </div>
+  {% endfor %}
+
+  {% if p.next_steps %}
+  <div class="card">
+    <h2>建议与后续</h2>
+    <ul>
+      {% for n in p.next_steps %}<li>{{ n | md_inline | safe }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+{% endblock %}

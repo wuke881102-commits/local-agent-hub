@@ -1,0 +1,48 @@
+# 团队共享 Agent 配置（PRD §13.1）
+# 修改后重启后端服务生效。
+agents:
+  - id: document-map
+    enabled: true
+    default_scan:
+      include_paths: []
+      exclude_paths: ["/草稿", "/Sandbox"]
+    refresh_on_startup: false
+
+  - id: knowledge-governance
+    enabled: true
+    rules:
+      stale_days: 180
+      duplicate_similarity: 0.85
+      owner_required: true
+
+  - id: html-page
+    enabled: true
+    templates:
+      - internal_wiki
+      - project
+      - announcement
+    default_template: project
+    writeback_default_space: ""
+    allow_local_export: true
+
+  - id: meeting-minutes
+    enabled: true
+    action_item:
+      default_task_list: "我的任务"
+      reminder_offset_minutes: 1440  # 截止前一天提醒
+
+  - id: base-analysis
+    enabled: true
+    sample_rows: 50
+    templates:
+      - general    # 综合分析（默认）
+      - quality    # 数据质量体检
+      - report     # 报表与看板
+      - insight    # 业务洞察
+    default_template: general
+
+  - id: collab-dispatch
+    enabled: true
+    default_channels: []
+    default_email_recipients: []
+    allow_batch_dispatch: false

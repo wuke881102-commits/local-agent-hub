@@ -1,0 +1,16 @@
+# 文档分类规则（PRD §5.2）。Phase A 仅作为 Phase B 实现的占位。
+classes:
+  - name: PRD
+    keywords: ["PRD", "需求", "产品需求"]
+  - name: 会议纪要
+    keywords: ["会议", "纪要", "minutes"]
+  - name: 项目计划
+    keywords: ["项目计划", "里程碑", "Roadmap"]
+  - name: 方案
+    keywords: ["方案", "策略", "提案"]
+  - name: 周报
+    keywords: ["周报", "Weekly"]
+  - name: 公告
+    keywords: ["公告", "通知"]
+  - name: 数据说明
+    keywords: ["数据字典", "口径", "指标说明"]

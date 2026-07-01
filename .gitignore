@@ -1,0 +1,48 @@
+# Backend
+backend/.env
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/.venv/
+backend/.pytest_cache/
+backend/*.egg-info/
+backend/data/*.sqlite
+backend/data/*.sqlite-journal
+backend/data/drafts/
+backend/data/*.log
+backend/data/*.json
+# 全量忽略运行时数据目录（含「自动化提炼」截图与 digests.jsonl 等用户数据，绝不提交）
+backend/data/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/*.local
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Original design / source materials (kept out of build artifacts)
+Feishu.zip
+Feishu_design/
+
+# ── Build artifacts & large binaries (regenerable; keep repo lean) ──
+/dist-installer/
+/backend/dist/
+/backend/build/
+/build/stage/
+# 打包用的第三方运行时/工具（自行下载，不入库）：内置 Node、Inno Setup 等
+/build/tools/
+
+# ── Secrets in PLAINTEXT — 绝不提交。请填入你自己的凭据，仓库不含任何真实密钥。 ──
+/build/production.env
+/build/stage/backend/.env
+# backend/.env already ignored above
+secrets.7z
+
+# ── Repo-root runtime data (dev server writes here; may contain tokens / logs) ──
+/data/
