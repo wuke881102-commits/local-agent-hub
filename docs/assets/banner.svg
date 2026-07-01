@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 340" role="img" aria-label="Local Agent Hub">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B3D26"/>
+      <stop offset="0.55" stop-color="#0E5A34"/>
+      <stop offset="1" stop-color="#00AA4F"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3BE07A"/>
+      <stop offset="1" stop-color="#00AA4F"/>
+    </linearGradient>
+    <pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.6" fill="#ffffff" opacity="0.06"/>
+    </pattern>
+    <style>
+      text { font-family: "Segoe UI","PingFang SC","Microsoft YaHei","Hiragino Sans GB",-apple-system,sans-serif; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="340" rx="20" fill="url(#bg)"/>
+  <rect width="1200" height="340" rx="20" fill="url(#dots)"/>
+
+  <!-- brand mark -->
+  <g transform="translate(72,120)">
+    <rect x="0" y="0" width="96" height="96" rx="24" fill="url(#mark)"/>
+    <text x="48" y="66" font-size="52" font-weight="800" fill="#0B3D26" text-anchor="middle">本</text>
+  </g>
+
+  <!-- title block -->
+  <g transform="translate(196,0)">
+    <text x="0" y="130" font-size="60" font-weight="800" fill="#ffffff" letter-spacing="1">本地 Agent 工作台</text>
+    <text x="4" y="176" font-size="27" font-weight="600" fill="#B8F5D0" letter-spacing="3">LOCAL&#160;&#160;AGENT&#160;&#160;HUB</text>
+    <text x="4" y="224" font-size="22" fill="#DFF6E8">本地优先的飞书 AI Agent 工作台 · 数据留本机 · 写回需确认</text>
+
+    <!-- pills -->
+    <g font-size="16" font-weight="600">
+      <g transform="translate(4,252)">
+        <rect x="0" y="0" width="132" height="34" rx="17" fill="#ffffff" opacity="0.14"/>
+        <text x="66" y="23" fill="#ffffff" text-anchor="middle">🔒 本地优先</text>
+      </g>
+      <g transform="translate(148,252)">
+        <rect x="0" y="0" width="150" height="34" rx="17" fill="#ffffff" opacity="0.14"/>
+        <text x="75" y="23" fill="#ffffff" text-anchor="middle">🧩 8 个 Agent</text>
+      </g>
+      <g transform="translate(310,252)">
+        <rect x="0" y="0" width="132" height="34" rx="17" fill="#ffffff" opacity="0.14"/>
+        <text x="66" y="23" fill="#ffffff" text-anchor="middle">⚖️ MIT 开源</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- decorative agent network (right) -->
+  <g transform="translate(880,170)" stroke="#8FE9B4" stroke-width="2" opacity="0.9" fill="none">
+    <line x1="0" y1="0" x2="120" y2="-80"/>
+    <line x1="0" y1="0" x2="140" y2="-6"/>
+    <line x1="0" y1="0" x2="118" y2="82"/>
+    <line x1="0" y1="0" x2="-2" y2="-118"/>
+    <line x1="0" y1="0" x2="-6" y2="120"/>
+  </g>
+  <g transform="translate(880,170)">
+    <circle cx="0" cy="0" r="30" fill="url(#mark)"/>
+    <text x="0" y="7" font-size="20" font-weight="800" fill="#0B3D26" text-anchor="middle">AI</text>
+    <g fill="#DFF6E8">
+      <circle cx="120" cy="-80" r="15"/>
+      <circle cx="140" cy="-6" r="15"/>
+      <circle cx="118" cy="82" r="15"/>
+      <circle cx="-2" cy="-118" r="15"/>
+      <circle cx="-6" cy="120" r="15"/>
+    </g>
+    <g font-size="12" font-weight="700" fill="#0B3D26" text-anchor="middle">
+      <text x="120" y="-76">文档</text>
+      <text x="140" y="-2">表格</text>
+      <text x="118" y="86">纪要</text>
+      <text x="-2" y="-114">PDF</text>
+      <text x="-6" y="124">云盘</text>
+    </g>
+  </g>
+</svg>
