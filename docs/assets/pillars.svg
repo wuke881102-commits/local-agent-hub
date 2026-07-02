@@ -54,7 +54,7 @@
     <rect width="384" height="6" rx="3" fill="#0EA5A0"/>
     <circle cx="52" cy="60" r="26" fill="#E6F7F5"/>
     <g transform="translate(37,45) scale(1.25)" fill="none" stroke="#0EA5A0" stroke-width="1.7" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></g>
-    <text class="t kick" x="92" y="48" fill="#0EA5A0">能力三 · 可选</text>
+    <text class="t kick" x="92" y="48" fill="#0EA5A0">能力三</text>
     <text class="t ti" x="92" y="72">飞书文档管理</text>
     <g class="t d">
       <circle cx="30" cy="126" r="3" fill="#0EA5A0"/><text x="44" y="130">盘点可访问的文档 / 知识库 / 多维表格</text>
@@ -63,7 +63,7 @@
       <circle cx="30" cy="240" r="3" fill="#0EA5A0"/><text x="44" y="244">团队飞书资产可治理、可复用</text>
     </g>
     <rect x="24" y="286" width="336" height="52" rx="10" fill="#EAF7F5"/>
-    <text class="t" x="40" y="309" font-size="11.5" font-weight="700" fill="#0E8F88">🔗 可选接入 · 用你的身份</text>
+    <text class="t" x="40" y="309" font-size="11.5" font-weight="700" fill="#0E8F88">🔗 接入飞书 · 用你的身份</text>
     <text class="t" x="40" y="327" font-size="11" fill="#5B6B62">以本人权限访问，只读你能看到的</text>
   </g>
 </svg>

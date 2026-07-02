@@ -30,7 +30,7 @@
   <g transform="translate(196,0)">
     <text x="0" y="130" font-size="60" font-weight="800" fill="#ffffff" letter-spacing="1">本地 Agent 工作台</text>
     <text x="4" y="176" font-size="27" font-weight="600" fill="#B8F5D0" letter-spacing="3">LOCAL&#160;&#160;AGENT&#160;&#160;HUB</text>
-    <text x="4" y="224" font-size="22" fill="#DFF6E8">本地优先的 AI Agent 工作台 · 本地文档 · 自动留痕 · 可选接入飞书</text>
+    <text x="4" y="224" font-size="22" fill="#DFF6E8">本地优先的 AI Agent 工作台 · 本地文档 · 自动留痕 · 飞书文档</text>
 
     <!-- pills -->
     <g font-size="16" font-weight="600">
