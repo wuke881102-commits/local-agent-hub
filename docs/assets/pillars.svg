@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 384" role="img" aria-label="面向企业的三大能力">
+  <defs>
+    <style>
+      .t{font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+      .ti{font-weight:800;font-size:19px;fill:#0F2A1C}
+      .kick{font-weight:800;font-size:11px;letter-spacing:1px}
+      .d{font-size:13px;fill:#3B4A42}
+      .card{fill:#fff;stroke:#E3EAE5;stroke-width:1.5}
+    </style>
+  </defs>
+  <rect width="1200" height="384" rx="16" fill="#F6FAF7"/>
+
+  <!-- ===== Card 1 · 本地文件内容生成 (green) ===== -->
+  <g transform="translate(8,8)">
+    <rect class="card" width="384" height="368" rx="16"/>
+    <rect width="384" height="6" rx="3" fill="#00AA4F"/>
+    <circle cx="52" cy="60" r="26" fill="#E8F7EE"/>
+    <g transform="translate(37,45) scale(1.25)" fill="none" stroke="#00AA4F" stroke-width="1.7" stroke-linejoin="round"><path d="M4 4h16v5H4zM4 13h7v7H4zM15 13h5v7h-5z"/></g>
+    <text class="t kick" x="92" y="48" fill="#00AA4F">能力一</text>
+    <text class="t ti" x="92" y="72">本地文件内容生成</text>
+    <g class="t d">
+      <circle cx="30" cy="126" r="3" fill="#00AA4F"/><text x="44" y="130">Excel / Word / PDF / PPT / 网页 本地解析</text>
+      <circle cx="30" cy="164" r="3" fill="#00AA4F"/><text x="44" y="168">一键生成企业 HTML 页面 / 知识卡片 / FAQ</text>
+      <circle cx="30" cy="202" r="3" fill="#00AA4F"/><text x="44" y="206">PDF 合同识别与金额测算</text>
+      <circle cx="30" cy="240" r="3" fill="#00AA4F"/><text x="44" y="244">多维 / 电子表格分析出图</text>
+    </g>
+    <rect x="24" y="286" width="336" height="52" rx="10" fill="#F0FAF4"/>
+    <text class="t" x="40" y="309" font-size="11.5" font-weight="700" fill="#00AA4F">🖥️ 全程本地 · 不上传</text>
+    <text class="t" x="40" y="327" font-size="11" fill="#5B6B62">把散落的原始资料变成规范成果</text>
+  </g>
+
+  <!-- ===== Card 2 · 自动化提炼 (sky) ===== -->
+  <g transform="translate(408,8)">
+    <rect class="card" width="384" height="368" rx="16"/>
+    <rect width="384" height="6" rx="3" fill="#0EA5E9"/>
+    <circle cx="52" cy="60" r="26" fill="#E6F5FD"/>
+    <g transform="translate(37,45) scale(1.25)" fill="none" stroke="#0EA5E9" stroke-width="1.7" stroke-linejoin="round"><path d="M4 5h16l-6 7v6l-4-2v-4z"/></g>
+    <text class="t kick" x="92" y="48" fill="#0EA5E9">能力二</text>
+    <text class="t ti" x="92" y="72">自动化提炼</text>
+    <g class="t d">
+      <circle cx="30" cy="126" r="3" fill="#0EA5E9"/><text x="44" y="130">工作时按 Enter 自动留痕当前窗口</text>
+      <circle cx="30" cy="164" r="3" fill="#0EA5E9"/><text x="44" y="168">定时提炼「重点 / 操作 / 会议 / 待办」</text>
+      <circle cx="30" cy="202" r="3" fill="#0EA5E9"/><text x="44" y="206">自动产出日报 / 周报素材、交接记录</text>
+      <circle cx="30" cy="240" r="3" fill="#0EA5E9"/><text x="44" y="244">截图存本机私有目录，最长 10h 自停</text>
+    </g>
+    <rect x="24" y="286" width="336" height="52" rx="10" fill="#EFF9FE"/>
+    <text class="t" x="40" y="309" font-size="11.5" font-weight="700" fill="#0284C7">📸 无感留痕 · 私有目录</text>
+    <text class="t" x="40" y="327" font-size="11" fill="#5B6B62">让「这段时间做了什么」自动成文</text>
+  </g>
+
+  <!-- ===== Card 3 · 飞书文档管理 (teal) ===== -->
+  <g transform="translate(808,8)">
+    <rect class="card" width="384" height="368" rx="16"/>
+    <rect width="384" height="6" rx="3" fill="#0EA5A0"/>
+    <circle cx="52" cy="60" r="26" fill="#E6F7F5"/>
+    <g transform="translate(37,45) scale(1.25)" fill="none" stroke="#0EA5A0" stroke-width="1.7" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></g>
+    <text class="t kick" x="92" y="48" fill="#0EA5A0">能力三 · 可选</text>
+    <text class="t ti" x="92" y="72">飞书文档管理</text>
+    <g class="t d">
+      <circle cx="30" cy="126" r="3" fill="#0EA5A0"/><text x="44" y="130">盘点可访问的文档 / 知识库 / 多维表格</text>
+      <circle cx="30" cy="164" r="3" fill="#0EA5A0"/><text x="44" y="168">建索引、分类、查重去旧</text>
+      <circle cx="30" cy="202" r="3" fill="#0EA5A0"/><text x="44" y="206">批量回填摘要 / 标签，写回需确认</text>
+      <circle cx="30" cy="240" r="3" fill="#0EA5A0"/><text x="44" y="244">团队飞书资产可治理、可复用</text>
+    </g>
+    <rect x="24" y="286" width="336" height="52" rx="10" fill="#EAF7F5"/>
+    <text class="t" x="40" y="309" font-size="11.5" font-weight="700" fill="#0E8F88">🔗 可选接入 · 用你的身份</text>
+    <text class="t" x="40" y="327" font-size="11" fill="#5B6B62">以本人权限访问，只读你能看到的</text>
+  </g>
+</svg>
