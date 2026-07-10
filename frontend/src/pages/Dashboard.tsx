@@ -171,7 +171,7 @@ const Dashboard: React.FC = () => {
                 <td className="mono" style={{ fontSize: 12 }}>{t.id}</td>
                 <td>{t.scene || '—'}</td>
                 <td>{t.agent_id}</td>
-                <td style={{ maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.target}</td>
+                <td style={{ maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={t.target && t.target !== '—' ? t.target : undefined}>{t.target}</td>
                 <td><StatusBadge status={t.status} /></td>
                 <td><span className="badge">{t.writeback}</span></td>
                 <td className="mono" style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{t.started_at?.slice(5, 16).replace('T', ' ')}</td>

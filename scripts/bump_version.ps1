@@ -3,7 +3,7 @@
   Bump the app version in every canonical spot, in one shot.
 
 .DESCRIPTION
-  The version string lives in 4 places across 3 build systems. This script keeps
+  The version string lives in 5 places across 3 build systems. This script keeps
   them in sync so a release is a single command:
 
       scripts\bump_version.ps1 2.0      (两段式 X.Y：小版本 2.1/2.2…，大版本 3.0/4.0…)
@@ -13,6 +13,7 @@
     2. frontend\package.json          -> "version": "<v>"                   (npm)
     3. build\installer.iss            -> #define MyAppVersion "<v>"         (installer + filename)
     4. backend\app\main.py            -> APP_VERSION = "<v>"                (FastAPI + /api/health)
+    5. backend\version_info.txt       -> filevers/prodvers + File/ProductVersion (exe 版本资源)
 
   After bumping, run build\build_installer.cmd to produce LocalAgentHub-Setup-<v>.exe.
 #>
@@ -33,6 +34,12 @@ if ($Version -notmatch '^\d+\.\d+$') {
 # 这里镜像成三段式 X.Y.0；其余 3 处（侧边栏徽章 / 安装包 / /api/health）都用展示版本 X.Y。
 $NpmVersion = "$Version.0"
 
+# Windows 版本资源要四段式整数元组与 X.Y.0.0 字符串（backend\version_info.txt）。
+$Parts = $Version.Split('.')
+$Major = $Parts[0]
+$Minor = $Parts[1]
+$VerFile = "$Version.0.0"
+
 # Repo root = parent of the scripts\ folder.
 $root = Split-Path -Parent $PSScriptRoot
 
@@ -41,7 +48,11 @@ $edits = @(
   @{ Path = 'frontend\src\version.ts'; Pattern = "export const APP_VERSION = '[^']*';"; Replace = "export const APP_VERSION = '$Version';"; Bom = $false },
   @{ Path = 'frontend\package.json';   Pattern = '"version":\s*"[^"]*"';                Replace = "`"version`": `"$NpmVersion`"";       Bom = $false },
   @{ Path = 'build\installer.iss';     Pattern = '#define MyAppVersion "[^"]*"';         Replace = "#define MyAppVersion `"$Version`""; Bom = $true  },
-  @{ Path = 'backend\app\main.py';     Pattern = 'APP_VERSION = "[^"]*"';                Replace = "APP_VERSION = `"$Version`"";        Bom = $false }
+  @{ Path = 'backend\app\main.py';     Pattern = 'APP_VERSION = "[^"]*"';                Replace = "APP_VERSION = `"$Version`"";        Bom = $false },
+  @{ Path = 'backend\version_info.txt'; Pattern = 'filevers=\(\d+, \d+, \d+, \d+\)';       Replace = "filevers=($Major, $Minor, 0, 0)";  Bom = $false },
+  @{ Path = 'backend\version_info.txt'; Pattern = 'prodvers=\(\d+, \d+, \d+, \d+\)';       Replace = "prodvers=($Major, $Minor, 0, 0)";  Bom = $false },
+  @{ Path = 'backend\version_info.txt'; Pattern = "StringStruct\('FileVersion', '[^']*'\)";   Replace = "StringStruct('FileVersion', '$VerFile')";    Bom = $false },
+  @{ Path = 'backend\version_info.txt'; Pattern = "StringStruct\('ProductVersion', '[^']*'\)"; Replace = "StringStruct('ProductVersion', '$VerFile')"; Bom = $false }
 )
 
 $failed = $false

@@ -20,7 +20,7 @@ from .routes import auth, scenes, agents as agents_route, tasks, assets, writeba
 
 # Single source of truth for the backend version. Bump via
 # scripts\bump_version.ps1 <new-version> (keeps the frontend + installer in sync).
-APP_VERSION = "5.4"
+APP_VERSION = "5.5"
 
 logging.basicConfig(
     level=logging.INFO,

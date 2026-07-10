@@ -3,10 +3,10 @@
 
 #define MyAppName "Local Agent Hub"
 #define MyAppNameCN "本地 Agent 工作台"
-#define MyAppVersion "5.4"
+#define MyAppVersion "5.5"
 #define MyAppPublisher "Local Agent Hub"
-#define MyAppExeName "feishu-agent.exe"
-#define MyAppExeRelative "backend\feishu-agent.exe"
+#define MyAppExeName "LocalAgentHub.exe"
+#define MyAppExeRelative "backend\LocalAgentHub.exe"
 
 [Setup]
 AppId={{2F1E5807-A6E2-4F1A-9B5C-FE15HU0HUB001}}
@@ -81,7 +81,7 @@ begin
   begin
     if WizardIsTaskSelected('resetdata') then
     begin
-      Exec(ExpandConstant('{cmd}'), '/C taskkill /F /IM feishu-agent.exe',
+      Exec(ExpandConstant('{cmd}'), '/C taskkill /F /IM {#MyAppExeName}',
            '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
       DataDir := ExpandConstant('{localappdata}\Feishu Agent Hub');
       if DirExists(DataDir) then

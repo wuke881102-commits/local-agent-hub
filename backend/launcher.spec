@@ -85,7 +85,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="feishu-agent",
+    name="LocalAgentHub",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -97,6 +97,7 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon="../build/icon.ico",
+    version="version_info.txt",
 )
 
 coll = COLLECT(
@@ -107,5 +108,5 @@ coll = COLLECT(
     strip=False,
     upx=False,
     upx_exclude=[],
-    name="feishu-agent",
+    name="LocalAgentHub",
 )

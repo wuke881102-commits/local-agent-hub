@@ -15,7 +15,7 @@ def _is_frozen() -> bool:
 def _app_root() -> Path:
     """Install/source root. Frontend dist + bundled runtime live here."""
     if _is_frozen():
-        # exe path: <INSTALL>/backend/feishu-agent.exe
+        # exe path: <INSTALL>/backend/LocalAgentHub.exe
         return Path(sys.executable).resolve().parent.parent
     # dev: this file = backend/app/config.py -> root is two parents up
     return Path(__file__).resolve().parent.parent.parent

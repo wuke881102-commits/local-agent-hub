@@ -1,0 +1,36 @@
+# UTF-8
+# PyInstaller Windows version resource for Local Agent Hub.
+# Embeds a proper ProductName / FileDescription so the .exe identifies itself
+# as "Local Agent Hub" in Explorer 文件属性 / 任务管理器 / 开始菜单.
+# 版本号由 scripts\bump_version.ps1 与其余 4 处一起同步（filevers/prodvers/FileVersion/ProductVersion）。
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=(5, 5, 0, 0),
+    prodvers=(5, 5, 0, 0),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo(
+      [
+        StringTable(
+          '040904B0',
+          [
+            StringStruct('CompanyName', 'Local Agent Hub contributors'),
+            StringStruct('FileDescription', 'Local Agent Hub 本地 Agent 工作台'),
+            StringStruct('FileVersion', '5.5.0.0'),
+            StringStruct('InternalName', 'LocalAgentHub'),
+            StringStruct('OriginalFilename', 'LocalAgentHub.exe'),
+            StringStruct('ProductName', 'Local Agent Hub'),
+            StringStruct('ProductVersion', '5.5.0.0')
+          ]
+        )
+      ]
+    ),
+    VarFileInfo([VarStruct('Translation', [1033, 1200])])
+  ]
+)

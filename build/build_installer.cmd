@@ -103,7 +103,7 @@ if not exist "build\stage\runtime\node\node.exe" (
 if exist "build\stage\backend"  rmdir /S /Q "build\stage\backend"
 if exist "build\stage\frontend" rmdir /S /Q "build\stage\frontend"
 if exist "build\stage\config"   rmdir /S /Q "build\stage\config"
-xcopy /E /I /Q /Y "backend\dist\feishu-agent" "build\stage\backend" >nul
+xcopy /E /I /Q /Y "backend\dist\LocalAgentHub" "build\stage\backend" >nul
 xcopy /E /I /Q /Y "frontend\dist"             "build\stage\frontend\dist" >nul
 xcopy /E /I /Q /Y "config"                    "build\stage\config" >nul
 copy /Y "build\production.env" "build\stage\backend\.env" >nul

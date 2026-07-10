@@ -25,6 +25,28 @@ def _norm_token(s: str) -> str:
     return m.group(1) if m else (s or "").strip()
 
 
+def _basename(path: str) -> str:
+    """取路径最后一段（文件名），跨平台兼容 \\ 与 /。"""
+    return re.split(r"[\\/]+", (path or "").strip().rstrip("\\/"))[-1]
+
+
+def _local_target(inputs: dict[str, Any]) -> str:
+    """本地文件数据源的「对象」列：显示文件名而非完整路径（避免暴露目录结构）。
+
+    覆盖 local_path（PDF 识别 / 表格分析）与 files / images（本地内容生成）两种入参形态。
+    """
+    lp = (inputs.get("local_path") or "").strip()
+    if lp:
+        return _basename(lp) or lp
+    files = inputs.get("files") or inputs.get("images") or []
+    if isinstance(files, str):
+        files = [files]
+    names = [_basename(str(f)) for f in files if str(f).strip()]
+    if names:
+        return names[0] if len(names) == 1 else f"{names[0]} 等 {len(names)} 个文件"
+    return ""
+
+
 # 内存中保留运行中的任务通道
 _task_channels: dict[str, asyncio.Queue[dict]] = {}
 _task_results: dict[str, AgentResult] = {}
@@ -75,6 +97,9 @@ async def submit(agent_id: str, inputs: dict[str, Any], scene: str | None = None
                 target = title
         except Exception:  # noqa: BLE001
             pass
+    # 本地文件数据源（无飞书 token）：用文件名当「对象」，让「最近任务」可读。
+    if not target:
+        target = _local_target(inputs)
     # 无文档/资产对象时（如「协作分发」以 source_task_id / content 为输入），
     # 退而用上游任务的对象、或内容首行，避免「对象」列空着只显示「—」。
     if not target:
