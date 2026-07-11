@@ -4,6 +4,7 @@ import useSWR from 'swr';
 import { api, fetcher, errMsg, TaskSummary } from '../api';
 import { Icon } from '../components/icons';
 import { useToast } from '../components/Toast';
+import { SourceTag } from './Dashboard';
 
 const TasksPage: React.FC = () => {
   const nav = useNavigate();
@@ -66,7 +67,7 @@ const TasksPage: React.FC = () => {
                 <td className="mono" style={{ fontSize: 12 }}>{t.id}</td>
                 <td>{t.agent_id}</td>
                 <td>{t.scene || '—'}</td>
-                <td>{t.target}</td>
+                <td><SourceTag source={t.source} />{t.target}</td>
                 <td><span className="badge">{t.status}</span></td>
                 <td><span className="badge">{t.writeback}</span></td>
                 <td className="mono" style={{ fontSize: 11 }}>{t.started_at}</td>

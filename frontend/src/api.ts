@@ -102,6 +102,7 @@ export type TaskSummary = {
   finished_at: string | null;
   error: string | null;
   writeback: string;
+  source?: 'local' | 'feishu' | '';
 };
 
 export type WritebackProposal = {

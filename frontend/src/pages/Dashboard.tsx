@@ -171,7 +171,9 @@ const Dashboard: React.FC = () => {
                 <td className="mono" style={{ fontSize: 12 }}>{t.id}</td>
                 <td>{t.scene || '—'}</td>
                 <td>{t.agent_id}</td>
-                <td style={{ maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={t.target && t.target !== '—' ? t.target : undefined}>{t.target}</td>
+                <td style={{ maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={t.target && t.target !== '—' ? t.target : undefined}>
+                  <SourceTag source={t.source} />{t.target}
+                </td>
                 <td><StatusBadge status={t.status} /></td>
                 <td><span className="badge">{t.writeback}</span></td>
                 <td className="mono" style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{t.started_at?.slice(5, 16).replace('T', ' ')}</td>
@@ -231,6 +233,13 @@ const StatCard: React.FC<{ label: string; value: string; hint: string; tone: 'su
       </div>
     </div>
   );
+};
+
+// 对象列的来源徽标：本地文件（绿）/ 飞书资产（蓝）。无对象输入的任务不显示。
+export const SourceTag: React.FC<{ source?: string }> = ({ source }) => {
+  if (source === 'local') return <span className="badge badge-success" style={{ marginRight: 6 }}>本地</span>;
+  if (source === 'feishu') return <span className="badge badge-info" style={{ marginRight: 6 }}>飞书</span>;
+  return null;
 };
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {

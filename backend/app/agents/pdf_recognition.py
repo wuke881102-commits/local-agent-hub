@@ -274,8 +274,9 @@ class PdfRecognitionAgent:
 
         采「均衡档主跑 + 快档兜底」双档：
           · 主档 text_model（plus）抽取质量好——这是全流程最重的一次调用（把上万字正文里每一笔
-            款项逐条拆成十几字段的 JSON、输出 token 也最多），plus 才读得准。单次长超时(180s)、
-            不做双重重试，避免像最强档 text_model_best(preview) 那样两次 150s 干等 5 分钟。
+            款项逐条拆成十几字段的 JSON、输出 token 也最多），plus 才读得准。单次长超时(300s，
+            长扫描件合同实测 180s 会超)、不做双重重试，避免像最强档 text_model_best(preview)
+            那样两次 150s 干等 5 分钟。
           · 万一 plus 超时/出错，回退 text_model_fast（flash）再跑一次(120s)，保证永不再卡死。
         实测教训：纯 flash 虽快(~87s 不超时)，但在扫描件合同上会**漏抽金额**（210万的采购协议
         被它报「未找到带金额款项」），故 flash 只作兜底、不作主跑。精确加总始终由 Python
@@ -293,7 +294,7 @@ class PdfRecognitionAgent:
         await ctx.log("info", f"识别为合同类文档，调用 {primary} 提炼各笔金额并按年测算 …")
         raw: str | None = None
         try:
-            raw = await _call(primary, 180)
+            raw = await _call(primary, 300)
         except Exception as e:  # noqa: BLE001
             await ctx.log("warn", f"{primary} 金额抽取超时/失败，回退 {fallback} 重试：{type(e).__name__}")
             try:

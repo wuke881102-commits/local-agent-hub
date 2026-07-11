@@ -5,8 +5,8 @@
 # 版本号由 scripts\bump_version.ps1 与其余 4 处一起同步（filevers/prodvers/FileVersion/ProductVersion）。
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(5, 5, 0, 0),
-    prodvers=(5, 5, 0, 0),
+    filevers=(5, 6, 0, 0),
+    prodvers=(5, 6, 0, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -22,11 +22,11 @@ VSVersionInfo(
           [
             StringStruct('CompanyName', 'Local Agent Hub contributors'),
             StringStruct('FileDescription', 'Local Agent Hub 本地 Agent 工作台'),
-            StringStruct('FileVersion', '5.5.0.0'),
+            StringStruct('FileVersion', '5.6.0.0'),
             StringStruct('InternalName', 'LocalAgentHub'),
             StringStruct('OriginalFilename', 'LocalAgentHub.exe'),
             StringStruct('ProductName', 'Local Agent Hub'),
-            StringStruct('ProductVersion', '5.5.0.0')
+            StringStruct('ProductVersion', '5.6.0.0')
           ]
         )
       ]

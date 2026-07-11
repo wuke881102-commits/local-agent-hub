@@ -47,6 +47,20 @@ def _local_target(inputs: dict[str, Any]) -> str:
     return ""
 
 
+def _task_source(inputs: dict[str, Any]) -> str:
+    """任务数据源标识：'local'（本地文件）/ 'feishu'（飞书资产）/ ''（无对象输入）。
+
+    供「最近任务」的对象列展示来源徽标。先判本地（本地任务只带 local_path/files），
+    再判飞书 token 类入参。
+    """
+    if inputs.get("local_path") or inputs.get("files") or inputs.get("images"):
+        return "local"
+    if (inputs.get("doc_token") or inputs.get("doc_tokens") or inputs.get("asset_id")
+            or inputs.get("file_token") or inputs.get("token")):
+        return "feishu"
+    return ""
+
+
 # 内存中保留运行中的任务通道
 _task_channels: dict[str, asyncio.Queue[dict]] = {}
 _task_results: dict[str, AgentResult] = {}
@@ -231,15 +245,20 @@ async def list_recent(limit: int = 30) -> list[dict]:
     async with get_db() as db:
         async with db.execute(
             """SELECT t.id, t.agent_id, t.scene, t.target, t.status, t.started_at, t.finished_at, t.error,
-                      (SELECT status FROM writeback_queue w WHERE w.task_id=t.id ORDER BY w.created_at DESC LIMIT 1) AS wb_status
+                      (SELECT status FROM writeback_queue w WHERE w.task_id=t.id ORDER BY w.created_at DESC LIMIT 1) AS wb_status,
+                      t.inputs
                  FROM task_run t ORDER BY t.started_at DESC LIMIT ?""",
             (limit,),
         ) as cur:
             async for r in cur:
+                try:
+                    src = _task_source(json.loads(r[9] or "{}"))
+                except Exception:  # noqa: BLE001
+                    src = ""
                 out.append({
                     "id": r[0], "agent_id": r[1], "scene": r[2], "target": r[3], "status": r[4],
                     "started_at": r[5], "finished_at": r[6], "error": r[7],
-                    "writeback": r[8] or "—",
+                    "writeback": r[8] or "—", "source": src,
                 })
     # 历史任务的 target 可能仍是 token：批量换成资产标题（找不到的保持原样）。
     norm = {o["id"]: _norm_token(o["target"]) for o in out if o["target"] and o["target"] != "—"}
