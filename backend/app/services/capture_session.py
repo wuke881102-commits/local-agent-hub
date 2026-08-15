@@ -47,6 +47,56 @@ _SKIP_TITLE_MARKERS = (
     "钉钉", "dingtalk",
     "slack", "qq",
 )
+# C) 会议白名单（优先级最高，先于 A/B 判断）：飞书 / Teams / 微信等既是聊天工具
+#    也是会议工具，只按进程名跳过会把「会议画面」一并跳掉。这里先放行会议窗口，
+#    聊天窗口仍按 A/B 跳过——即「聊天不截、会议照截」。
+#
+#    误伤风险低：聊天客户端的主窗口标题通常只有应用名（"飞书" / "微信"），会话名在
+#    界面里而不在标题栏；会议窗口则带明确的会议 / 通话字样。若你的某个会话正好被命名
+#    成含下列字样，那次会被截到——可用 CAPTURE_MEETING_MARKERS 反向调整（见下）。
+_MEETING_TITLE_MARKERS = (
+    # 飞书 / Lark / G-Space（白标飞书）：实测白标版会议窗标题为「普笺G-Space会议」，
+    # 聊天主窗口则是「普笺G-Space」——差别就在结尾的「会议」二字。
+    "视频会议", "飞书会议", "g-space会议", "g-space 会议",
+    "lark meetings", "video meeting", "feishu video",
+    # Microsoft Teams：实测会议窗标题为「Microsoft Teams 会议」（中文界面）；
+    # 英文界面为「Meeting | Microsoft Teams」。聊天窗是「<会话名> | Microsoft Teams」，不会命中。
+    "teams 会议", "teams meeting", "meeting | microsoft",
+    # 通用会议中 / 通话中
+    "会议中", "meeting in progress", "meeting with", "正在开会",
+    # 微信 / 企业微信 / QQ 通话
+    "视频通话", "语音通话", "video call", "voice call", "企业微信会议",
+    # 钉钉 / 腾讯会议（腾讯会议 wemeet.exe 本就不在跳过名单，这里兜底其网页版/嵌入窗口）
+    "钉钉会议", "腾讯会议", "tencent meeting",
+    # Slack
+    "huddle",
+    # 屏幕共享（共享中一定不是在打字聊天）
+    "正在共享", "屏幕共享", "sharing your screen", "is sharing",
+)
+# 通用规律（实测）：各家「会议窗口」的标题都以「会议」结尾，而聊天主窗口只有应用名——
+#   普笺G-Space会议 / Microsoft Teams 会议 / 腾讯会议 / 钉钉会议   ← 会议窗
+#   普笺G-Space     / Microsoft Teams      / 微信     / 飞书      ← 聊天窗
+# 故单列一条后缀规则，新会议软件无需再逐个加白名单。
+# 代价：若把某个会话/群命名成以「会议」结尾（如「项目周会议」）并弹成独立窗口，那个窗口
+# 会被截到。不接受这个代价就把本元组置空，只保留上面的精确关键词。
+_MEETING_TITLE_SUFFIXES = ("会议", "meeting")
+
+# 窗口类名白名单（不受界面语言影响，比标题更准）。留空即不启用；
+# 用「最近跳过的窗口」诊断看到会议窗口的真实类名后，可加进来做精确放行。
+_MEETING_CLASS_MARKERS: tuple[str, ...] = ()
+
+
+def _extra_meeting_markers() -> tuple[str, ...]:
+    """用户自定义的会议标题关键词（.env 里 CAPTURE_MEETING_MARKERS=逗号分隔）。
+
+    没验证到你实际的会议窗口标题时的兜底口子：加一条就放行，改完重启后端生效。
+    """
+    try:
+        from ..config import settings  # noqa: PLC0415 —— 延迟导入，避免循环依赖
+        raw = getattr(settings, "capture_meeting_markers", "") or ""
+    except Exception:  # noqa: BLE001
+        return ()
+    return tuple(s.strip().lower() for s in raw.split(",") if s.strip())
 
 _lock = threading.Lock()
 _state = {
@@ -60,17 +110,58 @@ _state = {
 }
 _hook = None              # keyboard 返回的 hook 句柄
 _last_shot_mono = 0.0     # 去抖用的单调时钟
+_SKIP_LOG_MAX = 8         # 「最近跳过的窗口」保留条数
+_skip_log: list[dict] = []  # 仅内存，不落盘（标题可能含会话名）
+
+
+def _is_meeting_window(title: str, cls: str) -> bool:
+    """前台窗口看起来是「会议 / 通话 / 共享」窗口 → 即使属于聊天应用也要截图。"""
+    if cls and any(m in cls.lower() for m in _MEETING_CLASS_MARKERS):
+        return True
+    t = (title or "").strip()
+    if t and t.endswith(_MEETING_TITLE_SUFFIXES):
+        return True
+    return any(m in t for m in _MEETING_TITLE_MARKERS + _extra_meeting_markers())
 
 
 def _should_skip_window() -> bool:
     """前台窗口是邮件 / 即时通讯窗口 → 跳过截图（本应用自身窗口不跳过）。
 
-    先按进程名精确匹配（桌面客户端可靠），再按窗口标题子串匹配（覆盖网页版）。
+    判断顺序：
+      C) 先看是不是会议 / 通话窗口 —— 是就放行（聊天应用的会议也要留痕）。
+      A) 再按进程名精确匹配（桌面客户端可靠）。
+      B) 最后按窗口标题子串匹配（覆盖网页版）。
     """
-    if screenshot.active_window_process_name() in _SKIP_PROCESS_NAMES:
-        return True
     title = screenshot.active_window_title().lower()
-    return any(m in title for m in _SKIP_TITLE_MARKERS)
+    cls = screenshot.active_window_class_name()
+    if _is_meeting_window(title, cls):
+        return False
+    if screenshot.active_window_process_name() in _SKIP_PROCESS_NAMES:
+        _record_skip(title, cls)
+        return True
+    if any(m in title for m in _SKIP_TITLE_MARKERS):
+        _record_skip(title, cls)
+        return True
+    return False
+
+
+def _record_skip(title: str, cls: str) -> None:
+    """记下最近被跳过的窗口，供「最近跳过」诊断展示。
+
+    只留内存里最近 _SKIP_LOG_MAX 条、不落盘、不进日志文件——标题可能含会话名。
+    用途：会议窗口若被误跳，你能在这里看到它的真实标题 / 类名，据此加白名单。
+    """
+    if not title and not cls:
+        return
+    entry = {"title": title[:80], "cls": cls[:60], "at": dt.datetime.now().isoformat(timespec="seconds")}
+    with _lock:
+        # 同一个窗口连按 Enter 只记一条（更新时间），避免刷屏
+        for it in _skip_log:
+            if it["title"] == entry["title"] and it["cls"] == entry["cls"]:
+                it["at"] = entry["at"]
+                return
+        _skip_log.insert(0, entry)
+        del _skip_log[_SKIP_LOG_MAX:]
 
 
 def _on_enter(_event=None) -> None:
@@ -159,4 +250,6 @@ def stop() -> dict:
 
 def status() -> dict:
     with _lock:
-        return dict(_state)
+        out = dict(_state)
+        out["recent_skips"] = [dict(it) for it in _skip_log]
+    return out

@@ -3,7 +3,7 @@
 
 #define MyAppName "Local Agent Hub"
 #define MyAppNameCN "本地 Agent 工作台"
-#define MyAppVersion "5.6"
+#define MyAppVersion "5.7"
 #define MyAppPublisher "Local Agent Hub"
 #define MyAppExeName "LocalAgentHub.exe"
 #define MyAppExeRelative "backend\LocalAgentHub.exe"

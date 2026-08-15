@@ -526,6 +526,8 @@ def status() -> dict:
     out["shot_count"] = cap.get("count", 0)
     out["last_shot_at"] = cap.get("last_at", "")
     out["capture_error"] = cap.get("error", "")
+    # 最近被跳过的聊天/邮件窗口（仅内存）。会议窗口若被误跳，可在此看到真实标题。
+    out["recent_skips"] = cap.get("recent_skips", [])
     # 钩子层若已掉线（如后端重启后），active 以钩子为准
     if _state["active"] and not cap.get("active"):
         out["active"] = False

@@ -88,6 +88,26 @@ def active_window_title() -> str:
         return ""
 
 
+def active_window_class_name() -> str:
+    """前台窗口的窗口类名（拿不到返回空串）。
+
+    比标题稳定：不随界面语言 / 会话名变化。用于区分同一应用的不同窗口
+    （如飞书的聊天主窗口 vs 视频会议窗口）。
+    """
+    if not _IS_WINDOWS:
+        return ""
+    try:
+        user32 = ctypes.windll.user32
+        hwnd = user32.GetForegroundWindow()
+        if not hwnd:
+            return ""
+        buf = ctypes.create_unicode_buffer(256)
+        user32.GetClassNameW(hwnd, buf, 256)
+        return buf.value or ""
+    except Exception:  # noqa: BLE001
+        return ""
+
+
 def active_window_process_name() -> str:
     """前台窗口所属进程的可执行文件名（小写，如 'feishu.exe'）；拿不到返回空串。
 

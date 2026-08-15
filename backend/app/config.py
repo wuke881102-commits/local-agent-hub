@@ -81,6 +81,11 @@ class Settings(BaseSettings):
     image_model_api_version: str = "2025-04-01-preview"
     image_size: str = "1024x1024"
 
+    # 自动截图的「会议白名单」补充关键词（逗号分隔，小写匹配窗口标题）。
+    # 聊天应用（飞书/Teams/微信…）默认整体不截图，但命中会议关键词的窗口会照常截。
+    # 若你的会议窗口没被识别到，在「最近跳过的窗口」里看到它的标题后加到这里即可。
+    capture_meeting_markers: str = ""
+
     lark_cli_bin: str = "lark-cli"
     enable_mock_fallback: bool = True
 

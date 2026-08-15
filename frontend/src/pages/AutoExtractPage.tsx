@@ -20,6 +20,7 @@ type Status = {
   window_shot_count: number;
   last_shot_at: string;
   capture_error: string;
+  recent_skips: { title: string; cls: string; at: string }[];
 };
 
 type Digest = {
@@ -234,7 +235,31 @@ const AutoExtractPage: React.FC = () => {
         <div style={{ marginTop: 14, fontSize: 11.5, color: 'var(--text-tertiary)', lineHeight: 1.6, background: 'var(--surface-subtle)', borderRadius: 8, padding: '9px 11px' }}>
           <Icon name="shield" size={12} /> 这些截图只用于本场景的自动提炼，<strong>不会出现在「内容生成」的文件选择里</strong>，存放于应用私有目录。
           捕获期间「全局」生效——在本应用里按 Enter 也会截一张，编辑文字时可先「停止」。
+          <br />
+          <Icon name="shield" size={12} /> 聊天与邮件窗口（飞书 / Teams / 微信 / 钉钉 / Outlook…）<strong>不截图</strong>；
+          但这些应用的<strong>会议 / 通话 / 屏幕共享窗口会照常截图</strong>。
         </div>
+
+        {!!st?.recent_skips?.length && (
+          <details style={{ marginTop: 10 }}>
+            <summary style={{ fontSize: 11.5, color: 'var(--text-tertiary)', cursor: 'pointer' }}>
+              最近跳过的窗口（{st.recent_skips.length}）—— 会议窗口若被误跳，可在此看到它的标题
+            </summary>
+            <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {st.recent_skips.map((s, i) => (
+                <div key={i} style={{ fontSize: 11.5, color: 'var(--text-secondary)', display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                  <code className="mono" style={{ fontSize: 11, background: 'var(--surface-subtle)', padding: '1px 6px', borderRadius: 5 }}>{s.title || '(无标题)'}</code>
+                  {s.cls && <span style={{ fontSize: 10.5, color: 'var(--text-tertiary)' }}>类名 {s.cls}</span>}
+                  <span style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginLeft: 'auto' }}>{s.at?.slice(11, 16)}</span>
+                </div>
+              ))}
+              <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                仅保存在内存中，不落盘、不进日志。若上面出现了本该截图的会议窗口，把它标题里的关键词
+                加到 <code className="mono">.env</code> 的 <code className="mono">CAPTURE_MEETING_MARKERS</code>（逗号分隔）后重启即可放行。
+              </div>
+            </div>
+          </details>
+        )}
 
         {st?.directory && (
           <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
