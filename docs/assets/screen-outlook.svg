@@ -4,6 +4,7 @@
       .t{font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
       .mut{fill:#8A968F} .dk{fill:#0F2A1C} .sub{fill:#5B6B62} .grn{fill:#00AA4F}
       .card{fill:#fff;stroke:#E6EBE8;stroke-width:1.5}
+      .mono{font-family:"Consolas","SFMono-Regular",monospace}
     </style>
   </defs>
   <rect x="6" y="6" width="1428" height="888" rx="16" fill="#fff" stroke="#DDE3DF" stroke-width="1.5"/>
@@ -24,22 +25,23 @@
     <g class="t sub" font-size="13.5">
       <text x="30" y="128">⌂  工作台</text><text x="30" y="162">✧  任务场景</text><text x="30" y="196">≣  运行记录</text>
       <text x="30" y="230">▤  飞书文档</text><text x="30" y="264">▢  本地目录</text><text x="30" y="298">▦  历史总结</text><text x="30" y="332">⋔  组织架构</text>
-      <text x="30" y="400">✎  个人摘记</text>
+      <text x="30" y="400">▤  个人摘记</text>
     </g>
     <rect x="14" y="348" width="220" height="30" rx="8" fill="#E8F7EE"/>
-    <text class="t grn" x="30" y="368" font-size="13.5" font-weight="700">✉  本地邮箱</text>
+    <text class="t grn" x="30" y="368" font-size="13.5" font-weight="700">△  本地邮箱</text>
     <text class="t mut" x="24" y="442" font-size="11" letter-spacing="2">AGENTS</text>
     <g class="t" font-size="13">
-      <g><circle cx="30" cy="468" r="5" fill="#22C55E"/><text class="dk" x="46" y="472">HTML 页面生成</text></g>
-      <g><circle cx="30" cy="498" r="5" fill="#3B82F6"/><text class="dk" x="46" y="502">文档地图</text></g>
-      <g><circle cx="30" cy="528" r="5" fill="#EC4899"/><text class="dk" x="46" y="532">摘要标签回填</text></g>
-      <g><circle cx="30" cy="558" r="5" fill="#F59E0B"/><text class="dk" x="46" y="562">知识治理</text></g>
-      <g><circle cx="30" cy="588" r="5" fill="#EAB308"/><text class="dk" x="46" y="592">多维表格分析</text></g>
-      <g><circle cx="30" cy="618" r="5" fill="#8B5CF6"/><text class="dk" x="46" y="622">PDF 识别</text></g>
-      <g><circle cx="30" cy="648" r="5" fill="#F97316"/><text class="dk" x="46" y="652">会议纪要</text></g>
-      <g><circle cx="30" cy="678" r="5" fill="#EF4444"/><text class="dk" x="46" y="682">协作分发</text></g>
-      <g><circle cx="30" cy="708" r="5" fill="#0EA5E9"/><text class="dk" x="46" y="712">AIHot 模型榜</text></g>
-      <g><circle cx="30" cy="738" r="5" fill="#14B8A6"/><text class="dk" x="46" y="742">AIHot 新闻简报</text></g>
+      <g><circle cx="30" cy="468" r="5" fill="#22C55E"/><text class="dk" x="46" y="472">HTML 页面生成</text><text class="mut" x="196" y="472" font-size="11">就绪</text></g>
+      <g><circle cx="30" cy="498" r="5" fill="#3B82F6"/><text class="dk" x="46" y="502">文档地图</text><text class="mut" x="196" y="502" font-size="11">就绪</text></g>
+      <g><circle cx="30" cy="528" r="5" fill="#EC4899"/><text class="dk" x="46" y="532">摘要标签回填</text><text class="mut" x="196" y="532" font-size="11">就绪</text></g>
+      <g><circle cx="30" cy="558" r="5" fill="#22C55E"/><text class="dk" x="46" y="562">知识治理</text><text class="mut" x="196" y="562" font-size="11">就绪</text></g>
+      <g><circle cx="30" cy="588" r="5" fill="#EAB308"/><text class="dk" x="46" y="592">多维表格分析</text><text class="mut" x="196" y="592" font-size="11">就绪</text></g>
+      <g><circle cx="30" cy="618" r="5" fill="#8B5CF6"/><text class="dk" x="46" y="622">PDF 识别</text><text class="mut" x="196" y="622" font-size="11">就绪</text></g>
+      <g><circle cx="30" cy="648" r="5" fill="#F97316"/><text class="dk" x="46" y="652">会议纪要</text><text class="mut" x="196" y="652" font-size="11">就绪</text></g>
+      <g><circle cx="30" cy="678" r="5" fill="#EF4444"/><text class="dk" x="46" y="682">协作分发</text><text class="mut" x="196" y="682" font-size="11">就绪</text></g>
+      <g><circle cx="30" cy="708" r="5" fill="#0EA5E9"/><text class="dk" x="46" y="712">AIHot 模型榜</text><text class="mut" x="196" y="712" font-size="11">就绪</text></g>
+      <g><circle cx="30" cy="738" r="5" fill="#14B8A6"/><text class="dk" x="46" y="742">AIHot 新闻简报</text><text class="mut" x="196" y="742" font-size="11">就绪</text></g>
+      <g><circle cx="30" cy="768" r="5" fill="#0EA5E9"/><text class="dk" x="46" y="772">自动化提炼</text><text class="mut" x="196" y="772" font-size="11">就绪</text></g>
     </g>
   </g>
 
@@ -48,126 +50,169 @@
     <rect width="1178" height="52" fill="#FBFCFC" stroke="#EAEFEC" stroke-width="1.5"/>
     <text class="t sub" x="36" y="32" font-size="13.5">☰   工作台  ›  本地邮箱</text>
 
-    <text class="t dk" x="36" y="98" font-size="24" font-weight="800">本地邮箱</text>
-    <text class="t sub" x="36" y="124" font-size="12.5">直接读桌面 Outlook（COM）· 邮件不出本机 · 只读：不发送 / 不回复 / 不删除 / 不改已读</text>
-
     <!-- mailbox picker -->
-    <g transform="translate(36,144)">
-      <rect class="card" width="1106" height="52" rx="12"/>
-      <text class="t dk" x="24" y="32" font-size="12.5" font-weight="700">读哪个邮箱</text>
-      <rect x="112" y="12" width="248" height="28" rx="8" fill="#fff" stroke="#E0E6E2"/>
-      <text class="t dk" x="126" y="31" font-size="12.5">示例邮箱 A（主）</text><text class="t mut" x="344" y="31" font-size="11">▾</text>
-      <text class="t sub" x="380" y="32" font-size="11.5">收件箱和已发送一起切 · 一次只读一个邮箱 · 选择会记住</text>
-      <rect x="892" y="12" width="190" height="28" rx="8" fill="#E8F7EE"/>
-      <text class="t grn" x="987" y="31" font-size="11.5" text-anchor="middle" font-weight="700">另有：示例邮箱 B（委派）</text>
+    <g transform="translate(36,68)">
+      <rect class="card" width="1106" height="44" rx="10"/>
+      <text class="t dk" x="20" y="28" font-size="12.5" font-weight="700">读哪个邮箱</text>
+      <rect x="100" y="9" width="216" height="26" rx="6" fill="#fff" stroke="#CFD8D3"/>
+      <text class="t dk" x="112" y="27" font-size="12.5">示例邮箱 A（主）</text><text class="t sub" x="300" y="27" font-size="10">▾</text>
+      <text class="t sub" x="330" y="28" font-size="11.5">收件箱和已发送一起切 · 一次只读一个邮箱 · 选择会记住</text>
     </g>
 
     <!-- range -->
-    <g transform="translate(36,208)">
-      <rect class="card" width="1106" height="52" rx="12"/>
-      <text class="t dk" x="24" y="32" font-size="12.5" font-weight="700">看多久</text>
-      <rect x="86" y="12" width="62" height="28" rx="8" class="grn"/><text class="t" x="117" y="31" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">当天</text>
-      <rect x="156" y="12" width="72" height="28" rx="8" fill="#EEF2F0"/><text class="t sub" x="192" y="31" font-size="12" text-anchor="middle">近 3 天</text>
-      <rect x="236" y="12" width="72" height="28" rx="8" fill="#EEF2F0"/><text class="t sub" x="272" y="31" font-size="12" text-anchor="middle">近 7 天</text>
-      <text class="t mut" x="328" y="32" font-size="11.5">从 2026-03-04 起（含今天）</text>
-      <text class="t mut" x="836" y="32" font-size="11.5" text-anchor="end">上次读取 09:41 · 缓存 5 分钟</text>
-      <rect x="856" y="12" width="106" height="28" rx="8" fill="#fff" stroke="#E0E6E2"/><text class="t sub" x="909" y="31" font-size="12" text-anchor="middle">⟳ 刷新邮件</text>
-      <rect x="972" y="12" width="110" height="28" rx="8" fill="#fff" stroke="#E0E6E2"/><text class="t sub" x="1027" y="31" font-size="12" text-anchor="middle">▤ 信息矩阵</text>
+    <g transform="translate(36,122)">
+      <rect class="card" width="1106" height="44" rx="10"/>
+      <text class="t dk" x="20" y="28" font-size="12.5" font-weight="700">看多久</text>
+      <rect x="78" y="9" width="58" height="26" rx="7" fill="#EEF2F0"/><text class="t sub" x="107" y="27" font-size="12" text-anchor="middle">当天</text>
+      <rect x="144" y="9" width="66" height="26" rx="7" class="grn"/><text class="t" x="177" y="27" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">近 3 天</text>
+      <rect x="218" y="9" width="66" height="26" rx="7" fill="#EEF2F0"/><text class="t sub" x="251" y="27" font-size="12" text-anchor="middle">近 7 天</text>
+      <text class="t sub" x="298" y="28" font-size="11.5">从 2026-03-02 起（含今天）</text>
+      <text class="t mut" x="928" y="28" font-size="11.5" text-anchor="end">上次刷新 10:53 · 缓存</text>
+      <rect x="944" y="9" width="102" height="26" rx="7" fill="#fff" stroke="#CFD8D3"/><text class="t sub" x="995" y="27" font-size="12" text-anchor="middle">⟳ 刷新邮件</text>
     </g>
 
-    <!-- tabs -->
-    <g transform="translate(36,276)">
-      <text class="t grn" x="0" y="16" font-size="14" font-weight="800">智能看板</text>
-      <rect x="0" y="26" width="66" height="3" rx="2" class="grn"/>
-      <text class="t sub" x="96" y="16" font-size="14">信息矩阵</text>
-      <text class="t sub" x="192" y="16" font-size="14">时间图谱</text>
-      <text class="t mut" x="1106" y="16" font-size="11.5" text-anchor="end">「谁在等我回」为本地比对 ConversationID 算出，零模型调用</text>
+    <!-- alert -->
+    <g transform="translate(36,176)">
+      <rect width="1106" height="72" rx="10" fill="#FEF6F6" stroke="#F5D2D2" stroke-width="1.5"/>
+      <rect x="0" y="0" width="4" height="72" rx="2" fill="#DC2626"/>
+      <text class="t" x="22" y="32" font-size="15" font-weight="800" fill="#DC2626">1 件即将到期<tspan class="mut" font-weight="400"> · </tspan><tspan fill="#B45309">6 个人在等你回话</tspan><tspan class="sub" font-size="13" font-weight="400">（最久的等了 1 天）。</tspan></text>
+      <text class="t sub" x="22" y="56" font-size="12">近 3 天 · 其余 53 个会话可以不看 · 要回复请到矩阵里点「打开」回 Outlook，<tspan font-weight="700">本页面不发送任何邮件</tspan></text>
     </g>
 
-    <!-- three buckets -->
-    <g transform="translate(36,318)">
-      <!-- col 1 -->
+    <!-- board -->
+    <text class="t dk" x="36" y="278" font-size="14" font-weight="800">▽ 智能看板</text>
+    <text class="t mut" x="136" y="278" font-size="11.5">按「这封邮件要你做什么动作」分类 · 点格子筛下面的矩阵，再点一下取消</text>
+    <text class="t sub" x="36" y="302" font-size="12" font-weight="700">类型</text>
+    <text class="t mut" x="76" y="302" font-size="11">会议 / 告警 / 工单 / 广告由本机硬信号判定，其余由 AI 判定</text>
+
+    <g transform="translate(36,314)">
+      <!-- hot row -->
       <g>
-        <rect class="card" width="355" height="452" rx="14"/>
-        <rect x="0" y="0" width="355" height="46" rx="14" fill="#FEF2F2"/><rect x="0" y="32" width="355" height="14" fill="#FEF2F2"/>
-        <text class="t" x="20" y="30" font-size="13.5" font-weight="800" fill="#DC2626">需我回复</text>
-        <rect x="104" y="14" width="30" height="20" rx="6" fill="#FECACA"/><text class="t" x="119" y="29" font-size="11.5" font-weight="700" fill="#B91C1C" text-anchor="middle">3</text>
-        <g transform="translate(16,62)">
-          <rect width="323" height="118" rx="10" fill="#FCFDFC" stroke="#EEF2F0"/>
-          <text class="t dk" x="14" y="26" font-size="13" font-weight="700">示例：季度供货计划确认</text>
-          <text class="t mut" x="14" y="46" font-size="11.5">Alex · 今天 09:12 · 会话 4 封</text>
-          <rect x="14" y="58" width="72" height="20" rx="6" fill="#FEE2E2"/><text class="t" x="50" y="72" font-size="10.5" fill="#B91C1C" text-anchor="middle">等我回 2 天</text>
-          <rect x="94" y="58" width="52" height="20" rx="6" fill="#EEF2F0"/><text class="t sub" x="120" y="72" font-size="10.5" text-anchor="middle">决策</text>
-          <text class="t sub" x="14" y="98" font-size="11.5">对方最后一句：麻烦本周内给个明确时间。</text>
-        </g>
-        <g transform="translate(16,192)">
-          <rect width="323" height="100" rx="10" fill="#FCFDFC" stroke="#EEF2F0"/>
-          <text class="t dk" x="14" y="26" font-size="13" font-weight="700">示例：验收标准第 3 条歧义</text>
-          <text class="t mut" x="14" y="46" font-size="11.5">Blair · 昨天 17:40 · 会话 2 封</text>
-          <rect x="14" y="58" width="62" height="20" rx="6" fill="#FEF3C7"/><text class="t" x="45" y="72" font-size="10.5" fill="#92400E" text-anchor="middle">等我回 1 天</text>
-          <rect x="84" y="58" width="52" height="20" rx="6" fill="#EEF2F0"/><text class="t sub" x="110" y="72" font-size="10.5" text-anchor="middle">业务</text>
-        </g>
-        <g transform="translate(16,304)">
-          <rect width="323" height="100" rx="10" fill="#FCFDFC" stroke="#EEF2F0"/>
-          <text class="t dk" x="14" y="26" font-size="13" font-weight="700">示例：周五评审能否改期</text>
-          <text class="t mut" x="14" y="46" font-size="11.5">Casey · 昨天 11:05 · 会话 1 封</text>
-          <rect x="14" y="58" width="72" height="20" rx="6" fill="#EEF2F0"/><text class="t sub" x="50" y="72" font-size="10.5" text-anchor="middle">会议邀请</text>
-        </g>
-        <text class="t mut" x="177" y="432" font-size="11.5" text-anchor="middle">全部 3 条已列出</text>
+        <rect width="149" height="112" rx="9" fill="#fff" stroke="#F0C9C9" stroke-width="1.5"/><rect width="149" height="3" rx="2" fill="#DC2626"/>
+        <text class="t dk" x="14" y="28" font-size="12.5" font-weight="800">决策请求</text><text class="t mut" x="76" y="28" font-size="9">·AI</text>
+        <text class="t" x="135" y="29" font-size="14" font-weight="800" fill="#DC2626" text-anchor="end">1</text>
+        <text class="t sub" x="14" y="52" font-size="10.5">回复: 示例季度预算</text>
       </g>
-      <!-- col 2 -->
-      <g transform="translate(375,0)">
-        <rect class="card" width="355" height="452" rx="14"/>
-        <rect x="0" y="0" width="355" height="46" rx="14" fill="#FFFBEB"/><rect x="0" y="32" width="355" height="14" fill="#FFFBEB"/>
-        <text class="t" x="20" y="30" font-size="13.5" font-weight="800" fill="#B45309">待我处理</text>
-        <rect x="104" y="14" width="30" height="20" rx="6" fill="#FDE68A"/><text class="t" x="119" y="29" font-size="11.5" font-weight="700" fill="#92400E" text-anchor="middle">2</text>
-        <g transform="translate(16,62)">
-          <rect width="323" height="118" rx="10" fill="#FCFDFC" stroke="#EEF2F0"/>
-          <text class="t dk" x="14" y="26" font-size="13" font-weight="700">示例：月度报表待补两列</text>
-          <text class="t mut" x="14" y="46" font-size="11.5">Dana · 今天 08:30</text>
-          <rect x="14" y="58" width="86" height="20" rx="6" fill="#FEF3C7"/><text class="t" x="57" y="72" font-size="10.5" fill="#92400E" text-anchor="middle">周五 17:00 截止</text>
-          <text class="t sub" x="14" y="98" font-size="11.5">你答应过：这两列我周五前补上。</text>
-        </g>
-        <g transform="translate(16,192)">
-          <rect width="323" height="100" rx="10" fill="#FCFDFC" stroke="#EEF2F0"/>
-          <text class="t dk" x="14" y="26" font-size="13" font-weight="700">示例：合规问卷待填写</text>
-          <text class="t mut" x="14" y="46" font-size="11.5">Erin · 前天 14:22</text>
-          <rect x="14" y="58" width="52" height="20" rx="6" fill="#EEF2F0"/><text class="t sub" x="40" y="72" font-size="10.5" text-anchor="middle">行政</text>
-        </g>
-        <text class="t mut" x="177" y="432" font-size="11.5" text-anchor="middle">截止日期由正文本地抽取</text>
+      <g transform="translate(159,0)">
+        <rect width="149" height="112" rx="9" fill="#fff" stroke="#F0C9C9" stroke-width="1.5"/><rect width="149" height="3" rx="2" fill="#DC2626"/>
+        <text class="t dk" x="14" y="28" font-size="12.5" font-weight="800">审阅确认</text><text class="t mut" x="76" y="28" font-size="9">·AI</text>
+        <text class="t" x="135" y="29" font-size="14" font-weight="800" fill="#DC2626" text-anchor="end">2</text>
+        <text class="t sub" x="14" y="52" font-size="10.5">回复: 示例验收标准…</text>
+        <text class="t sub" x="14" y="70" font-size="10.5">示例: 用章申请待确认</text>
       </g>
-      <!-- col 3 -->
-      <g transform="translate(750,0)">
-        <rect class="card" width="355" height="452" rx="14"/>
-        <rect x="0" y="0" width="355" height="46" rx="14" fill="#F0F9FF"/><rect x="0" y="32" width="355" height="14" fill="#F0F9FF"/>
-        <text class="t" x="20" y="30" font-size="13.5" font-weight="800" fill="#0369A1">知会即可</text>
-        <rect x="104" y="14" width="34" height="20" rx="6" fill="#BAE6FD"/><text class="t" x="121" y="29" font-size="11.5" font-weight="700" fill="#075985" text-anchor="middle">18</text>
-        <g transform="translate(16,62)">
-          <rect width="323" height="86" rx="10" fill="#FCFDFC" stroke="#EEF2F0"/>
-          <text class="t dk" x="14" y="26" font-size="13" font-weight="700">示例：系统维护通知</text>
-          <text class="t mut" x="14" y="46" font-size="11.5">示例平台 · 今天 07:00</text>
-          <rect x="14" y="58" width="52" height="20" rx="6" fill="#E0F2FE"/><text class="t" x="40" y="72" font-size="10.5" fill="#0369A1" text-anchor="middle">告警</text>
-        </g>
-        <g transform="translate(16,160)">
-          <rect width="323" height="86" rx="10" fill="#FCFDFC" stroke="#EEF2F0"/>
-          <text class="t dk" x="14" y="26" font-size="13" font-weight="700">示例：本周行业简报</text>
-          <text class="t mut" x="14" y="46" font-size="11.5">示例订阅 · 今天 06:10</text>
-          <rect x="14" y="58" width="64" height="20" rx="6" fill="#EEF2F0"/><text class="t sub" x="46" y="72" font-size="10.5" text-anchor="middle">订阅资讯</text>
-        </g>
-        <rect x="16" y="258" width="323" height="60" rx="10" fill="#F7FAF8"/>
-        <text class="t sub" x="30" y="282" font-size="11.5">◔ 广告 / 订阅资讯 / 工单流水不进「信息矩阵」</text>
-        <text class="t sub" x="30" y="302" font-size="11.5">　 与「时间图谱」，但照常留在这里。</text>
-        <text class="t mut" x="177" y="432" font-size="11.5" text-anchor="middle">还有 16 条 · 展开</text>
+      <g transform="translate(318,0)">
+        <rect width="149" height="112" rx="9" fill="#fff" stroke="#F0C9C9" stroke-width="1.5"/><rect width="149" height="3" rx="2" fill="#DC2626"/>
+        <text class="t dk" x="14" y="28" font-size="12.5" font-weight="800">审批流转</text><text class="t mut" x="76" y="28" font-size="9">·AI</text>
+        <text class="t" x="135" y="29" font-size="14" font-weight="800" fill="#DC2626" text-anchor="end">1</text>
+        <text class="t sub" x="14" y="52" font-size="10.5">示例: 账号开通申请</text>
+      </g>
+      <g transform="translate(477,0)">
+        <rect width="149" height="112" rx="9" fill="#fff" stroke="#F0C9C9" stroke-width="1.5"/><rect width="149" height="3" rx="2" fill="#DC2626"/>
+        <text class="t dk" x="14" y="28" font-size="12.5" font-weight="800">索取信息</text><text class="t mut" x="76" y="28" font-size="9">·AI</text>
+        <text class="t" x="135" y="29" font-size="14" font-weight="800" fill="#DC2626" text-anchor="end">1</text>
+        <text class="t sub" x="14" y="52" font-size="10.5">示例: 要一份排期表</text>
+      </g>
+      <g transform="translate(636,0)">
+        <rect width="149" height="112" rx="9" fill="#fff" stroke="#F0C9C9" stroke-width="1.5"/><rect width="149" height="3" rx="2" fill="#DC2626"/>
+        <text class="t dk" x="14" y="28" font-size="12.5" font-weight="800">故障事故</text><text class="t mut" x="76" y="28" font-size="9">·AI</text>
+        <text class="t" x="135" y="29" font-size="14" font-weight="800" fill="#DC2626" text-anchor="end">3</text>
+        <text class="t sub" x="14" y="52" font-size="10.5">示例: 批处理任务失败</text>
+        <text class="t sub" x="14" y="70" font-size="10.5">示例: 演示环境不可用</text>
+        <text class="t sub" x="14" y="88" font-size="10.5">示例: 同步延迟告警</text>
+      </g>
+      <g transform="translate(795,0)">
+        <rect width="149" height="112" rx="9" fill="#fff" stroke="#F5DFC0" stroke-width="1.5"/><rect width="149" height="3" rx="2" fill="#F59E0B"/>
+        <text class="t dk" x="14" y="28" font-size="12.5" font-weight="800">交付进度</text><text class="t mut" x="76" y="28" font-size="9">·AI</text>
+        <text class="t" x="135" y="29" font-size="14" font-weight="800" fill="#B45309" text-anchor="end">3</text>
+        <text class="t sub" x="14" y="52" font-size="10.5">示例: 迭代二上线通知</text>
+        <text class="t sub" x="14" y="70" font-size="10.5">示例: 迁移窗口确认</text>
+        <text class="t sub" x="14" y="88" font-size="10.5">回复: 示例交付排期</text>
+      </g>
+      <g transform="translate(954,0)">
+        <rect width="149" height="112" rx="9" fill="#fff" stroke="#F5DFC0" stroke-width="1.5"/><rect width="149" height="3" rx="2" fill="#F59E0B"/>
+        <text class="t dk" x="14" y="28" font-size="12.5" font-weight="800">会议安排</text>
+        <text class="t" x="135" y="29" font-size="14" font-weight="800" fill="#B45309" text-anchor="end">3</text>
+        <text class="t sub" x="14" y="52" font-size="10.5">示例: 周五评审改期</text>
+        <text class="t sub" x="14" y="70" font-size="10.5">示例: 迭代复盘会</text>
+        <text class="t sub" x="14" y="88" font-size="10.5">示例: 例会时间调整</text>
+      </g>
+      <!-- second row -->
+      <g transform="translate(0,124)">
+        <rect width="149" height="94" rx="9" fill="#fff" stroke="#F5DFC0" stroke-width="1.5"/><rect width="149" height="3" rx="2" fill="#F59E0B"/>
+        <text class="t dk" x="14" y="28" font-size="12.5" font-weight="800">系统告警</text>
+        <text class="t" x="135" y="29" font-size="14" font-weight="800" fill="#B45309" text-anchor="end">4</text>
+        <text class="t sub" x="14" y="52" font-size="10.5">示例: 证书 30 天到期</text>
+        <text class="t sub" x="14" y="70" font-size="10.5">示例: 磁盘使用率偏高</text>
+      </g>
+      <g transform="translate(159,124)">
+        <rect width="149" height="94" rx="9" fill="#fff" stroke="#E6EBE8" stroke-width="1.5"/><rect width="149" height="3" rx="2" fill="#8A968F"/>
+        <text class="t dk" x="14" y="28" font-size="12.5" font-weight="800">未分类</text>
+        <text class="t sub" x="135" y="29" font-size="14" font-weight="800" text-anchor="end">6</text>
+        <text class="t sub" x="14" y="52" font-size="10.5">示例: 内部通知转发</text>
+        <text class="t sub" x="14" y="70" font-size="10.5">答复: 示例合同续约</text>
+      </g>
+      <rect x="318" y="124" width="786" height="94" rx="9" fill="#F7FAF8"/>
+      <text class="t sub" x="338" y="152" font-size="11.5">留空而不是猜 —— 一个猜错的「决策请求」会让整块看板失去可信度，空标签只少一条信息。</text>
+      <text class="t sub" x="338" y="176" font-size="11.5">标 ·AI 的类型由云端模型判定；会议 / 告警 / 工单 / 广告只用本机硬信号（MessageClass、发件人、</text>
+      <text class="t sub" x="338" y="196" font-size="11.5">主题词），连正文都不用读。</text>
+    </g>
+
+    <!-- matrix -->
+    <text class="t dk" x="36" y="576" font-size="14" font-weight="800">▤ 信息矩阵</text>
+    <text class="t mut" x="136" y="576" font-size="11.5">一行一个会话 · 只列跟我有关的：群组邮件不进这张表</text>
+    <text class="t mut" x="1142" y="576" font-size="11.5" text-anchor="end">已挡掉 35 个群组邮件 + 1 个噪音类型（看板里仍可见）</text>
+
+    <g transform="translate(36,590)">
+      <rect class="card" width="1106" height="196" rx="10"/>
+      <rect x="1" y="1" width="1104" height="34" rx="9" fill="#FAFCFB"/>
+      <g class="t sub" font-size="11.5" font-weight="700">
+        <text x="18" y="23">时间</text><text x="92" y="23">收件方式</text><text x="180" y="23">对方</text>
+        <text x="366" y="23">状态</text><text x="470" y="23">主题</text>
+        <text x="866" y="23">项目</text><text x="892" y="23" font-size="9" class="mut">·AI</text>
+        <text x="942" y="23">事项</text><text x="968" y="23" font-size="9" class="mut">·AI</text>
+      </g>
+      <line x1="1" y1="35" x2="1105" y2="35" stroke="#EEF2F0"/>
+
+      <g class="t" font-size="11.5">
+        <text class="sub" x="18" y="60">03-04</text><text class="mut" x="18" y="76" font-size="10.5">10:52</text>
+        <text x="92" y="60" fill="#DC2626" font-weight="700">直发我和</text><text x="92" y="76" fill="#DC2626" font-weight="700">其他人</text>
+        <text class="dk" x="180" y="60">Alex、Blair、Casey</text>
+        <text class="dk" x="366" y="60">等了 1 天</text><text class="mut" x="366" y="76" font-size="10.5">追了 3 封</text>
+        <text class="dk" x="470" y="60">回复: 示例季度供货计划确认</text>
+        <rect x="470" y="68" width="70" height="16" rx="5" fill="#F3F6F4"/><text class="mut" x="505" y="80" font-size="9.5" text-anchor="middle">EXAMPLE.COM</text>
+        <text class="dk" x="866" y="60">示例项目</text><text class="dk" x="942" y="60">给个明确时间</text>
+        <rect x="1020" y="48" width="62" height="24" rx="7" fill="#E8F7EE"/><text class="grn" x="1051" y="64" font-size="11" text-anchor="middle" font-weight="700">↗ 打开</text>
+      </g>
+      <line x1="14" y1="94" x2="1092" y2="94" stroke="#F2F5F3"/>
+      <g class="t" font-size="11.5" transform="translate(0,52)">
+        <text class="sub" x="18" y="60">03-04</text><text class="mut" x="18" y="76" font-size="10.5">10:37</text>
+        <text class="sub" x="92" y="60">抄送我</text>
+        <text class="dk" x="180" y="60">Dana、Erin</text>
+        <text class="sub" x="366" y="60">只是抄送我</text>
+        <text class="dk" x="470" y="60">答复: 示例服务续约合同审核</text>
+        <rect x="470" y="68" width="52" height="16" rx="5" fill="#FEF3C7"/><text x="496" y="80" font-size="9.5" fill="#92400E" text-anchor="middle">附件 2 个</text>
+        <text class="mut" x="866" y="60">—</text><text class="mut" x="942" y="60">—</text>
+        <rect x="1020" y="48" width="62" height="24" rx="7" fill="#E8F7EE"/><text class="grn" x="1051" y="64" font-size="11" text-anchor="middle" font-weight="700">↗ 打开</text>
+      </g>
+      <line x1="14" y1="146" x2="1092" y2="146" stroke="#F2F5F3"/>
+      <g class="t" font-size="11.5" transform="translate(0,104)">
+        <text class="sub" x="18" y="60">03-03</text><text class="mut" x="18" y="76" font-size="10.5">16:20</text>
+        <text class="sub" x="92" y="60">只发我</text>
+        <text class="dk" x="180" y="60">Finley</text>
+        <text x="366" y="60" fill="#B45309" font-weight="700">周五 17:00 到期</text>
+        <text class="dk" x="470" y="60">示例: 月度报表待补两列</text>
+        <text class="dk" x="866" y="60">示例报表</text><text class="dk" x="942" y="60">补两列后回传</text>
+        <rect x="1020" y="48" width="62" height="24" rx="7" fill="#E8F7EE"/><text class="grn" x="1051" y="64" font-size="11" text-anchor="middle" font-weight="700">↗ 打开</text>
       </g>
     </g>
 
     <!-- footer -->
-    <g transform="translate(36,790)">
-      <rect class="card" width="1106" height="38" rx="10"/>
-      <text class="t mut" x="18" y="24" font-size="11.5">当天</text>
-      <text class="t sub" x="70" y="24" font-size="11.5">读 <tspan font-weight="700">示例邮箱 A（主）</tspan> · 不发送 · 不修改邮件</text>
-      <text class="t mut" x="360" y="24" font-size="11.5">23 封 → 12 个会话 · 2148 ms</text>
-      <text class="t" x="1088" y="24" font-size="11.5" fill="#B45309" text-anchor="end">本次外发 2 批 / 3.1k 字 → 快省档文本模型（可用 OUTLOOK_AI_ENRICH=false 关闭）</text>
+    <g transform="translate(36,798)">
+      <rect class="card" width="1106" height="34" rx="9"/>
+      <text class="t mut" x="18" y="22" font-size="11">近 3 天</text>
+      <text class="t sub" x="76" y="22" font-size="11">读 <tspan font-weight="700">示例邮箱 A（主）</tspan> · 不发送 · 不修改邮件</text>
+      <text class="t mut" x="340" y="22" font-size="11">59 封 → 24 个会话 · 2148 ms</text>
+      <text class="t" x="1088" y="22" font-size="11" fill="#B45309" text-anchor="end">本次外发 2 批 / 3.1k 字 → 快省档文本模型（OUTLOOK_AI_ENRICH=false 可关）</text>
     </g>
   </g>
 </svg>
