@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" role="img" aria-label="个人摘记 (示例数据)">
+  <defs>
+    <style>
+      .t{font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+      .mut{fill:#8A968F} .dk{fill:#0F2A1C} .sub{fill:#5B6B62} .grn{fill:#00AA4F}
+      .card{fill:#fff;stroke:#E6EBE8;stroke-width:1.5}
+    </style>
+  </defs>
+  <rect x="6" y="6" width="1428" height="888" rx="16" fill="#fff" stroke="#DDE3DF" stroke-width="1.5"/>
+  <rect x="6" y="6" width="1428" height="44" rx="16" fill="#F3F6F4"/><rect x="6" y="34" width="1428" height="16" fill="#F3F6F4"/>
+  <g><circle cx="34" cy="28" r="6" fill="#FF5F57"/><circle cx="56" cy="28" r="6" fill="#FEBC2E"/><circle cx="78" cy="28" r="6" fill="#28C840"/></g>
+  <rect x="520" y="17" width="400" height="24" rx="12" fill="#E7ECE9"/>
+  <text class="t mut" x="720" y="33" font-size="12" text-anchor="middle">127.0.0.1:8787 · 个人摘记</text>
+  <rect x="7" y="50" width="1426" height="843" fill="#F4F7F5"/>
+
+  <!-- sidebar -->
+  <g transform="translate(7,50)">
+    <rect width="248" height="843" fill="#FBFCFC" stroke="#EAEFEC" stroke-width="1.5"/>
+    <rect x="22" y="22" width="40" height="40" rx="11" class="grn"/>
+    <text class="t" x="42" y="48" font-size="20" font-weight="800" fill="#fff" text-anchor="middle">本</text>
+    <text class="t dk" x="74" y="40" font-size="15" font-weight="800">本地 Agent 工作台</text>
+    <text class="t mut" x="74" y="57" font-size="10" letter-spacing="1">LOCAL AGENT HUB · v6.6</text>
+    <text class="t mut" x="24" y="96" font-size="11" letter-spacing="2">导航</text>
+    <g class="t sub" font-size="13.5">
+      <text x="30" y="128">⌂  工作台</text><text x="30" y="162">✧  任务场景</text><text x="30" y="196">≣  运行记录</text>
+      <text x="30" y="230">▤  飞书文档</text><text x="30" y="264">▢  本地目录</text><text x="30" y="298">▦  历史总结</text><text x="30" y="332">⋔  组织架构</text>
+      <text x="30" y="366">✉  本地邮箱</text>
+    </g>
+    <rect x="14" y="382" width="220" height="30" rx="8" fill="#E8F7EE"/>
+    <text class="t grn" x="30" y="402" font-size="13.5" font-weight="700">✎  个人摘记</text>
+    <text class="t mut" x="24" y="442" font-size="11" letter-spacing="2">AGENTS</text>
+    <g class="t" font-size="13">
+      <g><circle cx="30" cy="468" r="5" fill="#22C55E"/><text class="dk" x="46" y="472">HTML 页面生成</text></g>
+      <g><circle cx="30" cy="498" r="5" fill="#3B82F6"/><text class="dk" x="46" y="502">文档地图</text></g>
+      <g><circle cx="30" cy="528" r="5" fill="#EC4899"/><text class="dk" x="46" y="532">摘要标签回填</text></g>
+      <g><circle cx="30" cy="558" r="5" fill="#F59E0B"/><text class="dk" x="46" y="562">知识治理</text></g>
+      <g><circle cx="30" cy="588" r="5" fill="#EAB308"/><text class="dk" x="46" y="592">多维表格分析</text></g>
+      <g><circle cx="30" cy="618" r="5" fill="#8B5CF6"/><text class="dk" x="46" y="622">PDF 识别</text></g>
+      <g><circle cx="30" cy="648" r="5" fill="#F97316"/><text class="dk" x="46" y="652">会议纪要</text></g>
+      <g><circle cx="30" cy="678" r="5" fill="#EF4444"/><text class="dk" x="46" y="682">协作分发</text></g>
+      <g><circle cx="30" cy="708" r="5" fill="#0EA5E9"/><text class="dk" x="46" y="712">AIHot 模型榜</text></g>
+      <g><circle cx="30" cy="738" r="5" fill="#14B8A6"/><text class="dk" x="46" y="742">AIHot 新闻简报</text></g>
+    </g>
+  </g>
+
+  <!-- main -->
+  <g transform="translate(255,50)">
+    <rect width="1178" height="52" fill="#FBFCFC" stroke="#EAEFEC" stroke-width="1.5"/>
+    <text class="t sub" x="36" y="32" font-size="13.5">☰   工作台  ›  个人摘记</text>
+
+    <text class="t dk" x="36" y="98" font-size="24" font-weight="800">个人摘记</text>
+    <text class="t sub" x="36" y="124" font-size="12.5">默认不开 · 你开启后每隔一段时间把这段时间的动静合并成一段话，在飞书里推给你自己</text>
+
+    <!-- status card -->
+    <g transform="translate(36,144)">
+      <rect class="card" width="1106" height="120" rx="14"/>
+      <rect x="24" y="24" width="48" height="48" rx="12" fill="#E8F7EE"/>
+      <text class="t grn" x="48" y="55" font-size="20" text-anchor="middle">✎</text>
+      <text class="t dk" x="90" y="46" font-size="16" font-weight="800">摘记进行中</text><circle cx="196" cy="41" r="5" fill="#22C55E"/>
+      <text class="t sub" x="90" y="70" font-size="12.5">已推 6 次 · 下次 14:00 · 本窗口起点 10:00</text>
+      <text class="t sub" x="552" y="52" font-size="12.5">间隔</text>
+      <rect x="596" y="34" width="252" height="34" rx="9" fill="#EEF2F0"/>
+      <text class="t sub" x="628" y="56" font-size="12" text-anchor="middle">1 小时</text>
+      <text class="t sub" x="692" y="56" font-size="12" text-anchor="middle">2 小时</text>
+      <rect x="722" y="38" width="62" height="26" rx="7" fill="#fff" stroke="#E0E6E2"/><text class="t dk" x="753" y="56" font-size="12" font-weight="700" text-anchor="middle">4 小时</text>
+      <text class="t sub" x="820" y="56" font-size="12" text-anchor="middle">8 小时</text>
+      <rect x="868" y="34" width="82" height="34" rx="9" fill="#EF4444"/><text class="t" x="909" y="56" font-size="12.5" font-weight="700" fill="#fff" text-anchor="middle">✕ 停止</text>
+      <rect x="958" y="34" width="124" height="34" rx="9" fill="#fff" stroke="#E0E6E2"/><text class="t sub" x="1020" y="56" font-size="12.5" text-anchor="middle">✧ 立即摘记一次</text>
+      <rect x="24" y="86" width="1058" height="22" rx="7" fill="#F7FAF8"/>
+      <text class="t sub" x="38" y="101" font-size="11.5">◔ 只推给你自己。默认用应用身份发送（应用级令牌不过期，不受用户授权 7 天窗口影响）；应用身份不可用时回落到用户身份。</text>
+    </g>
+
+    <!-- sources -->
+    <g transform="translate(36,280)">
+      <rect class="card" width="1106" height="56" rx="12"/>
+      <text class="t dk" x="24" y="34" font-size="12.5" font-weight="700">采集来源</text>
+      <g>
+        <rect x="112" y="15" width="132" height="26" rx="7" fill="#E8F7EE"/><text class="t grn" x="178" y="32" font-size="11.5" font-weight="700" text-anchor="middle">✓ 本地邮箱</text>
+        <rect x="256" y="15" width="132" height="26" rx="7" fill="#E8F7EE"/><text class="t grn" x="322" y="32" font-size="11.5" font-weight="700" text-anchor="middle">✓ 自动化提炼</text>
+        <rect x="400" y="15" width="132" height="26" rx="7" fill="#EEF2F0"/><text class="t sub" x="466" y="32" font-size="11.5" text-anchor="middle">飞书消息</text>
+      </g>
+      <text class="t mut" x="1082" y="34" font-size="11.5" text-anchor="end">窗口内没有新动静时，退回「有没有欠账」这个更有用的结论</text>
+    </g>
+
+    <!-- digests -->
+    <text class="t dk" x="36" y="374" font-size="15" font-weight="800">摘记记录 · 6</text>
+    <text class="t sub" x="1142" y="374" font-size="12.5" text-anchor="end">🗑 清空记录</text>
+
+    <g transform="translate(36,390)">
+      <rect class="card" width="1106" height="212" rx="14"/>
+      <rect x="0" y="0" width="4" height="212" rx="2" class="grn"/>
+      <text class="t dk" x="24" y="38" font-size="15" font-weight="800">10:00 ~ 14:00</text>
+      <rect x="176" y="24" width="72" height="22" rx="7" fill="#E8F7EE"/><text class="t grn" x="212" y="39" font-size="11" text-anchor="middle" font-weight="700">已推送</text>
+      <rect x="260" y="24" width="96" height="22" rx="7" fill="#F3F6F4"/><text class="t sub" x="308" y="39" font-size="11" text-anchor="middle">合并 4 段</text>
+      <text class="t mut" x="1082" y="39" font-size="11.5" text-anchor="end">14:00 推送 · 应用身份</text>
+      <text class="t dk" x="24" y="74" font-size="13">这四个小时主要在推进示例项目的季度供货计划：跟 Alex 的会话已经等了你两天，对方要一个明确时间；</text>
+      <text class="t dk" x="24" y="98" font-size="13">示例月度报表还差两列，是你自己在邮件里答应过周五前补上的。评审改期的事 Casey 问了一次，还没回。</text>
+      <line x1="20" y1="120" x2="1086" y2="120" stroke="#EEF2F0"/>
+      <text class="t" x="24" y="150" font-size="12.5" font-weight="700" fill="#DC2626">⚑ 欠着的</text>
+      <g class="t" font-size="12.5">
+        <circle cx="30" cy="172" r="3" fill="#DC2626"/><text class="dk" x="44" y="176">回 Alex：季度供货计划的确认时间</text>
+        <circle cx="30" cy="194" r="3" fill="#DC2626"/><text class="dk" x="44" y="198">补示例月度报表的两列（周五 17:00 前）</text>
+      </g>
+      <text class="t" x="560" y="150" font-size="12.5" font-weight="700" fill="#2563EB">⧉ 做过的</text>
+      <g class="t" font-size="12.5">
+        <circle cx="566" cy="172" r="3" fill="#2563EB"/><text class="dk" x="580" y="176">回复了验收标准第 3 条的歧义</text>
+        <circle cx="566" cy="194" r="3" fill="#2563EB"/><text class="dk" x="580" y="198">更新了示例需求文档的迭代范围</text>
+      </g>
+    </g>
+
+    <g transform="translate(36,618)">
+      <rect class="card" width="1106" height="152" rx="14"/>
+      <rect x="0" y="0" width="4" height="152" rx="2" fill="#8FD9AE"/>
+      <text class="t dk" x="24" y="38" font-size="15" font-weight="800">06:00 ~ 10:00</text>
+      <rect x="176" y="24" width="72" height="22" rx="7" fill="#E8F7EE"/><text class="t grn" x="212" y="39" font-size="11" text-anchor="middle" font-weight="700">已推送</text>
+      <rect x="260" y="24" width="96" height="22" rx="7" fill="#F3F6F4"/><text class="t sub" x="308" y="39" font-size="11" text-anchor="middle">合并 2 段</text>
+      <text class="t mut" x="1082" y="39" font-size="11.5" text-anchor="end">10:00 推送 · 应用身份</text>
+      <text class="t dk" x="24" y="74" font-size="13">上午先清了一遍收件箱：18 封知会类里没有需要动手的，两封系统维护通知已确认与本机无关。</text>
+      <text class="t dk" x="24" y="98" font-size="13">随后把示例需求文档的验收标准过了一遍，发现第 3 条表述有歧义，已去信确认。</text>
+      <line x1="20" y1="116" x2="1086" y2="116" stroke="#EEF2F0"/>
+      <text class="t sub" x="24" y="140" font-size="11.5">◔ 这一段没有新的欠账 —— 窗口内无新动静时，会退回「有没有欠账」的结论，而不是干说一句「没有新邮件」。</text>
+    </g>
+  </g>
+</svg>
