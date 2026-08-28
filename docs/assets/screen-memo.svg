@@ -15,36 +15,45 @@
 
   <!-- sidebar -->
   <g transform="translate(7,50)">
-    <rect width="248" height="843" fill="#FBFCFC" stroke="#EAEFEC" stroke-width="1.5"/>
-    <rect x="22" y="22" width="40" height="40" rx="11" class="grn"/>
-    <text class="t" x="42" y="48" font-size="20" font-weight="800" fill="#fff" text-anchor="middle">本</text>
-    <text class="t dk" x="74" y="40" font-size="15" font-weight="800">本地 Agent 工作台</text>
-    <text class="t mut" x="74" y="57" font-size="10" letter-spacing="1">LOCAL AGENT HUB · v6.6</text>
-    <text class="t mut" x="24" y="96" font-size="11" letter-spacing="2">导航</text>
-    <g class="t sub" font-size="13.5">
-      <text x="30" y="128">⌂  工作台</text><text x="30" y="162">✧  任务场景</text><text x="30" y="196">≣  运行记录</text>
-      <text x="30" y="230">▤  飞书文档</text><text x="30" y="264">▢  本地目录</text><text x="30" y="298">▦  历史总结</text><text x="30" y="332">⋔  组织架构</text>
-      <text x="30" y="366">△  本地邮箱</text>
+      <rect width="248" height="843" fill="#FBFCFC" stroke="#EAEFEC" stroke-width="1.5"/>
+      <rect x="22" y="22" width="40" height="40" rx="11" class="grn"/>
+      <text class="t" x="42" y="48" font-size="20" font-weight="800" fill="#fff" text-anchor="middle">本</text>
+      <text class="t dk" x="74" y="40" font-size="15" font-weight="800">本地 Agent 工作台</text>
+      <text class="t mut" x="74" y="57" font-size="10" letter-spacing="1">LOCAL AGENT HUB · v6.6</text>
+      <text class="t mut" x="24" y="96" font-size="11" letter-spacing="2">导航</text>
+      <rect x="14" y="380" width="220" height="30" rx="8" fill="#E8F7EE"/>
+      <g class="t sub" font-size="13.5">
+        <text x="30" y="128">⌂  工作台</text>
+        <text x="30" y="162">✧  任务场景</text>
+        <text x="30" y="196">≣  运行记录</text>
+        <text x="30" y="230">▤  飞书文档</text>
+        <text x="30" y="264">▢  本地目录</text>
+        <text x="30" y="298">▦  历史总结</text>
+        <text x="30" y="332">⋔  组织架构</text>
+        <text x="30" y="366">△  本地邮箱</text>
+        <text class="t grn" x="30" y="400" font-size="13.5" font-weight="700">▤  个人摘记</text>
+      </g>
+      <text class="t mut" x="24" y="442" font-size="11" letter-spacing="2">AGENTS</text>
+      <g class="t" font-size="13">
+        <g><circle cx="30" cy="468" r="5" fill="#22C55E"/><text class="dk" x="46" y="472">HTML 页面生成</text><text class="mut" x="196" y="472" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="498" r="5" fill="#3B82F6"/><text class="dk" x="46" y="502">文档地图</text><text class="mut" x="196" y="502" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="528" r="5" fill="#EC4899"/><text class="dk" x="46" y="532">摘要标签回填</text><text class="mut" x="196" y="532" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="558" r="5" fill="#22C55E"/><text class="dk" x="46" y="562">知识治理</text><text class="mut" x="196" y="562" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="588" r="5" fill="#EAB308"/><text class="dk" x="46" y="592">多维表格分析</text><text class="mut" x="196" y="592" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="618" r="5" fill="#8B5CF6"/><text class="dk" x="46" y="622">PDF 识别</text><text class="mut" x="196" y="622" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="648" r="5" fill="#F97316"/><text class="dk" x="46" y="652">会议纪要</text><text class="mut" x="196" y="652" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="678" r="5" fill="#EF4444"/><text class="dk" x="46" y="682">协作分发</text><text class="mut" x="196" y="682" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="708" r="5" fill="#0EA5E9"/><text class="dk" x="46" y="712">AIHot 模型榜</text><text class="mut" x="196" y="712" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="738" r="5" fill="#14B8A6"/><text class="dk" x="46" y="742">AIHot 新闻简报</text><text class="mut" x="196" y="742" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="768" r="5" fill="#0EA5E9"/><text class="dk" x="46" y="772">自动化提炼</text><text class="mut" x="196" y="772" font-size="11">就绪</text></g>
+      </g>
+      <rect x="14" y="784" width="220" height="44" rx="10" fill="#F2FAF5" stroke="#DCEDE3"/>
+      <circle cx="40" cy="806" r="14" class="grn"/>
+      <text class="t" x="40" y="811" font-size="12" font-weight="800" fill="#fff" text-anchor="middle">A</text>
+      <text class="t dk" x="64" y="802" font-size="12" font-weight="700">Alex</text>
+      <text class="t grn" x="64" y="818" font-size="10">● 已授权 · 飞书</text>
     </g>
-    <rect x="14" y="382" width="220" height="30" rx="8" fill="#E8F7EE"/>
-    <text class="t grn" x="30" y="402" font-size="13.5" font-weight="700">▤  个人摘记</text>
-    <text class="t mut" x="24" y="442" font-size="11" letter-spacing="2">AGENTS</text>
-    <g class="t" font-size="13">
-      <g><circle cx="30" cy="468" r="5" fill="#22C55E"/><text class="dk" x="46" y="472">HTML 页面生成</text><text class="mut" x="196" y="472" font-size="11">就绪</text></g>
-      <g><circle cx="30" cy="498" r="5" fill="#3B82F6"/><text class="dk" x="46" y="502">文档地图</text><text class="mut" x="196" y="502" font-size="11">就绪</text></g>
-      <g><circle cx="30" cy="528" r="5" fill="#EC4899"/><text class="dk" x="46" y="532">摘要标签回填</text><text class="mut" x="196" y="532" font-size="11">就绪</text></g>
-      <g><circle cx="30" cy="558" r="5" fill="#22C55E"/><text class="dk" x="46" y="562">知识治理</text><text class="mut" x="196" y="562" font-size="11">就绪</text></g>
-      <g><circle cx="30" cy="588" r="5" fill="#EAB308"/><text class="dk" x="46" y="592">多维表格分析</text><text class="mut" x="196" y="592" font-size="11">就绪</text></g>
-      <g><circle cx="30" cy="618" r="5" fill="#8B5CF6"/><text class="dk" x="46" y="622">PDF 识别</text><text class="mut" x="196" y="622" font-size="11">就绪</text></g>
-      <g><circle cx="30" cy="648" r="5" fill="#F97316"/><text class="dk" x="46" y="652">会议纪要</text><text class="mut" x="196" y="652" font-size="11">就绪</text></g>
-      <g><circle cx="30" cy="678" r="5" fill="#EF4444"/><text class="dk" x="46" y="682">协作分发</text><text class="mut" x="196" y="682" font-size="11">就绪</text></g>
-      <g><circle cx="30" cy="708" r="5" fill="#0EA5E9"/><text class="dk" x="46" y="712">AIHot 模型榜</text><text class="mut" x="196" y="712" font-size="11">就绪</text></g>
-      <g><circle cx="30" cy="738" r="5" fill="#14B8A6"/><text class="dk" x="46" y="742">AIHot 新闻简报</text><text class="mut" x="196" y="742" font-size="11">就绪</text></g>
-      <g><circle cx="30" cy="768" r="5" fill="#0EA5E9"/><text class="dk" x="46" y="772">自动化提炼</text><text class="mut" x="196" y="772" font-size="11">就绪</text></g>
-    </g>
-  </g>
 
-  <!-- main -->
   <g transform="translate(255,50)">
     <rect width="1178" height="52" fill="#FBFCFC" stroke="#EAEFEC" stroke-width="1.5"/>
     <text class="t sub" x="36" y="32" font-size="13.5">☰   工作台  ›  个人摘记</text>
