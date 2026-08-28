@@ -16,6 +16,8 @@ hiddenimports = [
     "app.agents.pdf_recognition",
     "app.agents.collab_dispatch",
     "app.agents.local_image",
+    "app.agents.aihot_models",
+    "app.agents.aihot_news",
     "uvicorn.protocols.http.auto",
     "uvicorn.protocols.http.h11_impl",
     "uvicorn.protocols.websockets.auto",
@@ -46,6 +48,13 @@ hiddenimports = [
     "lxml",
     "lxml.etree",
     "lxml._elementpath",
+    # 本地邮箱：Outlook COM。这三个**必须**列在这里 —— services/outlook.py 是在
+    # 函数内部惰性 import 的（为了让没装 Outlook 的机器也能启动），PyInstaller 的
+    # 静态分析看不见函数体里的 import，漏收后果是打包成功、运行时才炸。
+    # win32timezone 不是多余的：读 ReceivedTime 得到 pywintypes 时间，转换会用到它。
+    "pythoncom",
+    "win32com.client",
+    "win32timezone",
 ]
 # openpyxl 纯 Python，子模块较多，全量收集以防漏导。
 hiddenimports += collect_submodules("openpyxl")

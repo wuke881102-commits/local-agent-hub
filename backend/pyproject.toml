@@ -2,7 +2,13 @@
 name = "feishu-agent-hub-backend"
 version = "0.1.0"
 description = "Local backend for Local Agent Hub — wraps lark-cli and orchestrates agents."
-requires-python = ">=3.11"
+# 3.12 起步，不是 3.11：html/renderer.py 在 f-string 里用了反斜杠转义
+# （`f"...{re.sub(r'^\s*\d+[.)]\s+', ...)}..."`），这个语法 3.12 才合法。
+# 声明成 >=3.11 的代价不是装不上，而是 **ruff 按 3.11 解析、整个仓的 lint 直接
+# 报语法错**，于是仓级 F821 检查跑不起来 —— 而那个检查正是 6.0 那次
+# NameError（diagnostics 里漏了 llm = get_llm()）之后才加的。声明宽一格，
+# 就等于把当初为防回归加的那道闸门关掉了。捆绑运行时实际是 3.13.3。
+requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.111",
     "uvicorn[standard]>=0.30",
@@ -25,6 +31,10 @@ dependencies = [
     "python-pptx>=0.6.23",
     # 本地目录：全局快捷键（Enter 触发截图）。截图本身复用已内置的 Pillow（ImageGrab）。
     "keyboard>=0.13.5",
+    # 本地邮箱：Outlook COM（pythoncom / win32com.client）。**必须显式声明** ——
+    # 它此前只是恰好装在开发机的 venv 里，全新环境重建 venv 后打包会得到一个
+    # 「本地邮箱一点就报 ModuleNotFoundError」的安装包，而构建本身不报错。
+    "pywin32>=306",
 ]
 
 [project.optional-dependencies]

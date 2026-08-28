@@ -870,3 +870,145 @@ def build_meeting_minutes_prompt(*, title: str, space: str, owner: str, source_t
         content=txt,
     )
     return MEETING_MINUTES_SYSTEM, user
+
+
+# ── AIHot 模型榜：选型建议（榜单数字由 Python 算，模型只做取舍判断）─────────
+
+AIHOT_MODELS_SYSTEM = """你是企业 AI 平台的选型顾问。用户给你一张「AIHOT 大模型共识榜」的真实数据表，
+以及本机工作台当前配置的模型档位。请据此给出可执行的选型建议。
+
+铁律：
+1. **只能推荐表里出现的模型**，模型名照抄表里的写法，不得改写、不得凭记忆补充表外模型。
+2. **不得编造或修改任何数字**（共识分、价格、完整度、名次）。要引用就照抄表里的值。
+3. 价格标注为「待核验」的模型，如果要推荐，必须明说「价格未公开/待核验，成本不可控」。
+4. 证据可信度为「低」或评测完整度偏低的模型，必须在理由里点出「样本不足，结论可能变动」。
+5. keep_or_switch 里的 current 必须逐字使用用户给出的当前模型名；表里查不到就把 verdict
+   设为 "unknown"，reason 写明「未上榜，无法用榜单数据比较」，不要瞎猜它的水平。
+6. 判断要落在「这台工作台的实际用途」上（会议纪要 / 表格分析 / 合同金额抽取 / HTML 生成
+   等中文长文本任务），不要写成通用测评点评。
+7. 共识分高 ≠ 该换。换模型有迁移成本，只有当收益明确（分数差距大、或成本降一个量级）
+   才建议换；否则给 "keep"。
+
+严格输出 JSON，不要解释、不要 Markdown 代码块包裹。"""
+
+AIHOT_MODELS_USER_TEMPLATE = """今天是 {today}。请基于下面这张 AIHOT 模型榜给出选型建议。
+
+# 榜单元信息
+- 榜单更新时间：{updated}
+- 综合公开榜单数：{boards} 家
+- 侧重：{focus_zh}
+{extra_instruction}
+# 榜单数据（共 {n} 条，已按共识分排序）
+{table}
+
+# 本机工作台当前配置
+{current}
+
+# 字段口径（重要）
+- 共识分：AIHOT 汇总多家公开榜单后的综合分，满分 100，越高越好。
+- 完整度：该模型被多少评测覆盖（越低 = 样本越少，分数越不稳）。
+- 可信度：证据可信度（高/中/低）。
+- 名次区间：考虑不确定度后该模型「可能」落在的排名区间。
+- 输入/输出价：人民币每百万 token。「待核验」= 站点尚未核实到官方价。
+- 性价比：本机计算 = 共识分 ÷ 混合价，混合价 =（输入价 + 3×输出价）÷ 4，
+  即假设输入:输出 ≈ 1:3。这是本地口径，不是 AIHOT 的指标。
+
+# 输出 JSON Schema
+{{
+  "headline": "一句话结论（≤60 字），点出这张榜对本机选型最关键的一件事",
+  "picks": [
+    {{"tier": "balanced | fast | best",
+      "model": "照抄表里的模型名",
+      "provider": "厂商",
+      "why": "为什么这一档选它（结合共识分/价格/可信度，引用表里的真实数字）",
+      "tradeoff": "代价 / 风险（价格、样本不足、上下文限制等）"}}
+  ],
+  "keep_or_switch": [
+    {{"current": "当前模型名（逐字照抄）", "tier": "均衡 | 快省 | 最强",
+      "verdict": "keep | switch | unknown", "target": "建议换成的模型（keep/unknown 时留空)",
+      "reason": "判断依据（引用真实数字）"}}
+  ],
+  "watch": ["值得盯的信号（如某模型名次区间很宽、某新模型完整度还低）"],
+  "caveats": ["这份建议的局限（如榜单口径、价格换算、未覆盖的能力维度）"]
+}}
+
+picks 三档各一条（balanced / fast / best）。直接输出 JSON 对象，不要使用代码块包裹。"""
+
+
+def build_aihot_models_prompt(*, today: str, updated: str, boards: int, focus_zh: str,
+                              table: str, current: str, n: int,
+                              custom_instruction: str = "") -> tuple[str, str]:
+    extra = ""
+    if (custom_instruction or "").strip():
+        extra = "- 用户额外要求：" + custom_instruction.strip()[:600] + "\n"
+    user = AIHOT_MODELS_USER_TEMPLATE.format(
+        today=today, updated=updated or "未知", boards=boards or "未知",
+        focus_zh=focus_zh, extra_instruction=extra, table=table, current=current, n=n,
+    )
+    return AIHOT_MODELS_SYSTEM, user
+
+
+# ── AIHot 新闻简报：条目用编号引用，链接由 Python 回填（模型不碰 URL）───────
+
+AIHOT_NEWS_SYSTEM = """你是企业 AI 情报编辑。用户给你一批 AIHOT 抓取的真实 AI 资讯条目（每条带编号 [n]），
+可能还带「当前热点事件」的时间线与站点日报分栏。请编成一份给内部同事看的简报。
+
+铁律：
+1. **只能使用给定条目里的信息**。绝不补充记忆里的其它新闻、版本号、价格或时间。
+2. **不要输出任何 URL**。要指向某条资讯，只填它的编号 refs: [3, 7]。链接由程序回填。
+3. 每条 highlight / item 必须至少带一个 refs 编号；没有编号支撑的话就不要写。
+4. "why" 写「这条为什么值得我们知道」——影响谁、改变什么决策，不要复述标题。
+5. 同一件事被多个来源报道时合并成一条，refs 列全部相关编号，不要重复罗列。
+6. 不确定的推断放进 caveats，不要写成既成事实。
+7. actions 是给本团队的具体动作（如「评估 X 能否替换现有 Y」），没有值得做的就给空数组。
+8. 全部用中文；专有名词 / 模型名保留原文写法。
+
+严格输出 JSON，不要解释、不要 Markdown 代码块包裹。"""
+
+AIHOT_NEWS_USER_TEMPLATE = """今天是 {today}。请把下面这批 AI 资讯编成一份 {window_zh} 简报。
+
+# 简报设定
+- 时间窗口：{window_zh}
+- 内容池：{mode_zh}
+- 关注方向：{focus}
+{extra_instruction}
+# 资讯条目（共 {n} 条，[编号] 标题 · 分类 · 来源 · 时间）
+{items}
+{hot_block}{daily_block}
+# 输出 JSON Schema
+{{
+  "headline": "一句话概括这个窗口最重要的变化（≤60 字）",
+  "highlights": [
+    {{"text": "今日要点（一句话，说清发生了什么 + 影响）", "refs": [1, 4]}}
+  ],
+  "sections": [
+    {{"label": "分栏名（如 模型发布/更新、产品发布、行业事件、论文、教程）",
+      "items": [
+        {{"title": "条目标题（可精简，但不得改变事实）",
+          "why": "为什么值得知道（1–2 句，影响谁、改变什么）",
+          "refs": [2]}}
+      ]}}
+  ],
+  "watchlist": [
+    {{"topic": "值得持续跟的事件", "state": "现在到哪一步了", "refs": [5]}}
+  ],
+  "actions": ["给本团队的具体动作（可为空数组）"],
+  "caveats": ["需要注意的不确定性 / 信息缺口（可为空数组）"]
+}}
+
+highlights 3–5 条；sections 按分类归拢，只保留有内容的分栏。
+直接输出 JSON 对象，不要使用代码块包裹。"""
+
+
+def build_aihot_news_prompt(*, today: str, window_zh: str, mode_zh: str, focus: str,
+                            items: str, n: int, hot_block: str = "", daily_block: str = "",
+                            custom_instruction: str = "") -> tuple[str, str]:
+    extra = ""
+    if (custom_instruction or "").strip():
+        extra = "- 用户额外要求：" + custom_instruction.strip()[:600] + "\n"
+    user = AIHOT_NEWS_USER_TEMPLATE.format(
+        today=today, window_zh=window_zh, mode_zh=mode_zh, focus=focus or "综合",
+        extra_instruction=extra, items=items, n=n,
+        hot_block=hot_block, daily_block=daily_block,
+    )
+    return AIHOT_NEWS_SYSTEM, user

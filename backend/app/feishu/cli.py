@@ -51,7 +51,9 @@ _MIN_LOGIN_SCOPES_LIST = [
     "vc:record:readonly", "minutes:minutes.search:read",
     "contact:user.base:readonly", "contact:user:search",
     "im:chat:read",
-    # 写 · 均需用户在产品内确认后才触发
+    # 写 · 除「定时推送」外均需用户在产品内确认后才触发。
+    # 定时推送（services/selfpush.py）是唯一无逐次确认的写：用户在场景里显式开启后，
+    # 后台按频率把总结发给**用户自己**。收件人恒为自己，且开关默认关闭。
     "docx:document:create",            # 写回：创建文档
     "im:message",                      # 协作分发：发群消息（基础 scope）
     "im:message.send_as_user",         # 协作分发：以用户身份发消息。lark-cli `auth check --dry-run` 只校验
@@ -246,8 +248,24 @@ class LarkCLI:
             ``{appId, identities:{bot:{status:'ready'}, user:{status:'missing'}}}``。
             需要跑 ``auth login --no-wait --recommend``。
 
+        ── 阶段 2.5：登录还在，只是 access token 过期了（user_recoverable=True）
+            ``identities.user.status == 'needs_refresh'``，CLI 自己的说明是
+            「will auto-refresh on next user API call」。**这不是失效**：refresh
+            token 仍然有效，随便发一次真实用户调用就会自动续期，并把 7 天滚动
+            窗口推到 now+7d。
+
+            这个状态曾经被并进 needs_login，代价很大：保活看到
+            ``authenticated=False`` 就跳过，而跳过的那次调用正是能救回来的那次
+            —— 保活在它唯一该出手的时刻按兵不动，窗口静静走完，用户最后还是得
+            重新登录，而诊断页一直显示保活 enabled。个人摘记也因此误报
+            「飞书登录已失效」。所以这里必须把两者分开。
+
         ── 阶段 3：完全已授权（authenticated=True）
             ``identities.user.status == 'ready'``。
+
+        返回里三个状态字段的分工：``authenticated`` 严格等于 ready；
+        ``user_recoverable`` 只在 needs_refresh 时为真；``user_usable`` 是两者之
+        或 —— **想发用户身份调用的地方要看 user_usable，不要看 authenticated**。
         """
         code, stdout, stderr = await self._exec("auth", "status", timeout=15)
         raw: Any = None
@@ -278,19 +296,31 @@ class LarkCLI:
         identities = raw.get("identities") or {}
         user_iden = identities.get("user") or {}
         bot_iden = identities.get("bot") or {}
-        user_ready = user_iden.get("status") == "ready"
+        user_status = user_iden.get("status") or ""
+        user_ready = user_status == "ready"
+        # needs_refresh = refresh token 还在，下一次真实调用自动续期（见上面阶段 2.5）
+        user_recoverable = user_status == "needs_refresh"
         bot_ready = bot_iden.get("status") == "ready"
 
         # lark-cli 1.0.43 uses camelCase keys (openId / userName); older versions
         # used snake_case. Check both.
         info: dict[str, Any] = {
             "authenticated": user_ready,
+            # 原始状态原样透出，别让上层再去猜。
+            "user_status": user_status,
+            "user_recoverable": user_recoverable,
+            # 能不能发用户身份调用 —— needs_refresh 也能发，发了还会自动续期。
+            "user_usable": user_ready or user_recoverable,
             "user_id":   (user_iden.get("openId") or user_iden.get("user_id")
                           or user_iden.get("open_id") or raw.get("user_id")),
             "user_name": (user_iden.get("userName") or user_iden.get("user_name")
                           or user_iden.get("name") or raw.get("user_name")),
             "scopes":    (user_iden.get("scope") or user_iden.get("scopes")
                           or raw.get("scopes") or []),
+            # refresh token 的到期时间。透出来是为了让诊断能显示「授权还剩几天」
+            # —— 应用一直知道这个数，之前只是没往外说，于是用户只能等它挂了才发现。
+            "refresh_expires_at": (user_iden.get("refreshExpiresAt")
+                                   or user_iden.get("refresh_expires_at") or ""),
             "app_id":    raw.get("appId") or raw.get("app_id"),
             "brand":     raw.get("brand"),
             "bot_ready": bot_ready,
@@ -298,6 +328,10 @@ class LarkCLI:
         }
         if user_ready:
             info["stage"] = "authenticated"
+        elif user_recoverable:
+            # 关键：**不设 needs_login**。它不需要登录，它需要的只是被调用一次。
+            info["stage"] = "needs_refresh"
+            info["hint"] = "access token 已过期，下一次用户调用会自动续期，无需重新登录"
         elif bot_ready:
             info["stage"] = "needs_login"
             info["needs_login"] = True
@@ -1282,18 +1316,42 @@ class LarkCLI:
 
     # ── IM / Mail / Tasks ───────────────────────────────────────────
 
-    async def im_send(self, chat_id: str, text: str, dry_run: bool = False, markdown: bool = False) -> dict:
+    async def im_send(self, chat_id: str = "", text: str = "", dry_run: bool = False,
+                      markdown: bool = False, *, user_id: str = "",
+                      idempotency_key: str = "", identity: str = "user") -> dict:
+        """发消息。``chat_id``（群）与 ``user_id``（单聊 open_id）二选一。
+
+        ``user_id`` 指向自己时就是「发给自己」，落在飞书的自己会话 ——
+        定时推送用的就是这条路径（见 services/selfpush.py）。
+
+        ``idempotency_key``：同一个 key 重复发不会产生第二条消息。定时任务
+        必须传，否则重试或进程重启会把同一条总结重复轰炸出去。
+        """
         # 关键：经 --content 传 JSON，而不是 --text/--markdown 直传。
         # 直传多行文本时，Windows 上 lark-cli.CMD 经 cmd.exe 解析会在**第一个换行处截断**
         # （只发出首行）；而 JSON 里换行是转义的 \n（argv 中无真实换行），不会被截断。
         # markdown=True → 转飞书富文本 post（保留 **加粗** / 换行 / emoji）。
+        if bool(chat_id) == bool(user_id):
+            raise LarkCLIError("im_send 需要 chat_id 或 user_id 其中恰好一个")
         if markdown:
             content = json.dumps(_markdown_to_post(text), ensure_ascii=False)
             msg_type = "post"
         else:
             content = json.dumps({"text": text}, ensure_ascii=False)
             msg_type = "text"
-        args = ["im", "+messages-send", "--chat-id", chat_id, "--msg-type", msg_type, "--content", content]
+        args = ["im", "+messages-send", "--msg-type", msg_type, "--content", content]
+        if user_id:
+            # 这条路径显式带 --as：单聊的发送身份得说清楚。
+            #   bot  应用级令牌，**永不过期**（需 im:message:send_as_bot）
+            #   user 用户级令牌，授权 7 天滚动过期
+            # 群消息那条保持原样（默认 auto 一直好用），不为「统一」动在跑的路径。
+            args += ["--user-id", user_id, "--as", (identity or "user")]
+        else:
+            args += ["--chat-id", chat_id]
+        if idempotency_key:
+            # lark-cli 1.0.89 明确了上限 50 字符。超长不报错而是被拒，一拒就是整条不发 ——
+            # 在这里截断而不是交给调用方自己记得：幂等键的构造处散在各个场景里。
+            args += ["--idempotency-key", idempotency_key[:50]]
         if dry_run:
             args.append("--dry-run")
         # run() 会自动追加 --json；该子命令不识别会报错并自动剥掉重试（不会重复发送）。

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import useSWR from 'swr';
 import { Icon } from '../components/icons';
 import { fetcher, Scene } from '../api';
+import { sceneTarget } from '../sceneTargets';
 
 const ScenesPage: React.FC = () => {
   const nav = useNavigate();
@@ -37,18 +38,5 @@ const ScenesPage: React.FC = () => {
     </div>
   );
 };
-
-function sceneTarget(sceneId: string, nav: (p: string) => void): void {
-  const map: Record<string, string> = {
-    'content':       '/task/html-page',
-    'knowledge-gov': '/task/document-map',
-    'meeting':       '/task/meeting-minutes',
-    'table':         '/task/base-analysis',
-    'pdf':           '/task/pdf-recognition',
-    'dispatch':      '/task/collab-dispatch',
-    'auto-extract':  '/autoextract',
-  };
-  nav(map[sceneId] || '/scenes');
-}
 
 export default ScenesPage;

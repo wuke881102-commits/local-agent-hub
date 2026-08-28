@@ -7,7 +7,7 @@ from fastapi import APIRouter
 from ..config import settings
 from ..feishu import LarkCLI, MockLarkCLI, get_lark
 from ..llm import get_llm
-from ..services import index_service, audit
+from ..services import authkeep, index_service, audit
 
 router = APIRouter(prefix="/api/diagnostics", tags=["diagnostics"])
 
@@ -34,6 +34,11 @@ async def _llm_ping_safe() -> dict:
 
 @router.get("")
 async def diagnostics() -> dict:
+    # get_llm() 是进程级单例，这里拿它只为读配置快照（vision_last_model）。
+    # 别依赖 _llm_ping_safe 里的同名局部变量 —— 那是另一个作用域，引用它会 NameError，
+    # 而这个接口一挂，工作台上「模型连通 / 飞书索引 / 飞书 CLI」三张卡会同时变成
+    # 异常 / 0 / 回退（它们都读这一个响应），看起来像三处故障。
+    llm = get_llm()
     lark = await get_lark()
     cli_available = await lark.ping() if isinstance(lark, LarkCLI) else True
     cli_version = lark.version if hasattr(lark, "version") else None
@@ -67,6 +72,9 @@ async def diagnostics() -> dict:
         "llm": llm_ping,
         "index": index_stats,
         "audit_recent": recent_audit,
+        # 授权保活与到期倒计时。days_left 是这里最有用的一个数：
+        # 用户身份授权 7 天滚动，没这个数就只能等它挂了才发现。
+        "auth_keepalive": authkeep.status(),
         "env": {
             "text_provider": settings.text_model_provider,
             "text_model": settings.text_model,
@@ -76,6 +84,10 @@ async def diagnostics() -> dict:
             "vision_provider": settings.vision_model_provider,
             "vision_model": settings.vision_model,
             "vision_endpoint": settings.vision_model_azure_endpoint or settings.vision_model_base_url,
+            # 兜底读图模型（走文本端点）。vision_last_model 与 vision_model 不一致，
+            # 就说明主档正在失败、现在是兜底在顶 —— 这是排查时第一个该看的地方。
+            "vision_fallback_model": settings.vision_fallback_model,
+            "vision_last_model": llm.vision_last_model,
             "mock_fallback": settings.enable_mock_fallback,
         },
     }

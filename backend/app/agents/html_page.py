@@ -32,10 +32,20 @@ class HtmlPageAgent:
     name = "HTML 页面生成 Agent"
     description = "把飞书文档套入 Lumen-light 模板，生成可预览的企业内部 HTML 页面。"
     writeback_allowed = False
-    # 内容重组走均衡档（text_model，默认 qwen3.7-plus）：原本用最强 text_model_best
-    # （qwen3.7-max），但 preview 模型在 UI 任务里经常超时（4 分钟仍 Request timed out）。
-    # 均衡档又快又稳、重组质量足够，故固定走它。实际路由见 run() 里的 model= 传参。
-    default_model = "qwen3.7-plus"
+    # 内容重组走**最强档**（text_model_best）。这个决定翻过一次，两次都有实测依据：
+    #
+    #   上一代：最强档是 qwen 的 max/preview，在 UI 任务里经常超时（4 分钟仍
+    #   Request timed out），于是降到均衡档。那之后最强档一直是**空档**（无调用点）。
+    #
+    #   本代：最强档换成 deepseek-v4-pro 后重测两种形状（编造文档约 2500 字）——
+    #     · 结构化 payload（json_mode, 8192 tok）：42.0s vs 均衡档 53.8s，JSON 均合法、字段同构
+    #     · 直出整页 HTML（16000 tok）：157.0s vs 126.9s，但输出 28,445 字 vs 19,004 字，
+    #       且 </html> 闭合完整。**当年那个超时失败模式没有复现**（预算是 480s）。
+    #
+    #   所以形状 A 是纯赚（更快、同质）；形状 B 是取舍（慢 24%，内容多 50%）——
+    #   而自由版式这个模式存在的意义就是版面丰富，换内容密度是划得来的。
+    #   要退回只需把下面两处 model= 改回 ctx.llm.text_model。
+    default_model = "deepseek-v4-pro"
     output_types = ["HTML 页面", "本地预览", "来源引用清单", "生成说明"]
 
     PAGE_TYPES = ["internal_wiki", "project", "announcement", "custom"]
@@ -116,7 +126,7 @@ class HtmlPageAgent:
                     ctx, markdown, max_images=int(inputs.get("max_images", 0)),
                 )
                 if figures:
-                    await ctx.log("info", f"已用 {ctx.llm.vision_model} 识别 {len(figures)} 张图片并写入正文")
+                    await ctx.log("info", f"已用 {ctx.llm.vision_last_model} 识别 {len(figures)} 张图片并写入正文")
             except Exception as e:  # noqa: BLE001
                 await ctx.log("warn", f"图片识别整体失败（不阻塞）：{e}")
 
@@ -128,8 +138,8 @@ class HtmlPageAgent:
                 sources=sources, figures=figures,
             )
 
-        # 4. LLM 重组（走均衡档 text_model，又快又稳；preview 模型常超时已弃用）
-        await ctx.log("info", f"调用模型 {ctx.llm.text_model} 重组内容（最长 ~4 分钟）…")
+        # 4. LLM 重组（走最强档 text_model_best；理由与实测见类顶注释）
+        await ctx.log("info", f"调用模型 {ctx.llm.text_model_best} 重组内容（最长 ~4 分钟）…")
         system, user_prompt = build_html_page_prompt(
             page_type=page_type, title=title, space=space, owner=owner, updated=updated, markdown=markdown,
             custom_instruction=custom_instruction,
@@ -138,7 +148,7 @@ class HtmlPageAgent:
         # timeout 同步 240→300s 留余量（输出 8192≈170s + 大输入 prefill ~15–30s，300s 仍宽裕）。
         raw_text = await ctx.llm.text_complete(
             user_prompt, system=system, json_mode=True, max_tokens=8192,
-            timeout=300, retries=1, model=ctx.llm.text_model,
+            timeout=300, retries=1, model=ctx.llm.text_model_best,
         )
 
         payload = _safe_parse_json(raw_text)
@@ -178,7 +188,10 @@ class HtmlPageAgent:
                 {"title": s["title"], "url": s["url"], "note": "原始飞书文档"}
                 for s in sources
             ],
-            "vision_model": ctx.llm.vision_model,
+            # 用 vision_last_model 而不是 vision_model：主档挂了的话是兜底模型真正
+            # 读的图，而这个值会被渲染到生成页的页脚（lumen_base.html）——
+            # 写错就是在产物里留下一句假话。此处已在读图之后。
+            "vision_model": ctx.llm.vision_last_model,
         }
         html = get_renderer().render(page_type, payload, meta)
 
@@ -205,7 +218,7 @@ class HtmlPageAgent:
         与套模板路线的取舍：版式更丰富（表格/卡片/徽章/提示自由组合），代价是更慢、
         偶尔可能崩版或编内容——故用强约束 prompt + 成品 HTML 的可见文本数字核验兜底。
         """
-        await ctx.log("info", f"自由版式：调用 {ctx.llm.text_model} 直出 HTML（套内置 Lumen-light 设计系统，最长 ~5 分钟）…")
+        await ctx.log("info", f"自由版式：调用 {ctx.llm.text_model_best} 直出 HTML（套内置 Lumen-light 设计系统，最长 ~5 分钟）…")
         system, user = build_html_freeform_prompt(
             page_type=page_type, title=title, space=space, owner=owner,
             updated=updated, markdown=markdown, custom_instruction=custom_instruction,
@@ -217,7 +230,7 @@ class HtmlPageAgent:
         try:
             raw = await ctx.llm.text_complete(
                 user, system=system, json_mode=False, max_tokens=16000,
-                timeout=480, retries=0, model=ctx.llm.text_model,
+                timeout=480, retries=0, model=ctx.llm.text_model_best,
             )
         except Exception as e:  # noqa: BLE001
             await ctx.log("warn", f"自由版式生成超时/失败：{type(e).__name__}")

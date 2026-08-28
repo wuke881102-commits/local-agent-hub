@@ -17,7 +17,7 @@ import binascii
 import json
 import logging
 import time
-from typing import AsyncIterator
+from typing import Any, AsyncIterator
 
 from ..config import settings
 
@@ -86,6 +86,10 @@ class LLMClient:
         self.text_model_best = settings.text_model_best
         self.vision_provider = settings.vision_model_provider
         self.vision_model = settings.vision_model
+        # 上一次**真正**服务了读图请求的模型。主档正常时等于 vision_model，兜底顶上
+        # 时会变成兜底模型名。必须初始化：调用方在界面上写「调用 X 识别…」，
+        # 一次视觉调用都还没发生时也可能被读到。
+        self.vision_last_model = settings.vision_model
         self.image_provider = settings.image_model_provider
         self.image_model = settings.image_model
 
@@ -254,6 +258,33 @@ class LLMClient:
             if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
                 yield chunk.choices[0].delta.content
 
+    def _vision_fallback(self) -> tuple[Any, str] | None:
+        """(客户端, 模型名) —— 视觉主档不可用时的第二条腿，或 None 表示没有。
+
+        用的是**文本客户端**：实测 qwen3.7-flash / plus / max 都能读图，而它们和
+        文本共用同一个端点和 key。理由与取舍见 config.vision_fallback_model 的注释。
+
+        刻意不在这里做「哪个更快」的选择：兜底只负责让功能还能用。
+        """
+        m = str(getattr(settings, "vision_fallback_model", "") or "").strip()
+        if not m or self._text_client is None:
+            return None
+        return self._text_client, m
+
+    @staticmethod
+    def _img_messages(prompt: str, urls: list[str], system: str | None = None) -> list[dict]:
+        """文本 + 若干图片 → chat.completions 的 messages。主档和兜底共用一份，
+        免得两边的请求形状悄悄长歪（那种 bug 只在主档挂掉那天才暴露）。"""
+        content: list[dict] = [{"type": "text", "text": prompt}]
+        for u in urls:
+            if u:
+                content.append({"type": "image_url", "image_url": {"url": u}})
+        msgs: list[dict] = []
+        if system:
+            msgs.append({"role": "system", "content": system})
+        msgs.append({"role": "user", "content": content})
+        return msgs
+
     async def vision_describe(
         self,
         image_url: str,
@@ -262,23 +293,36 @@ class LLMClient:
         max_tokens: int = 200,
     ) -> str:
         """识别 / 描述一张图片。``max_tokens`` 默认 200（图示说明够用）；
-        整页 OCR 这类需要长输出的场景，调用方应调大（如 1500）。"""
-        if self._vision_client is None:
-            return f"（mock 图片说明）{prompt}"
+        整页 OCR 这类需要长输出的场景，调用方应调大（如 1500）。
+
+        主档失败或未配置时自动走兜底（见 _vision_fallback）。兜底真的顶上了会记
+        warning 并更新 ``vision_last_model`` —— 调用方在界面上写的是「调用
+        {llm.vision_model} 识别…」，不更新的话那句话就变成假话。
+        """
+        msgs = self._img_messages(prompt, [image_url])
+        if self._vision_client is not None:
+            try:
+                resp = await self._vision_client.chat.completions.create(
+                    model=self.vision_model, messages=msgs, max_tokens=max_tokens)
+                self.vision_last_model = self.vision_model
+                return resp.choices[0].message.content or ""
+            except Exception as e:  # noqa: BLE001
+                log.warning("vision_describe[%s] failed: %s", self.vision_model, e)
+
+        fb = self._vision_fallback()
+        if fb is None:
+            if self._vision_client is None:
+                return f"（mock 图片说明）{prompt}"
+            return "（图片说明生成失败：主档失败且未配置兜底）"
+        client, model = fb
         try:
-            resp = await self._vision_client.chat.completions.create(
-                model=self.vision_model,
-                messages=[
-                    {"role": "user", "content": [
-                        {"type": "text", "text": prompt},
-                        {"type": "image_url", "image_url": {"url": image_url}},
-                    ]}
-                ],
-                max_tokens=max_tokens,
-            )
+            resp = await client.chat.completions.create(
+                model=model, messages=msgs, max_tokens=max_tokens)
+            self.vision_last_model = model
+            log.warning("vision_describe fell back to %s", model)
             return resp.choices[0].message.content or ""
         except Exception as e:  # noqa: BLE001
-            log.warning("vision_describe failed: %s", e)
+            log.warning("vision_describe fallback[%s] failed: %s", model, e)
             return f"（图片说明生成失败：{type(e).__name__}）"
 
     async def vision_complete(
@@ -297,37 +341,54 @@ class LLMClient:
         ``images`` 是 data URI 列表（``data:image/png;base64,...``）或可访问的图片 URL。
         与 ``vision_describe`` 的区别：支持多张图、可带 system、输出更长，用于把若干截图
         重组成结构化文档 / HTML。视觉模型未配置时回退 mock 文本。
+
+        主档把重试用尽后**不直接抛**，先试一次兜底（见 _vision_fallback）——
+        这条路径背后是「自动化提炼」和「读图直出 HTML」，一次失败就是用户点了
+        半分钟等到一句报错。兜底也失败才抛。
         """
-        if self._vision_client is None:
-            return _mock_text(prompt)
-
-        content: list[dict] = [{"type": "text", "text": prompt}]
-        for url in images:
-            if url:
-                content.append({"type": "image_url", "image_url": {"url": url}})
-        messages: list[dict] = []
-        if system:
-            messages.append({"role": "system", "content": system})
-        messages.append({"role": "user", "content": content})
-
-        client = self._vision_client.with_options(timeout=timeout) if timeout else self._vision_client
+        messages = self._img_messages(prompt, list(images), system)
         last_err: Exception | None = None
-        for attempt in range(retries + 1):
-            try:
-                resp = await client.chat.completions.create(
-                    model=self.vision_model,
-                    messages=messages,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                )
-                return resp.choices[0].message.content or ""
-            except Exception as e:  # noqa: BLE001
-                last_err = e
-                log.warning("vision_complete[%s] attempt %d/%d failed: %s",
-                            self.vision_model, attempt + 1, retries + 1, e)
-                if attempt < retries:
-                    await asyncio.sleep(1.5 * (attempt + 1))
-        raise LLMError(f"vision_complete failed after retries: {last_err}", model=self.vision_model)
+
+        if self._vision_client is not None:
+            client = self._vision_client.with_options(timeout=timeout) if timeout else self._vision_client
+            for attempt in range(retries + 1):
+                try:
+                    resp = await client.chat.completions.create(
+                        model=self.vision_model,
+                        messages=messages,
+                        max_tokens=max_tokens,
+                        temperature=temperature,
+                    )
+                    self.vision_last_model = self.vision_model
+                    return resp.choices[0].message.content or ""
+                except Exception as e:  # noqa: BLE001
+                    last_err = e
+                    log.warning("vision_complete[%s] attempt %d/%d failed: %s",
+                                self.vision_model, attempt + 1, retries + 1, e)
+                    if attempt < retries:
+                        await asyncio.sleep(1.5 * (attempt + 1))
+
+        fb = self._vision_fallback()
+        if fb is None:
+            if self._vision_client is None:
+                return _mock_text(prompt)
+            raise LLMError(f"vision_complete failed after retries: {last_err}", model=self.vision_model)
+        client, model = fb
+        # 兜底只试一次：主档已经花掉 retries 轮和整个 timeout 了，再叠一轮重试
+        # 只会让用户多等一倍，而这条路径上游的超时是 180~300 秒。
+        fb_client = client.with_options(timeout=timeout) if timeout else client
+        try:
+            resp = await fb_client.chat.completions.create(
+                model=model, messages=messages,
+                max_tokens=max_tokens, temperature=temperature)
+            self.vision_last_model = model
+            log.warning("vision_complete fell back to %s", model)
+            return resp.choices[0].message.content or ""
+        except Exception as e:  # noqa: BLE001
+            log.warning("vision_complete fallback[%s] failed: %s", model, e)
+            raise LLMError(
+                "vision_complete failed on both %s and fallback %s: %s"
+                % (self.vision_model, model, e), model=self.vision_model) from e
 
     async def image_generate(
         self,

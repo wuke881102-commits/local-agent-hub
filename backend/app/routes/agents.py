@@ -17,6 +17,8 @@ AGENT_META = {
     "pdf-recognition":     {"icon": "scan",   "color": "#6A4DD4", "entries": ["PDF 识别"]},
     "meeting-minutes":     {"icon": "mic",    "color": "#EA580C", "entries": ["会议沉淀"]},
     "collab-dispatch":     {"icon": "send",   "color": "#C83A3A", "entries": ["协作分发"]},
+    "aihot-models":        {"icon": "graph",  "color": "#4F46E5", "entries": ["AIHot 内容和模型"]},
+    "aihot-news":          {"icon": "cloud",  "color": "#0891B2", "entries": ["AIHot 内容和模型"]},
 }
 
 

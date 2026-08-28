@@ -16,11 +16,11 @@ from .feishu import get_lark, LarkCLI
 
 # 注册所有 agent（import 触发 register_agent 副作用）
 from . import agents  # noqa: F401
-from .routes import auth, scenes, agents as agents_route, tasks, assets, writeback, diagnostics, org, base, dispatch, summaries, localdir, autoextract
+from .routes import auth, scenes, agents as agents_route, tasks, assets, writeback, diagnostics, org, base, dispatch, summaries, localdir, autoextract, aihot, outlook, memo
 
 # Single source of truth for the backend version. Bump via
 # scripts\bump_version.ps1 <new-version> (keeps the frontend + installer in sync).
-APP_VERSION = "5.7"
+APP_VERSION = "6.6"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -44,9 +44,14 @@ async def lifespan(app: FastAPI):
             await lark.ensure_app_configured()
         except Exception:
             logging.exception("ensure_app_configured failed at startup")
+    # 用户授权保活：它得在应用跑着的时候就开始，而不是等某个场景被打开 ——
+    # 正因为大部分场景根本不调用户身份接口，授权才会悄无声息地走到到期。
+    from .services import authkeep
+    authkeep.start()
     logging.info("Startup ok. lark-cli available=%s mock_fallback=%s text_model=%s",
                  available, settings.enable_mock_fallback, settings.text_model)
     yield
+    await authkeep.stop()
 
 
 app = FastAPI(
@@ -76,6 +81,9 @@ app.include_router(dispatch.router)
 app.include_router(summaries.router)
 app.include_router(localdir.router)
 app.include_router(autoextract.router)
+app.include_router(aihot.router)
+app.include_router(outlook.router)
+app.include_router(memo.router)
 
 
 @app.get("/api/health")

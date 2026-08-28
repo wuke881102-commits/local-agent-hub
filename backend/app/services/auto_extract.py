@@ -41,6 +41,9 @@ _MAX_INTERVAL = 240
 _DEFAULT_INTERVAL = 15
 _MAX_SESSION_SECONDS = 10 * 3600   # 单次提炼会话最长 10 小时，到点自动停止
 
+# 单个小节最多列多少条，超了只说“还有 N 条”。给 rollup_markdown 用。
+_ROLLUP_CAP = 12
+
 _DIGEST_FILE = "digests.jsonl"
 
 _state = {
@@ -364,6 +367,64 @@ async def _distill(window_start_ts: float, window_end_ts: float) -> dict | None:
 
     await asyncio.to_thread(_append_digest, rec)
     return rec
+
+
+# ── 定时推送到自己的飞书 ─────────────────────────────────
+
+def _merge_section(recs: list[dict], key: str) -> list[str]:
+    """把多条提炼的同一小节合并去重，保持原顺序。
+
+    去重是必要的：相邻几个窗口往往在看同一份东西，不去重的话一条推送里
+    同一句话会出现四次，看起来像坏了。
+    """
+    out: list[str] = []
+    seen: set[str] = set()
+    for rec in recs:
+        for it in (rec.get(key) or []):
+            t = str(it).strip()
+            if t and t not in seen:
+                seen.add(t)
+                out.append(t)
+    return out
+
+
+def rollup_markdown(recs: list[dict]) -> str:
+    """把一批提炼合成**一条**可读的推送。
+
+    不再调模型：这些 digest 本身己经是视觉模型的输出了，为了“再概括一次”
+    又发一轮请求，多花钱、多一个失败点，而且会把已经具体的东西磨成套话。
+    """
+    if not recs:
+        return ""
+    span = "%s → %s" % (
+        (recs[0].get("window_start") or recs[0].get("created_at") or "")[-8:-3] or "?",
+        (recs[-1].get("window_end") or recs[-1].get("created_at") or "")[-8:-3] or "?",
+    )
+    shots = sum(int(r.get("n_shots") or 0) for r in recs)
+    lines = ["## 工作提炼汇总 · %s" % span,
+             "", "%d 次提炼 / %d 张截图" % (len(recs), shots)]
+
+    # 每段的 summary 是叙事，不能去重合并，带上时间标逐条列。
+    narr = [(r.get("window_label") or (r.get("created_at") or "")[-8:-3], (r.get("summary") or "").strip())
+            for r in recs]
+    narr = [(t, x) for t, x in narr if x]
+    if narr:
+        lines += ["", "**这段时间在做什么**"]
+        lines += ["- %s：%s" % (t, x) for t, x in narr]
+
+    for label, key in _MD_SECTIONS:
+        items = _merge_section(recs, key)
+        if not items:
+            continue
+        lines += ["", "**%s**" % label]
+        lines += ["- %s" % it for it in items[:_ROLLUP_CAP]]
+        if len(items) > _ROLLUP_CAP:
+            lines.append("- …还有 %d 条" % (len(items) - _ROLLUP_CAP))
+
+    apps = _merge_section(recs, "apps")
+    if apps:
+        lines += ["", "涉及：" + " / ".join(apps[:_ROLLUP_CAP])]
+    return "\n".join(lines).strip()
 
 
 # ── 会话控制 ─────────────────────────────────────────────────────────────

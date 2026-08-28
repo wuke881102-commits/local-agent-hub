@@ -46,3 +46,19 @@ agents:
     default_channels: []
     default_email_recipients: []
     allow_batch_dispatch: false
+
+  - id: aihot-models
+    enabled: true
+    default_limit: 30            # 榜单取前 N 名
+    default_focus: balanced      # balanced | cost | quality
+    in_out_ratio: 3              # 性价比口径：假设输入:输出 token ≈ 1:3
+    compare_local: true          # 是否对照本机 .env 里配的三档模型
+
+  - id: aihot-news
+    enabled: true
+    default_window: 24h          # 24h | 7d
+    default_mode: selected       # selected（精选）| all（全部公开池）
+    default_limit: 40
+    include_hot_topics: true
+    expand_stories: 3            # 展开前 N 个热点的事件时间线（0–5）
+    use_daily: true              # 参考站点当日日报的分栏口径

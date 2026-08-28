@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import useSWR from 'swr';
 import { Icon } from '../components/icons';
 import { api, fetcher, errMsg, Scene, TaskSummary, Diagnostics } from '../api';
+import { sceneTarget } from '../sceneTargets';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../components/Toast';
 
@@ -113,8 +114,12 @@ const Dashboard: React.FC = () => {
         />
         <StatCard label="飞书索引" value={String(indexTotal)} hint={`上次刷新 ${lastRefreshed}`}
                   tone={indexTotal > 0 ? 'success' : 'info'} />
+        {/* 下面那行给**厂商名、不带版本**。原先只显示 text_model，而现在文本有三档、
+            两档是 DeepSeek —— 只写一个会把「邮件分类跑在 deepseek-v4-flash」这类事藏掉。
+            具体型号（带版本）放在悬停明细里，表面干净、细节不丢。 */}
         <StatCard label="模型连通" value={llmOk ? '正常' : '异常'}
-                  hint={`${shortModel(diag?.env?.text_model)} / ${shortModel(diag?.env?.vision_model)}`}
+                  hint={vendorsInUse(diag?.env)}
+                  detail={modelDetail(diag?.env, diag?.llm)}
                   tone={llmOk ? 'success' : 'error'} />
         <StatCard label="飞书 CLI" value={diag?.cli?.mode === 'live' ? '在线' : (diag?.cli?.mode === 'mock' ? 'Mock' : '回退')}
                   hint={diag?.cli?.version || diag?.cli?.bin || '—'}
@@ -208,7 +213,11 @@ const Dashboard: React.FC = () => {
   );
 };
 
-const StatCard: React.FC<{ label: string; value: string; hint: string; tone: 'success' | 'warning' | 'error' | 'info'; action?: React.ReactNode }> = ({ label, value, hint, tone, action }) => {
+const StatCard: React.FC<{ label: string; value: string; hint: string; tone: 'success' | 'warning' | 'error' | 'info';
+  action?: React.ReactNode;
+  // 悬停看完整明细（哪一档用哪个具体型号）。表面干净，细节不丢。
+  detail?: string;
+}> = ({ label, value, hint, tone, action, detail }) => {
   const colorMap = {
     success: 'var(--success)', warning: 'var(--warning)', error: 'var(--error)', info: 'var(--info)',
   };
@@ -227,7 +236,7 @@ const StatCard: React.FC<{ label: string; value: string; hint: string; tone: 'su
             fontSize: 12, color: 'var(--text-tertiary)', marginTop: 7, lineHeight: 1.45,
             display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
             overflow: 'hidden', wordBreak: 'break-word',
-          }} title={hint}>{hint}</div>
+          }} title={detail || hint}>{hint}</div>
         </div>
         {action}
       </div>
@@ -255,26 +264,47 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 
 // 模型 id 精简显示：去掉日期后缀与 qwen 档位后缀，qwen 首字母大写。
 // 例：qwen3.7-plus → Qwen3.6；gpt-4.1-mini-2025-04-14 → gpt-4.1-mini
-function shortModel(m?: string): string {
-  if (!m) return '—';
-  return m
-    .replace(/-\d{4}-\d{2}-\d{2}$/, '')
-    .replace(/-(plus|max|flash|turbo|latest)$/i, '')
-    .replace(/^qwen/i, 'Qwen');
+/** 模型 id → 厂商名（不带版本）。卡片正面只露这个，具体型号放悬停里。 */
+function vendorOf(m?: string): string {
+  const s = (m || '').toLowerCase();
+  if (!s) return '';
+  if (s.startsWith('qwen')) return 'Qwen';
+  if (s.startsWith('deepseek')) return 'DeepSeek';
+  if (s.startsWith('gpt') || /^o\d/.test(s)) return 'GPT';
+  if (s.startsWith('claude')) return 'Claude';
+  if (s.startsWith('gemini')) return 'Gemini';
+  return (m || '').split(/[-_.]/)[0];
 }
 
-// Map scene card → task launch page. Unknown scenes fall back to the scenes hub.
-function sceneTarget(sceneId: string, nav: (p: string) => void): void {
-  const map: Record<string, string> = {
-    'content':       '/task/html-page',
-    'knowledge-gov': '/task/document-map',     // 知识库治理：先建图，再切到治理
-    'meeting':       '/task/meeting-minutes',  // 会议沉淀：妙记 / 会议记录整理
-    'table':         '/task/base-analysis',    // 表格分析：多维表格分析
-    'pdf':           '/task/pdf-recognition',  // PDF 识别：云盘 PDF AI 识别
-    'dispatch':      '/task/collab-dispatch',  // 协作分发（Phase B 占位页）
-    'auto-extract':  '/autoextract',           // 自动化提炼：按 Enter 留痕 + 定时提炼
-  };
-  nav(map[sceneId] || '/scenes');
+/** 正在用的厂商，按「文本三档 → 视觉」顺序去重。 */
+function vendorsInUse(env?: Record<string, string>): string {
+  if (!env) return '—';
+  const vs: string[] = [];
+  for (const k of ['text_model', 'text_model_fast', 'text_model_best', 'vision_model']) {
+    const v = vendorOf(env[k]);
+    if (v && !vs.includes(v)) vs.push(v);
+  }
+  return vs.length ? vs.join(' · ') : '—';
+}
+
+/** 悬停明细：哪一档用哪个具体型号 + 探活延迟。这里才写完整版本号。 */
+function modelDetail(env?: Record<string, string>, llm?: Diagnostics['llm']): string {
+  if (!env) return '';
+  const rows: [string, string][] = [
+    ['均衡', env.text_model], ['快省', env.text_model_fast], ['最强', env.text_model_best],
+    ['视觉', env.vision_model], ['视觉兜底', env.vision_fallback_model],
+  ];
+  const lines = rows.filter(([, v]) => v).map(([k, v]) => `${k}  ${v}`);
+  if (llm?.text?.latency_ms != null || llm?.vision?.latency_ms != null) {
+    lines.push(`探活  文本 ${fmtMs(llm?.text?.latency_ms)} / 视觉 ${fmtMs(llm?.vision?.latency_ms)}`);
+  }
+  return lines.join(String.fromCharCode(10));
+}
+
+/** 探活延迟：秒级更好读，毫秒数字在卡片上没意义。 */
+function fmtMs(ms?: number): string {
+  if (typeof ms !== 'number' || ms < 0) return '—';
+  return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
 }
 
 export default Dashboard;

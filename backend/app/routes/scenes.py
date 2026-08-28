@@ -18,7 +18,17 @@ FALLBACK_SCENES = [
     {"id": "pdf",           "title": "PDF 识别",   "subtitle": "云盘 PDF · 全文(含扫描 OCR) · 字段/表格 · 逐页要点", "agents": ["PDF 识别"], "accent": "#6A4DD4", "icon": "scan"},
     {"id": "dispatch",      "title": "协作分发",   "subtitle": "群消息 + 任务草稿 · 通知/摘要/待办自动判别 · 确认后分发", "agents": ["协作分发"], "accent": "#C83A3A", "icon": "send"},
     {"id": "auto-extract",  "title": "自动化提炼", "subtitle": "按 Enter 自动留痕截图 · 定时用大模型提炼工作说明/重点/操作/会议", "agents": ["自动化提炼"], "accent": "#0EA5E9", "icon": "funnel"},
+    {"id": "aihot",         "title": "AIHot 内容和模型", "subtitle": "打开即看 AIHOT 大模型共识榜与 AI 资讯 / 热点 / 日报 · 直连公开数据 · AI 选型建议与简报可选", "agents": ["AIHot 模型榜", "AIHot 新闻简报"], "accent": "#4F46E5", "icon": "spark"},
 ]
+
+# 「本地邮箱」和「个人摘记」**故意不在这张列表里**。
+#
+# 它们和其余场景不是一类东西：其余每张卡背后都有 Agent（点进去填参数、跑一次、
+# 出产物），而这两个是**常驻视图**——打开即看、没有「运行一次」的概念，所以
+# agents 恒为空。空的 AGENTS 栏摆在一排有 Agent 的卡片中间，看起来像功能残缺。
+#
+# 它们的入口在左侧导航（WorkbenchShell 的 NAV_ITEMS），那才是常驻视图该待的地方。
+# 所以 sceneTargets.ts 里也不需要它们的落点。
 
 
 @router.get("")

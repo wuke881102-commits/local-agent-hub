@@ -1,8 +1,9 @@
 @echo off
 REM ============================================================
 REM  One-command, end-to-end installer build.
-REM  Safe to re-run: the bundled runtime (Node + lark-cli) is
-REM  bootstrapped only when missing, so repeat builds are fast.
+REM  Safe to re-run: bundled Node is extracted only when missing;
+REM  lark-cli is (re)installed to the version pinned in LARKCLIVER
+REM  every build - a no-op when already satisfied.
 REM
 REM   1. Ensure Python build deps (pyinstaller, pystray, pillow)
 REM   2. Bootstrap bundled runtime (Node + @larksuite/cli)
@@ -20,6 +21,8 @@ cd /d "%~dp0\.."
 set "ROOT=%CD%"
 set "PY=backend\.venv\Scripts\python.exe"
 set "NODEVER=node-v20.18.1-win-x64"
+REM lark-cli 版本**钉在这里**。改这一行就是升级捆绑的 CLI。
+set "LARKCLIVER=1.0.89"
 set "ISCC=C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
 
 echo.
@@ -67,16 +70,17 @@ if not exist "build\stage\runtime\node\node.exe" (
 
 REM NOTE: the real Feishu CLI is the SCOPED package @larksuite/cli.
 REM       (the public "lark-cli" package is an unrelated squatter - do NOT use it.)
-if not exist "build\stage\runtime\lark-cli\node_modules\.bin\lark-cli.cmd" (
-  echo   - Installing bundled lark-cli ^(@larksuite/cli^)...
-  if not exist "build\stage\runtime\lark-cli" mkdir "build\stage\runtime\lark-cli"
-  pushd "build\stage\runtime\lark-cli"
-  call npm install @larksuite/cli --silent
-  if errorlevel 1 (echo [ERROR] lark-cli install failed & popd & exit /b 1)
-  popd
-) else (
-  echo   - Bundled lark-cli already present, skipping.
-)
+REM
+REM 这里故意**不再**做「目录存在就跳过」：那个写法把捆绑的 CLI 永久冻结在首次
+REM 构建时装的版本 —— 实测已落后 45 个小版本而没人发现，而它是所有飞书
+REM 功能的地基。现在每次按钉住的版本装一次：npm 已满足时是几秒级 no-op，
+REM 代价可忽略，换来的是版本可复现。
+echo   - Ensuring bundled lark-cli @larksuite/cli@%LARKCLIVER% ...
+if not exist "build\stage\runtime\lark-cli" mkdir "build\stage\runtime\lark-cli"
+pushd "build\stage\runtime\lark-cli"
+call npm install @larksuite/cli@%LARKCLIVER% --silent
+if errorlevel 1 (echo [ERROR] lark-cli install failed & popd & exit /b 1)
+popd
 
 REM ----- 3. Build frontend -----
 echo [3/6] Building frontend...

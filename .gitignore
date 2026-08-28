@@ -5,7 +5,6 @@ backend/**/__pycache__/
 backend/**/*.pyc
 backend/.venv/
 backend/.pytest_cache/
-backend/*.egg-info/
 backend/data/*.sqlite
 backend/data/*.sqlite-journal
 backend/data/drafts/
@@ -35,14 +34,12 @@ Feishu_design/
 /backend/dist/
 /backend/build/
 /build/stage/
-# 打包用的第三方运行时/工具（自行下载，不入库）：内置 Node、Inno Setup 等
-/build/tools/
+/build/tools/*.zip
 
-# ── Secrets in PLAINTEXT — 绝不提交。请填入你自己的凭据，仓库不含任何真实密钥。 ──
+# ── Secrets in PLAINTEXT — never commit. Only the encrypted secrets.7z is tracked. ──
 /build/production.env
 /build/stage/backend/.env
 # backend/.env already ignored above
-secrets.7z
 
 # ── Repo-root runtime data (dev server writes here; may contain tokens / logs) ──
 /data/

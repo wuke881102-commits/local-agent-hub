@@ -98,6 +98,10 @@ class MockLarkCLI:
     async def auth_status(self) -> dict:
         return {
             "authenticated": self._authed,
+            # 跟真实 auth_status 保持同形，否则消费方在 mock 下走的是另一条分支。
+            "user_status": "ready" if self._authed else "missing",
+            "user_recoverable": False,
+            "user_usable": self._authed,
             "user_id": "ou_mock_user_001",
             "user_name": "陈昭（mock）",
             "scopes": ["docs:document:read", "wiki:wiki:read", "im:message:create"],

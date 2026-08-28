@@ -12,6 +12,9 @@ import OrgGraphPage from './pages/OrgGraphPage';
 import SummariesPage from './pages/SummariesPage';
 import LocalDirPage from './pages/LocalDirPage';
 import AutoExtractPage from './pages/AutoExtractPage';
+import AihotPage from './pages/AihotPage';
+import OutlookPage from './pages/OutlookPage';
+import MemoPage from './pages/MemoPage';
 
 // 会议纪要 / 协作分发 / PDF 等都共用 TaskAgentPage 这一个路由组件。跨 agent 跳转
 // （如 会议纪要「分发 / 沉淀飞书」→ 协作分发）不会触发重挂载，导致 taskId、来源任务
@@ -43,6 +46,11 @@ const App: React.FC = () => {
   else if (path.startsWith('/assets')) crumb.push({ label: '飞书文档' });
   else if (path.startsWith('/localdir')) crumb.push({ label: '本地目录' });
   else if (path.startsWith('/autoextract')) crumb.push({ label: '自动化提炼' });
+  else if (path.startsWith('/aihot')) crumb.push({ label: 'AIHot 内容和模型' });
+  else if (path.startsWith('/outlook')) crumb.push({ label: '本地邮箱' });
+  else if (path.startsWith('/memo')) crumb.push({ label: '个人摘记' });
+  else if (path.startsWith('/task/aihot-models')) crumb.push({ label: 'AIHot 内容和模型' }, { label: 'AI 选型建议' });
+  else if (path.startsWith('/task/aihot-news')) crumb.push({ label: 'AIHot 内容和模型' }, { label: 'AI 简报' });
   else if (path.startsWith('/summaries')) crumb.push({ label: '历史总结' });
   else if (path.startsWith('/org')) crumb.push({ label: '组织架构' });
   else if (path.startsWith('/scenes')) crumb.push({ label: '任务场景' });
@@ -57,6 +65,9 @@ const App: React.FC = () => {
         <Route path="/assets" element={<AssetsPage />} />
         <Route path="/localdir" element={<LocalDirPage />} />
         <Route path="/autoextract" element={<AutoExtractPage />} />
+        <Route path="/aihot" element={<AihotPage />} />
+        <Route path="/outlook" element={<OutlookPage />} />
+        <Route path="/memo" element={<MemoPage />} />
         <Route path="/summaries" element={<SummariesPage />} />
         <Route path="/org" element={<OrgGraphPage />} />
         <Route path="/tasks" element={<TasksPage />} />

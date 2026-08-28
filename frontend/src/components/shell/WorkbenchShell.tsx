@@ -19,6 +19,9 @@ const AGENT_TASK_PATHS: Record<string, string> = {
   'pdf-recognition': '/task/pdf-recognition',
   'meeting-minutes': '/task/meeting-minutes',
   'collab-dispatch': '/task/collab-dispatch',
+  // 同一个数据页的两个标签：模型榜走默认标签，新闻简报直接落到 AI 新闻标签。
+  'aihot-models': '/aihot?tab=board',
+  'aihot-news': '/aihot?tab=news',
   'auto-extract': '/autoextract',
 };
 
@@ -30,6 +33,8 @@ const NAV_ITEMS = [
   { id: 'localdir', label: '本地目录',   icon: 'desktop',  path: '/localdir' },
   { id: 'summaries',label: '历史总结',   icon: 'calendar',path: '/summaries' },
   { id: 'org',      label: '组织架构',   icon: 'graph',   path: '/org' },
+  { id: 'outlook',  label: '本地邮箱',   icon: 'bell',    path: '/outlook' },
+  { id: 'memo',     label: '个人摘记',   icon: 'calendar', path: '/memo' },
 ];
 
 interface Crumb { label: string; onClick?: () => void; }

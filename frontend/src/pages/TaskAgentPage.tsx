@@ -76,7 +76,41 @@ const AGENT_META: Record<string, AgentMeta> = {
     subtitle: '把其他 Agent 的产出改写为飞书群消息与任务草稿，自动判别通知 / 摘要 / 待办性质，经你确认后再分发到指定群与负责人。',
     buttonLabel: '生成草稿',
   },
+  'aihot-models': {
+    id: 'aihot-models',
+    scene: 'AIHot 内容和模型',
+    title: 'AIHot 模型榜',
+    subtitle: '拉取 AIHOT 大模型共识榜（含共识分 / 评测完整度 / 证据可信度 / 官方价），本地算「每元买到多少分」的性价比，并对照本机三档模型给出换 / 留建议。',
+    buttonLabel: '抓取模型榜',
+  },
+  'aihot-news': {
+    id: 'aihot-news',
+    scene: 'AIHot 内容和模型',
+    title: 'AIHot 新闻简报',
+    subtitle: '走 AIHOT 公开 API：资讯池 + 当前热点榜 + 热点事件时间线 + 当日日报，编成一份带来源回链的内部简报。条目用编号引用、链接由后端回填，模型不产 URL。',
+    buttonLabel: '生成简报',
+  },
 };
+
+// AIHot 模型榜的厂商筛选。列表只是「常见项快捷入口」——后端按榜单里的 provider
+// 原样匹配，榜上新增厂商时不选它照样能看到全部。
+const AIHOT_PROVIDERS = ['Anthropic', 'OpenAI', 'Google', 'xAI', 'Alibaba', 'DeepSeek', 'Moonshot AI', 'Z.ai', 'Meta'];
+
+const AIHOT_FOCUS = [
+  { id: 'balanced', label: '均衡', desc: '能力与成本兼顾（推荐）' },
+  { id: 'cost',     label: '省钱优先', desc: '在够用的前提下压成本' },
+  { id: 'quality',  label: '能力优先', desc: '先要效果，成本次之' },
+  { id: 'custom',   label: '自定义', desc: '用自然语言描述你的取舍' },
+];
+
+// 与后端 services.aihot.CATEGORY_CN / 站点 category 取值一一对应。
+const AIHOT_CATEGORIES = [
+  { id: 'ai-models',   label: '模型发布/更新' },
+  { id: 'ai-products', label: '产品发布' },
+  { id: 'industry',    label: '行业事件' },
+  { id: 'paper',       label: '论文' },
+  { id: 'tip',         label: '教程/技巧' },
+];
 
 // 仅登记骨架、核心逻辑待实现的 Agent：点开显示占位页，不渲染运行区。（已全部实现，留空集合备用。）
 const STUB_AGENTS = new Set<string>([]);
@@ -170,6 +204,25 @@ const TaskAgentPage: React.FC = () => {
   const pdfFiles = useMemo(
     () => (pdfList?.items || []).filter((a: any) => /\.pdf$/i.test(a.title || '')),
     [pdfList]);
+  // AIHot 模型榜：榜单取前 N + 厂商筛选 + 选型侧重 + 是否对照本机模型
+  const [lbLimit, setLbLimit] = useState(30);
+  const [lbProvider, setLbProvider] = useState('');      // '' = 全部厂商
+  const [lbFocus, setLbFocus] = useState('balanced');
+  const [lbInstruction, setLbInstruction] = useState('');
+  const [lbCompare, setLbCompare] = useState(true);
+  const [lbForce, setLbForce] = useState(false);          // 忽略本地缓存强制重抓
+  // AIHot 新闻简报：窗口 / 内容池 / 分类 / 盯题 / 热点展开
+  const [nwWindow, setNwWindow] = useState('24h');
+  const [nwMode, setNwMode] = useState('selected');
+  const [nwCats, setNwCats] = useState<string[]>([]);
+  const [nwQ, setNwQ] = useState('');
+  const [nwLimit, setNwLimit] = useState(40);
+  const [nwHot, setNwHot] = useState(true);
+  const [nwExpand, setNwExpand] = useState(3);
+  const [nwDaily, setNwDaily] = useState(true);
+  const [nwInstruction, setNwInstruction] = useState('');
+  const [nwForce, setNwForce] = useState(false);
+
   const [pdfManual, setPdfManual] = useState('');
   const [forceOcr, setForceOcr] = useState(false);
   const pdfToken = (selAssetId || pdfManual || '').trim();
@@ -322,6 +375,27 @@ const TaskAgentPage: React.FC = () => {
       inputs.template = pdfTemplate;
       if (pdfTemplate === 'custom') inputs.custom_instruction = customPdf.trim();
       if (forceOcr) inputs.force_ocr = true;
+    } else if (agentId === 'aihot-models') {
+      inputs.limit = lbLimit;
+      if (lbProvider) inputs.providers = [lbProvider];
+      inputs.focus = lbFocus;
+      inputs.compare_local = lbCompare;
+      if (lbInstruction.trim()) inputs.instruction = lbInstruction.trim();
+      if (lbForce) inputs.force_refresh = true;
+      // title 只为「最近任务」的对象列服务（后端 submit() 优先取它），Agent 本身不读。
+      inputs.title = `模型榜 · 前 ${lbLimit} 名${lbProvider ? ' · ' + lbProvider : ''}`;
+    } else if (agentId === 'aihot-news') {
+      inputs.window = nwWindow;
+      inputs.mode = nwMode;
+      if (nwCats.length) inputs.categories = nwCats;
+      if (nwQ.trim().length >= 2) inputs.q = nwQ.trim();
+      inputs.limit = nwLimit;
+      inputs.include_hot = nwHot;
+      inputs.expand_stories = nwHot ? nwExpand : 0;
+      inputs.use_daily = nwDaily;
+      if (nwInstruction.trim()) inputs.instruction = nwInstruction.trim();
+      if (nwForce) inputs.force_refresh = true;
+      inputs.title = `AI 简报 · ${nwWindow === '7d' ? '近 7 天' : '近 24 小时'}${nwQ.trim().length >= 2 ? ' · 盯题「' + nwQ.trim() + '」' : ''}`;
     } else if (agentId === 'meeting-minutes') {
       const tok = (selAssetId || meetingManual || '').trim();
       if (!tok) { setRunning(false); return; }
@@ -382,6 +456,8 @@ const TaskAgentPage: React.FC = () => {
   else if (agentId === 'pdf-recognition') canRun = (isLocal ? localReady : !!pdfToken) && !(pdfTemplate === 'custom' && !customPdf.trim());
   else if (agentId === 'meeting-minutes') canRun = !!meetingToken;
   else if (agentId === 'collab-dispatch') canRun = isLocal ? localReady : dispatchReady;
+  // AIHot 两个 Agent 全部参数都有默认值，随时可跑；custom 侧重要求写了字才有意义。
+  else if (agentId === 'aihot-models') canRun = !(lbFocus === 'custom' && !lbInstruction.trim());
 
   // 模板标识 + 自定义要求：统一放在结果区顶栏（与「HTML 页面生成」一致），不再塞进各结果卡片。
   const isTemplatedAgent = agentId === 'base-analysis' || agentId === 'pdf-recognition';
@@ -619,6 +695,161 @@ const TaskAgentPage: React.FC = () => {
           </div>
         )}
 
+
+        {agentId === 'aihot-models' && (
+          <div style={{ marginTop: 'var(--space-4)' }}>
+            <label className="label">取前几名</label>
+            <input className="input" type="number" min={1} max={100} style={{ width: '100%' }}
+                   value={lbLimit} onChange={e => setLbLimit(Math.max(1, Math.min(100, parseInt(e.target.value) || 30)))} />
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 6, lineHeight: 1.5 }}>
+              榜单当前有 30 个模型。填小一点（如 10）只看头部，页面更清爽。
+            </div>
+
+            <label className="label" style={{ marginTop: 12, display: 'block' }}>厂商</label>
+            <select className="input" style={{ width: '100%' }} value={lbProvider} onChange={e => setLbProvider(e.target.value)}>
+              <option value="">— 全部厂商 —</option>
+              {AIHOT_PROVIDERS.map(x => <option key={x} value={x}>{x}</option>)}
+            </select>
+
+            <label className="label" style={{ marginTop: 12, display: 'block' }}>选型侧重</label>
+            <div style={{ display: 'grid', gap: 6 }}>
+              {AIHOT_FOCUS.map(f => (
+                <label key={f.id} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13, cursor: 'pointer' }}>
+                  <input type="radio" name="lbfocus" checked={lbFocus === f.id} onChange={() => setLbFocus(f.id)} style={{ marginTop: 3 }} />
+                  <span><strong>{f.label}</strong>
+                    <div style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>{f.desc}</div>
+                  </span>
+                </label>
+              ))}
+            </div>
+            {lbFocus === 'custom' && (
+              <textarea className="textarea" style={{ width: '100%', marginTop: 8 }} rows={3}
+                        placeholder="例：主要跑中文长文档抽取，单次 3 万字，预算每月 500 元以内，延迟不敏感"
+                        value={lbInstruction} onChange={e => setLbInstruction(e.target.value)} />
+            )}
+
+            <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 'var(--space-4)', fontSize: 13 }}>
+              <input type="checkbox" checked={lbCompare} onChange={e => setLbCompare(e.target.checked)} style={{ marginTop: 3 }} />
+              <span><strong>对照本机在用的模型</strong>
+                <div style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>
+                  把 backend/.env 里配的三档（均衡 / 快省 / 最强）在榜里定位，并给出「保留还是更换」的判断。未上榜的型号会如实标注。
+                </div>
+              </span>
+            </label>
+            <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 'var(--space-4)', fontSize: 13 }}>
+              <input type="checkbox" checked={lbForce} onChange={e => setLbForce(e.target.checked)} style={{ marginTop: 3 }} />
+              <span><strong>忽略本地缓存，强制重抓</strong>
+                <div style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>
+                  默认 15 分钟内复用本地缓存（少打站点接口）。榜单刚更新、想立刻看到时勾这个。
+                </div>
+              </span>
+            </label>
+            <div style={{ marginTop: 14, fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.7, background: 'var(--surface-subtle)', padding: 10, borderRadius: 8 }}>
+              数据来自 <strong>AIHOT 大模型排行榜</strong>。站点<strong>未提供榜单 API</strong>，本功能解析榜单页内嵌的结构化数据——
+              站点改版时可能失效，届时会明确报错，而不是给你半张假榜。共识分 / 完整度 / 可信度 / 官方价是 AIHOT 口径，
+              <strong>性价比</strong>是本机计算。站点声明<strong>商用须先取得书面授权</strong>，产出页脚会自动带上这条提示。
+            </div>
+          </div>
+        )}
+
+        {agentId === 'aihot-news' && (
+          <div style={{ marginTop: 'var(--space-4)' }}>
+            <label className="label">时间窗口</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {[{ id: '24h', label: '近 24 小时' }, { id: '7d', label: '近 7 天' }].map(w => (
+                <button key={w.id} type="button" className={`btn btn-sm ${nwWindow === w.id ? 'btn-primary' : 'btn-tonal'}`}
+                        onClick={() => setNwWindow(w.id)}>{w.label}</button>
+              ))}
+            </div>
+
+            <label className="label" style={{ marginTop: 12, display: 'block' }}>内容池</label>
+            <div style={{ display: 'grid', gap: 6 }}>
+              {[{ id: 'selected', label: 'AIHOT 精选', desc: '站点已按分数筛过，信噪比高（推荐）' },
+                { id: 'all', label: '全部公开动态', desc: '未筛的完整池，量大、噪音也大' }].map(m => (
+                <label key={m.id} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13, cursor: 'pointer' }}>
+                  <input type="radio" name="nwmode" checked={nwMode === m.id} onChange={() => setNwMode(m.id)} style={{ marginTop: 3 }} />
+                  <span><strong>{m.label}</strong>
+                    <div style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>{m.desc}</div>
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            <label className="label" style={{ marginTop: 12, display: 'block' }}>分类（不选 = 全部）</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {AIHOT_CATEGORIES.map(c => {
+                const on = nwCats.includes(c.id);
+                return (
+                  <button key={c.id} type="button" className={`btn btn-sm ${on ? 'btn-primary' : 'btn-tonal'}`}
+                          onClick={() => setNwCats(on ? nwCats.filter(x => x !== c.id) : [...nwCats, c.id])}>
+                    {c.label}
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 6, lineHeight: 1.5 }}>
+              选多个分类会分别请求再合并（站点的 category 一次只接受一个值）。
+            </div>
+
+            <label className="label" style={{ marginTop: 12, display: 'block' }}>盯题关键词（可选）</label>
+            <input className="input" style={{ width: '100%' }} placeholder="如 Claude / 智能体 / 具身智能（≥2 字）"
+                   value={nwQ} onChange={e => setNwQ(e.target.value)} />
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 6, lineHeight: 1.5 }}>
+              走站点检索：先搜精选，精选无结果时自动放宽到全量池。留空 = 不限主题。
+            </div>
+
+            <label className="label" style={{ marginTop: 12, display: 'block' }}>取多少条素材</label>
+            <input className="input" type="number" min={1} max={100} style={{ width: '100%' }}
+                   value={nwLimit} onChange={e => setNwLimit(Math.max(1, Math.min(100, parseInt(e.target.value) || 40)))} />
+
+            <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 'var(--space-4)', fontSize: 13 }}>
+              <input type="checkbox" checked={nwHot} onChange={e => setNwHot(e.target.checked)} style={{ marginTop: 3 }} />
+              <span><strong>带上当前热点榜</strong>
+                <div style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>
+                  拉站点热点 Top10，命中的条目会标「热 N」并排到简报前面。
+                </div>
+              </span>
+            </label>
+            {nwHot && (
+              <div style={{ marginTop: 8, paddingLeft: 24 }}>
+                <label className="label">展开前几个热点的事件时间线</label>
+                <input className="input" type="number" min={0} max={5} style={{ width: '100%' }}
+                       value={nwExpand} onChange={e => setNwExpand(Math.max(0, Math.min(5, parseInt(e.target.value) || 0)))} />
+                <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 6, lineHeight: 1.5 }}>
+                  逐个拉 /stories：给出该事件的多源报道时间线与站点综述，回答「这事进展到哪了」。0 = 不展开。
+                </div>
+              </div>
+            )}
+            <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 'var(--space-4)', fontSize: 13 }}>
+              <input type="checkbox" checked={nwDaily} onChange={e => setNwDaily(e.target.checked)} style={{ marginTop: 3 }} />
+              <span><strong>参考站点当日日报</strong>
+                <div style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>
+                  取站点每天 08:00 发布的精编日报，仅作分栏与口径参照（不照抄其措辞）。
+                </div>
+              </span>
+            </label>
+            <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 'var(--space-4)', fontSize: 13 }}>
+              <input type="checkbox" checked={nwForce} onChange={e => setNwForce(e.target.checked)} style={{ marginTop: 3 }} />
+              <span><strong>忽略本地缓存，强制重抓</strong>
+                <div style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>
+                  默认 2 分钟内复用缓存（站点资讯接口 s-maxage=60）。
+                </div>
+              </span>
+            </label>
+
+            <label className="label" style={{ marginTop: 12, display: 'block' }}>额外要求（可选）</label>
+            <textarea className="textarea" style={{ width: '100%' }} rows={3}
+                      placeholder="例：面向企业 IT / 数据团队，重点标出可落地动作，忽略消费级产品新闻"
+                      value={nwInstruction} onChange={e => setNwInstruction(e.target.value)} />
+
+            <div style={{ marginTop: 14, fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.7, background: 'var(--surface-subtle)', padding: 10, borderRadius: 8 }}>
+              素材来自 <strong>AIHOT 公开 API v1</strong>（匿名只读、无需 Key）。喂给模型的条目<strong>带编号但不带 URL</strong>，
+              模型只能填引用编号、链接由后端按编号回填——所以简报里不会出现编造的新闻或错链接；引不到编号的内容会被丢弃。
+              站点声明<strong>商用须先取得书面授权</strong>，产出页脚会自动带上这条提示。
+            </div>
+          </div>
+        )}
+
         {agentId === 'collab-dispatch' && (
           <div style={{ marginTop: 'var(--space-4)' }}>
             <SourceTabs mode={srcMode} onChange={setSrcMode} feishuLabel="任务 / 文本" />
@@ -827,6 +1058,8 @@ const TaskAgentPage: React.FC = () => {
           {payload && agentId === 'pdf-recognition' && <PdfRecognitionResult p={payload} />}
           {payload && agentId === 'meeting-minutes' && <MeetingMinutesResult p={payload} taskId={taskId} onDispatch={(tid) => nav(`/task/collab-dispatch?source_task_id=${tid}&auto=1`)} />}
           {payload && agentId === 'collab-dispatch' && <CollabDispatchResult p={payload} />}
+          {payload && agentId === 'aihot-models' && <AihotModelsResult p={payload} taskId={taskId} />}
+          {payload && agentId === 'aihot-news' && <AihotNewsResult p={payload} taskId={taskId} />}
         </div>
       </div>
 
@@ -2223,6 +2456,386 @@ const CollabDispatchResult: React.FC<{ p: any }> = ({ p }) => {
           没有生成可分发的内容。换个素材，或同时勾选「生成群消息 / 任务」再试。
         </div>
       )}
+    </div>
+  );
+};
+
+
+// ── AIHot 内容和模型 ────────────────────────────────────────────────
+
+const AIHOT_ACCENT = '#4F46E5';
+const AIHOT_NEWS_ACCENT = '#0891B2';
+const CONF_CN: Record<string, string> = { HIGH: '高', MEDIUM: '中', LOW: '低' };
+const CONF_BADGE: Record<string, string> = { HIGH: 'badge-success', MEDIUM: 'badge-warning', LOW: 'badge-error' };
+
+function fmtCny(v: number | null | undefined, label?: string): string {
+  if (v === null || v === undefined) return label || '待核验';
+  return '¥' + Number(v).toFixed(2).replace(/\.?0+$/, '');
+}
+
+// 抓取来源 / 时间 / 缓存状态 + HTML 草稿入口。两个 AIHot 结果页共用。
+const AihotProvenance: React.FC<{ p: any; taskId?: string | null; accent: string; children?: React.ReactNode }> =
+  ({ p, taskId, accent, children }) => (
+  <div className="card" style={{ borderTop: `3px solid ${accent}` }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+      <a href={p.source_url} target="_blank" rel="noreferrer" style={{ fontWeight: 600 }}>AIHOT</a>
+      {children}
+      {p.cached
+        ? <span className="badge badge-info" title="本次复用了本地磁盘缓存，没有再打站点接口">缓存 {p.cache_age_s}s</span>
+        : <span className="badge badge-success" title="本次实时抓取">实时抓取</span>}
+      <div style={{ flex: 1 }} />
+      {taskId && (
+        <a className="btn btn-tonal btn-sm" href={`/api/tasks/${taskId}/preview`} target="_blank" rel="noreferrer">
+          <Icon name="external" size={14} /> 打开 HTML 草稿
+        </a>
+      )}
+    </div>
+    {p.policy?.commercial_use && (
+      <div style={{ marginTop: 10, fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.6 }}>
+        站点声明 <code>X-AIHOT-Commercial-Use: {p.policy.commercial_use}</code> —— <strong>商用须先取得书面授权</strong>
+        {p.policy.contact ? <>（联系 {p.policy.contact}）</> : null}。本页与 HTML 草稿只落本地，不会自动写回飞书或外发。
+      </div>
+    )}
+  </div>
+);
+
+const AihotModelsResult: React.FC<{ p: any; taskId?: string | null }> = ({ p, taskId }) => {
+  const rows: any[] = p.rows || [];
+  const local: any[] = p.local_models || [];
+  const a = p.advice || {};
+  const mine = new Set(local.filter(m => m.on_board).map(m => m.board_name));
+  const [byValue, setByValue] = useState(false);
+  const sorted = byValue
+    ? [...rows].sort((x, y) => (y.value ?? -1) - (x.value ?? -1))
+    : rows;
+
+  return (
+    <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
+      <AihotProvenance p={p} taskId={taskId} accent={AIHOT_ACCENT}>
+        <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+          榜单更新于 <strong>{p.updated_label || '未知'}</strong> · 综合 <strong>{p.board_count || '?'}</strong> 家公开榜单
+          · 榜上 {p.total_on_board} 个模型
+        </span>
+      </AihotProvenance>
+
+      {a.headline && (
+        <div className="card" style={{ background: 'var(--brand-50)', borderColor: 'var(--brand-200)' }}>
+          <div style={{ fontWeight: 600, lineHeight: 1.7 }}>{a.headline}</div>
+        </div>
+      )}
+
+      {/* 本机三档模型在榜位置 */}
+      {local.length > 0 && (
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>本机在用的模型</h3>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="table">
+              <thead><tr>
+                <th>档位</th><th>.env 配置项</th><th>模型</th><th>榜内名次</th>
+                <th>共识分</th><th>性价比</th><th>用途</th>
+              </tr></thead>
+              <tbody>
+                {local.map(m => (
+                  <tr key={m.setting}>
+                    <td><strong>{m.tier}</strong></td>
+                    <td><code style={{ fontSize: 12 }}>{m.setting}</code></td>
+                    <td><code>{m.model || '—'}</code></td>
+                    <td>{m.on_board
+                      ? <span className="badge badge-brand">第 {m.rank} 名</span>
+                      : <span className="badge badge-warning" title="榜单里没有这个型号，无法用榜单数据比较">未上榜</span>}</td>
+                    <td>{m.score !== null && m.score !== undefined ? m.score.toFixed(1) : '—'}</td>
+                    <td>{m.value ? m.value.toFixed(2) : '—'}</td>
+                    <td style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>{m.usage}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* 选型建议 */}
+      {(a.picks?.length > 0 || a.keep_or_switch?.length > 0) && (
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>选型建议</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+            {(a.picks || []).map((it: any, i: number) => (
+              <div key={i} style={{ border: '1px solid var(--border-subtle)', borderRadius: 10, padding: 12 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{it.tier_zh}</div>
+                <div style={{ fontWeight: 600, margin: '2px 0 6px' }}>{it.model}
+                  <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: 12 }}> · {it.provider}</span>
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{it.why}</div>
+                {it.tradeoff && (
+                  <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 6, lineHeight: 1.6 }}>
+                    代价：{it.tradeoff}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          {(a.keep_or_switch || []).length > 0 && (
+            <div style={{ marginTop: 14, display: 'grid', gap: 8 }}>
+              {(a.keep_or_switch || []).map((it: any, i: number) => (
+                <div key={i} style={{ fontSize: 13, lineHeight: 1.7 }}>
+                  <span className={`badge ${it.verdict === 'keep' ? 'badge-success' : it.verdict === 'switch' ? 'badge-warning' : 'badge-info'}`}>
+                    {it.verdict === 'keep' ? '建议保留' : it.verdict === 'switch' ? '建议更换' : '无法判断'}
+                  </span>{' '}
+                  <code>{it.current}</code>{it.tier ? `（${it.tier}档）` : ''}
+                  {it.target ? <> → <code>{it.target}</code></> : null}
+                  <div style={{ color: 'var(--text-secondary)' }}>{it.reason}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {(a.watch || []).length > 0 && (
+            <>
+              <h4 style={{ margin: '16px 0 6px', fontSize: 14 }}>值得盯的信号</h4>
+              <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+                {a.watch.map((x: string, i: number) => <li key={i}>{x}</li>)}
+              </ul>
+            </>
+          )}
+          {(a.caveats || []).length > 0 && (
+            <>
+              <h4 style={{ margin: '16px 0 6px', fontSize: 14 }}>这份建议的局限</h4>
+              <ul style={{ margin: 0, paddingLeft: 20, fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.7 }}>
+                {a.caveats.map((x: string, i: number) => <li key={i}>{x}</li>)}
+              </ul>
+            </>
+          )}
+        </div>
+      )}
+      {a.error && (
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>选型建议未生成</h3>
+          <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{a.error} —— 榜单数据不受影响，见下表。</div>
+        </div>
+      )}
+
+      {/* 榜单 */}
+      <div className="card">
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+          <h3 style={{ margin: 0 }}>模型榜<span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: 13 }}> · 前 {rows.length} 名</span></h3>
+          <div style={{ flex: 1 }} />
+          <button className="btn btn-tonal btn-sm" onClick={() => setByValue(v => !v)}
+                  title="在「共识分排序」（站点原序）和「性价比排序」（本机计算）之间切换">
+            <Icon name="refresh" size={13} /> {byValue ? '按共识分排序' : '按性价比排序'}
+          </button>
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--text-tertiary)', margin: '8px 0 12px', lineHeight: 1.6 }}>
+          前 8 列是 AIHOT 榜单口径。<strong>性价比</strong>为本机计算 = 共识分 ÷ 混合价，
+          混合价 =（输入价 + {p.in_out_ratio}×输出价）÷ {1 + Number(p.in_out_ratio)}（假设输入:输出 ≈ 1:{p.in_out_ratio}）；
+          价格待核验的模型不参与该口径。
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="table">
+            <thead><tr>
+              <th>排名</th><th>模型 / 厂商</th><th>上线日期</th><th>评测完整度</th>
+              <th>输入成本</th><th>输出成本</th><th>AIHOT 共识分</th><th>证据可信度</th>
+              <th>性价比*</th><th>名次区间</th>
+            </tr></thead>
+            <tbody>
+              {sorted.map(r => (
+                <tr key={r.slug || r.rank}>
+                  <td className="mono" style={{ fontWeight: 700 }}>{String(r.rank).padStart(2, '0')}</td>
+                  <td>
+                    {r.detail_url
+                      ? <a href={r.detail_url} target="_blank" rel="noreferrer" style={{ fontWeight: 600 }}>{r.name}</a>
+                      : <strong>{r.name}</strong>}
+                    {mine.has(r.name) && <> <span className="badge badge-brand">本机在用</span></>}
+                    <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{r.provider}</div>
+                  </td>
+                  <td style={{ whiteSpace: 'nowrap' }}>{r.released || '—'}</td>
+                  <td>{r.completeness !== null && r.completeness !== undefined ? `${r.completeness.toFixed(1)}%` : '—'}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>{fmtCny(r.price_in, r.price_label)}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>{fmtCny(r.price_out, r.price_label)}</td>
+                  <td><strong>{r.score?.toFixed(1)}</strong></td>
+                  <td><span className={`badge ${CONF_BADGE[r.confidence] || 'badge-info'}`}>{CONF_CN[r.confidence] || r.confidence || '—'}</span></td>
+                  <td title={r.value_rank ? `性价比第 ${r.value_rank} 名` : '价格待核验，不参与性价比排名'}>
+                    {r.value ? r.value.toFixed(2) : '—'}
+                  </td>
+                  <td style={{ whiteSpace: 'nowrap', color: 'var(--text-tertiary)', fontSize: 12 }}>
+                    {r.rank_from ? `${r.rank_from}–${r.rank_to}` : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AihotNewsResult: React.FC<{ p: any; taskId?: string | null }> = ({ p, taskId }) => {
+  const items: any[] = p.items || [];
+  const b = p.brief || {};
+  // refs 是 1 起的编号，指向 items —— 后端已把越界编号清掉，这里直接映射。
+  const refLinks = (refs: number[]) => (refs || []).map(i => items[i - 1]).filter(Boolean).map((it, k) => (
+    <span key={k} style={{ fontSize: 12, color: 'var(--text-tertiary)', marginRight: 10 }}>
+      [{(refs || [])[k]}] {it.source_name || '来源'}
+      {it.aihot_url && <> · <a href={it.aihot_url} target="_blank" rel="noreferrer">AIHOT</a></>}
+      {it.url && <> · <a href={it.url} target="_blank" rel="noreferrer">原文</a></>}
+    </span>
+  ));
+
+  return (
+    <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
+      <AihotProvenance p={p} taskId={taskId} accent={AIHOT_NEWS_ACCENT}>
+        <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+          {p.window_zh} · {p.mode_zh}
+          {p.q ? <> · 盯题「{p.q}」</> : null}
+          {' '}· {items.length} 条素材
+          {p.daily?.date ? <> · 参照日报 {p.daily.date}</> : null}
+        </span>
+        {(b.refs_fixed > 0 || b.refs_dropped > 0) && (
+          <span className="badge badge-warning"
+                title="模型填的引用编号会与条目内容做比对：指错的按内容改判，完全对不上的整条丢弃。">
+            引用体检 修正 {b.refs_fixed || 0} · 丢弃 {b.refs_dropped || 0}
+          </span>
+        )}
+      </AihotProvenance>
+
+      {b.headline && (
+        <div className="card" style={{ background: 'var(--brand-50)', borderColor: 'var(--brand-200)' }}>
+          <div style={{ fontWeight: 600, lineHeight: 1.7 }}>{b.headline}</div>
+        </div>
+      )}
+
+      {(b.highlights || []).length > 0 && (
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>今日要点</h3>
+          <div style={{ display: 'grid', gap: 12 }}>
+            {b.highlights.map((h: any, i: number) => (
+              <div key={i}>
+                <div style={{ fontSize: 14, lineHeight: 1.7 }}>{h.text}</div>
+                <div style={{ marginTop: 3 }}>{refLinks(h.refs)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(b.sections || []).map((sec: any, si: number) => (
+        <div className="card" key={si}>
+          <h3 style={{ marginTop: 0 }}>{sec.label}
+            <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: 13 }}> · {sec.items.length} 条</span>
+          </h3>
+          <div style={{ display: 'grid', gap: 12 }}>
+            {sec.items.map((it: any, i: number) => (
+              <div key={i}>
+                <div style={{ fontWeight: 600 }}>{it.title}</div>
+                {it.why && <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>{it.why}</div>}
+                <div style={{ marginTop: 3 }}>{refLinks(it.refs)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {(b.watchlist || []).length > 0 && (
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>值得持续跟</h3>
+          <div style={{ display: 'grid', gap: 12 }}>
+            {b.watchlist.map((w: any, i: number) => (
+              <div key={i}>
+                <div style={{ fontWeight: 600 }}>{w.topic}</div>
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>{w.state}</div>
+                <div style={{ marginTop: 3 }}>{refLinks(w.refs)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(b.actions || []).length > 0 && (
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>建议动作</h3>
+          <ol style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.8 }}>
+            {b.actions.map((x: string, i: number) => <li key={i}>{x}</li>)}
+          </ol>
+        </div>
+      )}
+
+      {/* 热点事件时间线（来自 /stories，确定性渲染） */}
+      {(p.stories || []).map((st: any, i: number) => (
+        <div className="card" key={i}>
+          <h3 style={{ marginTop: 0 }}>
+            事件时间线：{st.url ? <a href={st.url} target="_blank" rel="noreferrer">{st.title}</a> : st.title}
+            <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: 13 }}>
+              {' '}· {st.source_count || '?'} 个来源 / {st.report_count || '?'} 条报道
+            </span>
+          </h3>
+          {st.digest && <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.8 }}>{st.digest}</p>}
+          {(st.timeline || []).length > 0 && (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="table">
+                <thead><tr><th>时间</th><th>报道</th><th>来源</th></tr></thead>
+                <tbody>
+                  {st.timeline.map((t: any, k: number) => (
+                    <tr key={k}>
+                      <td className="mono" style={{ whiteSpace: 'nowrap' }}>{t.at}</td>
+                      <td>{t.url ? <a href={t.url} target="_blank" rel="noreferrer">{t.title}</a> : t.title}</td>
+                      <td style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>{t.source}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      ))}
+
+      {(b.caveats || []).length > 0 && (
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>不确定性与信息缺口</h3>
+          <ul style={{ margin: 0, paddingLeft: 20, fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.8 }}>
+            {b.caveats.map((x: string, i: number) => <li key={i}>{x}</li>)}
+          </ul>
+        </div>
+      )}
+      {b.error && (
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>简报未生成</h3>
+          <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{b.error} —— 下面是本次抓到的全部原始条目。</div>
+        </div>
+      )}
+
+      {/* 原始条目：编号与上文引用一致，便于核对 */}
+      <div className="card">
+        <details>
+          <summary style={{ cursor: 'pointer', fontWeight: 600 }}>
+            本次抓到的原始条目（{items.length} 条 · 编号与上文引用一致）
+          </summary>
+          <div style={{ overflowX: 'auto', marginTop: 12 }}>
+            <table className="table">
+              <thead><tr><th>#</th><th>标题 / 摘要</th><th>分类</th><th>来源</th><th>时间</th><th>链接</th></tr></thead>
+              <tbody>
+                {items.map((it, i) => (
+                  <tr key={it.id || i}>
+                    <td className="mono">{i + 1}</td>
+                    <td>
+                      {it.hot_rank && <span className="badge badge-warning" style={{ marginRight: 6 }}>热 {it.hot_rank}</span>}
+                      <strong>{it.title}</strong>
+                      {it.summary && <div style={{ fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.6 }}>{it.summary}</div>}
+                      {it.reason && <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, marginTop: 3 }}>站点点评：{it.reason}</div>}
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{it.category_zh}</td>
+                    <td style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{it.source_name || '—'}</td>
+                    <td className="mono" style={{ whiteSpace: 'nowrap', fontSize: 12 }}>{it.published_zh || '—'}</td>
+                    <td style={{ whiteSpace: 'nowrap', fontSize: 12 }}>
+                      {it.aihot_url && <a href={it.aihot_url} target="_blank" rel="noreferrer">AIHOT</a>}
+                      {it.aihot_url && it.url ? ' · ' : ''}
+                      {it.url && <a href={it.url} target="_blank" rel="noreferrer">原文</a>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </div>
     </div>
   );
 };
