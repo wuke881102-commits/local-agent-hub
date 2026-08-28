@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" role="img" aria-label="八个内置 Agent">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 726" role="img" aria-label="内置 Agent 能力总览">
   <defs>
     <style>
       .t  { font-family:"Segoe UI","PingFang SC","Microsoft YaHei","Hiragino Sans GB",sans-serif; }
@@ -9,9 +9,9 @@
       .ic  { fill:none; stroke:#00AA4F; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
     </style>
   </defs>
-  <rect width="1200" height="500" rx="18" fill="#F6FAF7"/>
+  <rect width="1200" height="726" rx="18" fill="#F6FAF7"/>
 
-  <!-- row/col geometry: 4 cols (w270, gap24, x=24/318/612/906); 2 rows (y=24/258, h210) -->
+  <!-- row/col geometry: 4 cols (w270, gap24, x=24/318/612/906); 3 rows (y=24/258/492, h210) -->
   <!-- ============ A1 HTML 页面生成 ============ -->
   <g transform="translate(24,24)">
     <rect class="card" width="270" height="210" rx="16"/>
@@ -84,5 +84,32 @@
     <text class="t tag" x="24" y="112">A8</text>
     <text class="t ti"  x="24" y="138">协作分发</text>
     <text class="t d"   x="24" y="166"><tspan x="24">生成消息 / 邮件 / 任务 / 日程</tspan><tspan x="24" dy="20">草稿，确认后再发送</tspan></text>
+  </g>
+  <!-- ============ A9 本地内容 ============ -->
+  <g transform="translate(24,492)">
+    <rect class="card" width="270" height="210" rx="16"/>
+    <rect x="24" y="24" width="52" height="52" rx="13" fill="#E8F7EE"/>
+    <g transform="translate(38,38) scale(1.05)"><path class="ic" d="M3 5h18v14H3zM3 16l5-5 4 4 3-3 6 6"/></g>
+    <text class="t tag" x="24" y="112">A9</text>
+    <text class="t ti"  x="24" y="138">本地内容</text>
+    <text class="t d"   x="24" y="166"><tspan x="24">本机截图 / 图片 → 视觉模型识别，</tspan><tspan x="24" dy="20">直出 HTML 或结构化要点</tspan></text>
+  </g>
+  <!-- ============ A10 AIHot 模型榜 ============ -->
+  <g transform="translate(318,492)">
+    <rect class="card" width="270" height="210" rx="16"/>
+    <rect x="24" y="24" width="52" height="52" rx="13" fill="#E8F7EE"/>
+    <g transform="translate(38,38) scale(1.05)"><path class="ic" d="M4 20h4v-9H4zM10 20h4V4h-4zM16 20h4v-6h-4zM3 20h18"/></g>
+    <text class="t tag" x="24" y="112">A10</text>
+    <text class="t ti"  x="24" y="138">AIHot 模型榜</text>
+    <text class="t d"   x="24" y="166"><tspan x="24">抓公开站点的模型共识榜，</tspan><tspan x="24" dy="20">按性价比重排，给选型建议</tspan></text>
+  </g>
+  <!-- ============ A11 AIHot 新闻简报 ============ -->
+  <g transform="translate(612,492)">
+    <rect class="card" width="270" height="210" rx="16"/>
+    <rect x="24" y="24" width="52" height="52" rx="13" fill="#E8F7EE"/>
+    <g transform="translate(38,38) scale(1.05)"><path class="ic" d="M4 5h13v14H4zM17 9h3v8a2 2 0 0 1-2 2H4M7 9h7M7 12h7M7 15h4"/></g>
+    <text class="t tag" x="24" y="112">A11</text>
+    <text class="t ti"  x="24" y="138">AIHot 新闻简报</text>
+    <text class="t d"   x="24" y="166"><tspan x="24">抓公开站点的 AI 新闻 / 日报，</tspan><tspan x="24" dy="20">合并成一页可下载的简报</tspan></text>
   </g>
 </svg>
