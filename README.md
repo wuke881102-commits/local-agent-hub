@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-00AA4F.svg" alt="License: MIT"></a>
-  <img src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white" alt="Python 3.11">
+  <img src="https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white" alt="Python 3.12+">
   <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI">
   <img src="https://img.shields.io/badge/React-61DAFB?logo=react&logoColor=black" alt="React">
   <img src="https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white" alt="Vite">
@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <b>一个面向企业用户的、本地优先的 AI 工作台。</b>把你手头的资料——本机的 Excel / Word / PDF / PPT / 网页，以及工作时随手按 Enter 留痕的截图——在本地建立索引，<br>用内置的 AI Agent 生成 HTML 页面、识别 PDF、分析表格，并自动提炼你的工作记录。<br>同时<b>接入飞书</b>，读取并治理你有权限的文档 / 知识库 / 多维表格 / 会议纪要。<br><b>所有数据留在本机，任何对外发送都需你显式确认。</b>
+  <b>一个面向企业用户的、本地优先的 AI 工作台。</b>把你手头的资料——本机的 Excel / Word / PDF / PPT / 网页，以及工作时随手按 Enter 留痕的截图——在本地建立索引，<br>用内置的 AI Agent 生成 HTML 页面、识别 PDF、分析表格，并自动提炼你的工作记录。<br>同时<b>接入飞书</b>，读取并治理你有权限的文档 / 知识库 / 多维表格 / 会议纪要。<br><b>数据留在本机；写回飞书 / 发消息一律需你确认，调用模型发出去多少界面每次都写明、也可以关掉。</b>
 </p>
 
 <p align="center">
@@ -177,6 +177,25 @@ flowchart LR
 
 ---
 
+## 📬 本地邮箱（只读）
+
+直接跟**桌面上已登录的 Outlook** 说话（COM），不走 Graph、不注册 Entra 应用、不经任何第三方邮件服务——**邮件不出这台机器**。打开就是三个视图：智能看板 / 信息矩阵 / 时间图谱。
+
+**「谁在等我回」是本地算的，零模型调用**：拿收件箱的 `ConversationID` 去已发送里找有没有更晚的同会话邮件。不靠「未读」——实测真实收件箱几万封、未读 0，拿未读当信号只会得到空列表。
+
+| | |
+|---|---|
+| 🔒 **严格只读** | 没有发送 / 回复 / 删除 / 移动 / 改已读的代码路径，一行都没有。这条由 [`backend/tools/check_readonly.py`](backend/tools/check_readonly.py) 走 AST 钉死（不是正则，注释和字符串不参与判定）。唯一豁免：你点一封邮件时在 Outlook 里把它打开。 |
+| 📮 **多邮箱可选** | 一个 profile 里挂着委派 / 共享邮箱是常态。可以选读哪一个，**收件箱和已发送一起切**——分开会让「我回过没有」的判断整个反掉。 |
+| 🧠 **AI 语义层（默认开，可关）** | 只发**主题 + 正文前 400 字**；**不发附件、不发附件名、不发收件人栏**；按内容哈希缓存，同一封只发一次。页脚每次写明这一趟外发了几批、多少字、给了哪个模型。`OUTLOOK_AI_ENRICH=false` 关掉后页面照常工作——只少三个语义类型（决策 / 业务 / 行政）和矩阵里的三列语义字段，本地维度和时间轴不受影响。 |
+| 🛡️ **正文当数据，不当指令** | 邮件正文是不可信输入。它被包在分隔符里、在 system 里申明是数据；模型输出只接受固定枚举，不在白名单里的直接丢弃。 |
+
+## 📝 个人摘记
+
+**默认不开。** 你打开它并选一个间隔（默认 4 小时），它就把这段时间的动静合并成一段话，在飞书里推给**你自己**——不是罗列 16 条流水，是合并成人话。**默认用应用身份**发送（应用级令牌不过期），因此不受用户授权 7 天滚动窗口的影响；应用身份不可用时回落到用户身份，另有授权保活，`needs_refresh` 不会被误判成登录失效。
+
+---
+
 ## 🏗️ 工作原理
 
 前端是浏览器里的单页应用，后端是只监听 `127.0.0.1` 的 FastAPI 进程。除了「调飞书 OpenAPI」和「调你配置的模型服务」，其余数据都留在本机。
@@ -291,7 +310,8 @@ Mock 模式下 UI 可完整跑通全流程（含 HTML 生成 + 写回确认 → 
 - **界面永不显示任何 API Key / 密钥。**
 - **所有写回飞书的动作必须显式确认**，并记入本地审计日志。
 - 本地只存元数据与草稿，不默认持久化完整文档正文。
-- ⚠️ 模型调用会把必要上下文发到你配置的模型服务——这是唯一离开本机的业务数据，请按团队合规评估。
+- 📬 **本地邮箱严格只读**——无发送 / 删除 / 移动 / 改已读代码路径，由仓内 AST 检查脚本钉死。邮件正文**不落盘**，缓存只在内存。
+- ⚠️ 模型调用会把必要上下文发到你配置的模型服务——**这是唯一离开本机的业务数据**，请按团队合规评估。其中「本地邮箱」的语义层**默认开启**，每次取数发送主题 + 正文前 400 字（不含附件 / 附件名 / 收件人栏），界面当场写明发送量，`OUTLOOK_AI_ENRICH=false` 可整条关闭。
 - 仓库不含任何真实凭据，请填入你自己的飞书应用与模型 Key。
 
 ---
@@ -312,7 +332,7 @@ build\build_installer.cmd         :: 产出 dist-installer\LocalAgentHub-Setup-X
 ## 🗂️ 目录结构
 
 ```
-backend/    Python 3.11 + FastAPI 本地服务
+backend/    Python 3.12+ + FastAPI 本地服务
   app/
     routes/    HTTP / SSE 路由
     agents/    各 AI Agent（import 即注册）
