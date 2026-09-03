@@ -16,11 +16,11 @@ from .feishu import get_lark, LarkCLI
 
 # 注册所有 agent（import 触发 register_agent 副作用）
 from . import agents  # noqa: F401
-from .routes import auth, scenes, agents as agents_route, tasks, assets, writeback, diagnostics, org, base, dispatch, summaries, localdir, autoextract, aihot, outlook, memo
+from .routes import auth, scenes, agents as agents_route, tasks, assets, writeback, diagnostics, org, base, dispatch, summaries, localdir, autoextract, aihot, outlook, memo, voice
 
 # Single source of truth for the backend version. Bump via
 # scripts\bump_version.ps1 <new-version> (keeps the frontend + installer in sync).
-APP_VERSION = "6.6"
+APP_VERSION = "7.5"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -84,6 +84,7 @@ app.include_router(autoextract.router)
 app.include_router(aihot.router)
 app.include_router(outlook.router)
 app.include_router(memo.router)
+app.include_router(voice.router)
 
 
 @app.get("/api/health")

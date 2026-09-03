@@ -196,6 +196,52 @@ class Settings(BaseSettings):
     # 哪些算噪音因人而异，改这个环境变量就能调，不用改代码。
     outlook_skip_kinds: str = "bulk,newsletter,ticket"
 
+    # ─── 语音速记（麦克风 / 系统回环 → 云端实时转写）───
+    # **会把语音发到云端。** 麦克风那一路发出去的是你自己的声音；系统声音（回环）
+    # 那一路发出去的是会议里**其他人**的声音 —— 后者是用户明确选择要的能力，
+    # 不是默认开启的副作用：录哪一路每次开录时在页面上选，没有"记住上次"。
+    #
+    # 音频本身**没有任何一条代码路径会落盘**（连可选项都不提供），只有转写出来的
+    # 文字存到 DATA_ROOT/voice/notes.jsonl。和 outlook_cache_ttl_s 那条注记同一个
+    # 取舍：内容只在内存里过一遍，磁盘上不留副本。
+    audio_model: str = "qwen-audio-3.0-realtime-flash"
+    # realtime 是 websocket，**不走** text_model_base_url 那个 /compatible-mode/v1
+    # REST 端点，所以单列一个地址、不复用。
+    audio_model_ws_url: str = "wss://dashscope.aliyuncs.com/api-ws/v1/realtime"
+    audio_model_api_key: str = ""      # 留空则复用 text_model_api_key（同一个 dashscope key）
+    # 静音判定阈值（PCM16 的 RMS，满量程 32768）。低于它算静音：**静音期一个字节
+    # 都不往云端发**，也用它决定什么时候提交一段。
+    # 200 是个保守起点：太高会把小声说话判成静音、句子被切断；太低则环境噪声让它
+    # 永远提交不了。真录起来不合适就调这个，不用改代码。
+    voice_silence_rms: int = 200
+    # 连续静音多久算"这句说完了"，然后提交。900 ms 接近服务端 VAD 自己的
+    # 800 ms（我们把服务端 VAD 关了，见 services/voice_asr.py 头注）。
+    voice_commit_silence_ms: int = 900
+    # 单次录音的硬上限（分钟）。**必需，不是保险**：录音是后台线程在跑，浏览器
+    # 标签页关了它还在录。没有这个上限，一次忘记停止就是无声无息录一整天。
+    voice_max_minutes: int = 90
+    # ─── 语音速记：传文件进来转写 ───
+    # 上传的字节**全程只在内存里**（接口收原始请求体，不用 FastAPI 的 UploadFile ——
+    # 后者超过 1 MB 就落到系统临时目录）。所以这两个上限同时也是内存上限。
+    #
+    # 200 MB 差不多是一小时的 m4a 会议录音再乘几倍的余量。
+    voice_file_max_mb: int = 200
+    # 时长上限。**不是性能考虑，是防误操作**：串行转写约 2.6 倍实时（实测），
+    # 一个三小时的文件就是一小时的模型调用，而误传一个大文件太容易了。
+    voice_file_max_minutes: int = 180
+    # 提炼（转写完把逐字稿送给文字模型）**每一档**的超时。
+    #
+    # 90 而不是更长，是实测定的。用户那条失败记录（235 字）复现出来的现象是：
+    # qwen3.7-plus **整整挂了 300 秒**才超时；而同一段内容隔一会儿再打，
+    # 33 秒就出结果，连打两次都正常。也就是说那是一次**瞬时卡死**，
+    # 不是"内容长所以慢"。
+    #
+    # 对这种故障，把超时调大是错的方向 —— 只会让人干等五分钟然后什么都没有。
+    # 正确做法是短超时 + 退到快档：实测同一段内容 deepseek-v4-flash 只要 7.2 秒
+    # （主档 33 秒）。所以最坏情况是 90 秒等不到 + 快档几秒出结果，
+    # 而不是 300 秒之后一场空。
+    voice_distill_timeout_s: int = 90
+
     lark_cli_bin: str = "lark-cli"
     enable_mock_fallback: bool = True
 

@@ -21,7 +21,7 @@ const NAV_TARGETS = [
   { label: '任务场景', sub: '按场景选择 Agent', icon: 'sparkle', path: '/scenes', kw: 'scenes changjing 场景 任务' },
   { label: '飞书文档', sub: '浏览已索引的飞书内容', icon: 'folder', path: '/assets', kw: 'assets zichan feishu 资产 文件 文档 飞书' },
   { label: '本地目录', sub: '浏览本地文件 · 任务数据源', icon: 'desktop', path: '/localdir', kw: 'localdir bendi 本地 目录 文件 文档' },
-  { label: '自动化提炼', sub: '按 Enter 留痕 · 定时提炼工作', icon: 'funnel', path: '/autoextract', kw: 'autoextract tilian 自动化 提炼 截图 捕获 screenshot 日志 工作' },
+  { label: '个人提炼', sub: '定时汇总发飞书 · 按 Enter 留痕提炼工作', icon: 'funnel', path: '/distill', kw: 'distill memo autoextract tilian zhaiji 个人 提炼 摘记 汇总 推送 飞书 自动化 截图 捕获 screenshot 日志 工作' },
   { label: 'AIHot 模型榜', sub: '打开即看 · 共识分 / 官方价 / 性价比', icon: 'graph', path: '/aihot?tab=board', kw: 'aihot moxingbang 模型榜 排行榜 leaderboard 大模型 共识分 性价比 选型 模型对比 llm' },
   { label: 'AIHot AI 新闻', sub: '打开即看 · 资讯 / 热点 / 事件时间线 / 日报', icon: 'cloud', path: '/aihot?tab=news', kw: 'aihot xinwen 新闻 资讯 热点 日报 news ai动态' },
   { label: 'AI 选型建议（AI 加工）', sub: '在模型榜上跑一次 AI：三档推荐 + 换留判断', icon: 'sparkle', path: '/task/aihot-models', kw: 'aihot xuanxing 选型 建议 推荐 模型选择 ai' },

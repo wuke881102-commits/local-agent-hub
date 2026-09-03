@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import useSWR from 'swr';
 import { Icon } from '../components/icons';
-import { api, fetcher, errMsg, Scene, TaskSummary, Diagnostics } from '../api';
+import { api, fetcher, errMsg, enrichDetail, RefreshResult, Scene, TaskSummary, Diagnostics } from '../api';
 import { sceneTarget } from '../sceneTargets';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../components/Toast';
@@ -30,9 +30,10 @@ const Dashboard: React.FC = () => {
   async function refreshIndex() {
     setRefreshing(true);
     try {
-      await api.post('/api/assets/refresh');
+      const r = await api.post<RefreshResult>('/api/assets/refresh');
       await Promise.all([mutateTasks(), mutateDiag()]);
-      toast.success('索引刷新完成');
+      // 回填是后台排的任务，mutateTasks 刚好把它刷进「最近任务」里，能直接点开。
+      toast.success('索引刷新完成', { detail: enrichDetail(r.enrich) });
     } catch (err) {
       toast.error('索引刷新失败', { detail: errMsg(err) });
     } finally {

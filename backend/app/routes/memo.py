@@ -24,7 +24,7 @@ router = APIRouter(prefix="/api/memo", tags=["memo"])
 class StartBody(BaseModel):
     every_min: int = 240
     # 来源开关。故意用显式字典而不是列表：前端加来源时后端不用改。
-    sources: dict[str, bool] = {"digest": True, "mail": True}
+    sources: dict[str, bool] = {"digest": True, "mail": True, "voice": True}
 
 
 @router.get("/status")

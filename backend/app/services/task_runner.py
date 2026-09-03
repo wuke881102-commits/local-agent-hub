@@ -95,6 +95,27 @@ async def reap_orphans() -> int:
         return cur.rowcount or 0
 
 
+async def running_task_id(agent_id: str) -> str | None:
+    """该 Agent 当前是否有在跑的任务；有就返回 task_id，没有返回 None。
+
+    给「自动触发」的调用方防重用：刷新索引会顺带起一次摘要标签回填，连点两次
+    刷新就会起两个回填任务，两个任务并发 UPDATE 同一批 asset 行、互相抢 SQLite
+    写锁，还会重复烧一遍模型调用。
+
+    读的是 DB 而不是内存里的 ``_task_channels``：后端重启后内存表是空的，而
+    ``reap_orphans()`` 已经在启动时把残留的 'running' 行收成 failed，所以 DB 这一侧
+    不会有僵尸行把后续触发永久挡住。
+    """
+    async with get_db() as db:
+        async with db.execute(
+            "SELECT id FROM task_run WHERE agent_id=? AND status='running' "
+            "ORDER BY started_at DESC LIMIT 1",
+            (agent_id,),
+        ) as cur:
+            row = await cur.fetchone()
+            return row[0] if row else None
+
+
 async def submit(agent_id: str, inputs: dict[str, Any], scene: str | None = None) -> str:
     agent = get_agent(agent_id)
     if not agent:

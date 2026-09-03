@@ -16,6 +16,13 @@ const DiagnosticsPage: React.FC = () => {
   );
   if (!data) return <div style={{ padding: 24, color: 'var(--text-secondary)' }}>加载中…（首次检测含模型连通性探测，最多约 12 秒）</div>;
 
+  // 真正的修在后端（feishu/cli.py 的 _scope_list 已把它收成数组）。这里再兜一层，
+  // 是因为这一页的失败方式太差：拿到字符串就 .map，整页白屏 —— 连「后端挂了」
+  // 这种它本该告诉你的事都看不见了。诊断页尤其不能自己先死。
+  const scopes: string[] = Array.isArray(data.auth.scopes)
+    ? data.auth.scopes
+    : String(data.auth.scopes || '').split(/\s+/).filter(Boolean);
+
   return (
     <div style={{ padding: 'var(--space-8)' }}>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
@@ -51,10 +58,10 @@ const DiagnosticsPage: React.FC = () => {
           <KV k="用户" v={data.auth.user_name || data.auth.user_id || '—'} />
           <KV k="权限范围" v={
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
-              {(data.auth.scopes || []).slice(0, 8).map(s => <span key={s} className="badge">{s}</span>)}
-              {(data.auth.scopes?.length || 0) > 8 &&
-                <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>等 {data.auth.scopes!.length} 项</span>}
-              {!data.auth.scopes?.length && '—'}
+              {scopes.slice(0, 8).map(s => <span key={s} className="badge">{s}</span>)}
+              {scopes.length > 8 &&
+                <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>等 {scopes.length} 项</span>}
+              {!scopes.length && '—'}
             </div>
           } />
           {!data.auth.authenticated ? (
@@ -97,6 +104,15 @@ const DiagnosticsPage: React.FC = () => {
               </span>
             </span>
           } />
+          {/* 快省档和最强档以前不显示。它们各有真实调用点（批量回填走 fast、
+              HTML 页面生成走 best），配错了会静默用错模型，所以必须看得到。 */}
+          <KV k="快省 / 最强档" v={
+            <span>
+              <span className="mono">{data.env.text_model_fast || '—'}</span>
+              <span style={{ color: 'var(--text-tertiary)' }}> / </span>
+              <span className="mono">{data.env.text_model_best || '—'}</span>
+            </span>
+          } />
           <KV k="文本端点" v={<span className="mono" style={{ fontSize: 12, color: 'var(--text-tertiary)', wordBreak: 'break-all' }}>{data.env.text_endpoint || '—'}</span>} />
           <KV k="视觉模型" v={
             <span>
@@ -107,7 +123,42 @@ const DiagnosticsPage: React.FC = () => {
               </span>
             </span>
           } />
+          {/* vision_last_model = 上一次真正服务了读图请求的模型。它和 vision_model
+              不一致，就说明主档正在失败、现在是兜底在顶 —— 排查读图问题第一个该看这里。
+              一致时不显示，免得平时多一行噪音。 */}
+          <KV k="视觉兜底" v={
+            <span>
+              <span className="mono">{data.env.vision_fallback_model || '—'}</span>{' '}
+              {data.env.vision_last_model && data.env.vision_last_model !== data.env.vision_model
+                ? <span className="badge badge-warning" title="主档读图失败，当前由兜底模型顶着">
+                    正在顶：{data.env.vision_last_model}
+                  </span>
+                : <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>未启用（主档正常）</span>}
+            </span>
+          } />
           <KV k="视觉端点" v={<span className="mono" style={{ fontSize: 12, color: 'var(--text-tertiary)', wordBreak: 'break-all' }}>{data.env.vision_endpoint || '—'}</span>} />
+          {/* 生图和语音以前在整个界面里一处都看不到，想确认只能翻 .env。
+              生图只报配置状态，**不做连通探测** —— images.generate 一调就真扣费。
+              语音是 realtime WebSocket，不在 llm.ping 覆盖范围内，所以也只报配置。 */}
+          <KV k="生图模型" v={
+            <span>
+              <span className="mono">{data.env.image_model || '—'}</span>{' '}
+              {data.env.image_provider && <span className="badge badge-info">{data.env.image_provider}</span>}{' '}
+              {data.llm.image
+                ? <span className={`badge ${data.llm.image.mock ? 'badge-warning' : 'badge-success'}`}
+                        title="生图不做连通探测（真调用会扣费），这里只报配置状态">
+                    {data.llm.image.mock ? '未配置' : '已配置'}
+                  </span>
+                : null}
+            </span>
+          } />
+          <KV k="语音模型" v={
+            <span>
+              <span className="mono">{data.env.audio_model || '—'}</span>{' '}
+              <span className="badge" title="realtime WebSocket，不在模型连通探测的覆盖范围内">未探测</span>
+            </span>
+          } />
+          <KV k="语音端点" v={<span className="mono" style={{ fontSize: 12, color: 'var(--text-tertiary)', wordBreak: 'break-all' }}>{data.env.audio_endpoint || '—'}</span>} />
           {(data.llm.text?.error || data.llm.vision?.error) && (
             <div className="alert alert-error" style={{ marginTop: 8 }}>
               <Icon name="warning" size={16} />

@@ -55,6 +55,20 @@ hiddenimports = [
     "pythoncom",
     "win32com.client",
     "win32timezone",
+    # 语音速记：WASAPI 采集。两个都要列 —— pyaudiowpatch 是 Python 包，
+    # _portaudiowpatch 是它的原生扩展且是**顶层**模块（不在包内），漏掉后者
+    # 会打包成功、运行时才炸 ImportError。services/voice_capture.py 是在函数里
+    # 惰性 import 的，静态分析同样看不见。
+    "pyaudiowpatch",
+    "_portaudiowpatch",
+    # realtime 转写走 websocket 客户端（uvicorn[standard] 已带 websockets 库，
+    # 但客户端那一侧的子模块不在 uvicorn 的收集范围里）。
+    "websockets.asyncio.client",
+    # 语音速记：文件解码（PyAV 自带 ffmpeg）。voice_file.py 同样是函数内惰性
+    # import，静态分析看不见。av.libs 里的 DLL 由 PyInstaller 按扩展模块的
+    # 导入表自动收，不用手列。
+    "av",
+    "av.audio.resampler",
 ]
 # openpyxl 纯 Python，子模块较多，全量收集以防漏导。
 hiddenimports += collect_submodules("openpyxl")

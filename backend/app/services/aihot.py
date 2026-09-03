@@ -468,6 +468,24 @@ LOCAL_TIERS = [
     ("最强", "text_model_best", "HTML 页面生成（内容重组 + 自由版式直出）"),
 ]
 
+# 本机在用、但**不参与榜单比较**的模型 → (用途, settings 属性, provider 属性, 用途说明)。
+# AIHot 比的是通用文本模型；读图/生图/语音这几路要么不在它的评比范围内，要么型号
+# 根本不会出现在榜上。所以它们不能塞进 LOCAL_TIERS —— 那会让四个全标「未上榜」，
+# 而「未上榜」读起来是「排名靠后/查不到」，不是「这张榜不管这类模型」。
+#
+# 但也不能不列：在此之前，生图和语音这两个模型在整个界面里没有任何一处能看到，
+# 想确认语音速记在用哪个模型只能去翻 .env。
+OTHER_MODELS = [
+    ("视觉", "vision_model", "vision_model_provider",
+     "PDF 识别 / 本地读图 / HTML 页面生成的读图"),
+    ("视觉兜底", "vision_fallback_model", "text_model_provider",
+     "主档读图失败时顶上，走文本端点"),
+    ("生图", "image_model", "image_model_provider",
+     "多维表格分析里画架构图 / 关系图"),
+    ("语音", "audio_model", "",
+     "语音速记的实时转写，realtime WebSocket"),
+]
+
 DEFAULT_IN_OUT_RATIO = 3.0   # 性价比口径：假设输入:输出 token ≈ 1:3
 
 
@@ -576,6 +594,25 @@ def match_local_models(rows: list[dict]) -> list[dict]:
             "value": hit["value"] if hit else None,
             "confidence": hit["confidence"] if hit else "",
             "board_name": hit["name"] if hit else "",
+        })
+    return out
+
+
+def other_models() -> list[dict]:
+    """本机在用、但不在这张榜比较范围内的模型（读图 / 兜底读图 / 生图 / 语音）。
+
+    和 match_local_models 分两份返回，而不是合成一张表：那边每行有名次、共识分、
+    性价比，这边一个都没有。混在一列里，空着的名次会被读成「查不到」，
+    而实际是「不适用」——这两件事的处置完全不同。
+    """
+    out = []
+    for label, attr, prov_attr, usage in OTHER_MODELS:
+        out.append({
+            "kind": label,
+            "setting": attr.upper(),
+            "model": str(getattr(settings, attr, "") or ""),
+            "provider": str(getattr(settings, prov_attr, "") or "") if prov_attr else "",
+            "usage": usage,
         })
     return out
 

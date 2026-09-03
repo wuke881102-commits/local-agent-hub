@@ -28,6 +28,7 @@ const PATHS: Record<string, React.ReactNode> = {
   spark: <path d="M12 2v8M12 14v8M2 12h8M14 12h8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />,
   refresh: <path d="M3 12a9 9 0 0 1 15.5-6.4L21 8M21 4v4h-4M21 12a9 9 0 0 1-15.5 6.4L3 16M3 20v-4h4" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />,
   check: <path d="M5 12l5 5L20 7" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />,
+  copy: <><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.6" fill="none" /><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" /></>,
   x: <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />,
   trash: <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13M10 11v6M14 11v6" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />,
   external: <path d="M14 4h6v6M20 4l-9 9M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />,

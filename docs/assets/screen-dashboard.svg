@@ -24,7 +24,7 @@
       <rect x="22" y="22" width="40" height="40" rx="11" class="grn"/>
       <text class="t" x="42" y="48" font-size="20" font-weight="800" fill="#fff" text-anchor="middle">本</text>
       <text class="t dk" x="74" y="40" font-size="15" font-weight="800">本地 Agent 工作台</text>
-      <text class="t mut" x="74" y="57" font-size="10" letter-spacing="1">LOCAL AGENT HUB · v6.6</text>
+      <text class="t mut" x="74" y="57" font-size="10" letter-spacing="1">LOCAL AGENT HUB · v7.5</text>
       <text class="t mut" x="24" y="96" font-size="11" letter-spacing="2">导航</text>
       <rect x="14" y="108" width="220" height="30" rx="8" fill="#E8F7EE"/>
       <g class="t sub" font-size="13.5">
@@ -36,7 +36,7 @@
         <text x="30" y="298">▦  历史总结</text>
         <text x="30" y="332">⋔  组织架构</text>
         <text x="30" y="366">△  本地邮箱</text>
-        <text x="30" y="400">▤  个人摘记</text>
+        <text x="30" y="400">▽  个人提炼</text>
       </g>
       <text class="t mut" x="24" y="442" font-size="11" letter-spacing="2">AGENTS</text>
       <g class="t" font-size="13">
@@ -50,7 +50,6 @@
         <g><circle cx="30" cy="678" r="5" fill="#EF4444"/><text class="dk" x="46" y="682">协作分发</text><text class="mut" x="196" y="682" font-size="11">就绪</text></g>
         <g><circle cx="30" cy="708" r="5" fill="#0EA5E9"/><text class="dk" x="46" y="712">AIHot 模型榜</text><text class="mut" x="196" y="712" font-size="11">就绪</text></g>
         <g><circle cx="30" cy="738" r="5" fill="#14B8A6"/><text class="dk" x="46" y="742">AIHot 新闻简报</text><text class="mut" x="196" y="742" font-size="11">就绪</text></g>
-        <g><circle cx="30" cy="768" r="5" fill="#0EA5E9"/><text class="dk" x="46" y="772">自动化提炼</text><text class="mut" x="196" y="772" font-size="11">就绪</text></g>
       </g>
       <rect x="14" y="784" width="220" height="44" rx="10" fill="#F2FAF5" stroke="#DCEDE3"/>
       <circle cx="40" cy="806" r="14" class="grn"/>
@@ -133,9 +132,9 @@
         <text class="sub" x="18" y="60" font-size="10.5">群消息 + 任务草稿 · 确认后分发</text>
         <text class="mut" x="18" y="84" font-size="9.5">AGENTS 协作分发</text></g>
       <g transform="translate(560,116)"><rect class="card" width="264" height="100" rx="12"/><rect width="264" height="4" rx="2" fill="#0EA5E9"/>
-        <text class="dk" x="18" y="36" font-size="13.5" font-weight="800">自动化提炼</text>
+        <text class="dk" x="18" y="36" font-size="13.5" font-weight="800">个人提炼</text>
         <text class="sub" x="18" y="60" font-size="10.5">按 Enter 自动留痕 · 定时提炼工作</text>
-        <text class="mut" x="18" y="84" font-size="9.5">AGENTS 自动化提炼</text></g>
+        <text class="mut" x="18" y="84" font-size="9.5">个人摘记 · 自动化提炼</text></g>
       <g transform="translate(840,116)"><rect class="card" width="264" height="100" rx="12"/><rect width="264" height="4" rx="2" fill="#14B8A6"/>
         <text class="dk" x="18" y="36" font-size="13.5" font-weight="800">AIHot 内容和模型</text>
         <text class="sub" x="18" y="60" font-size="10.5">公开站点的 AI 新闻与模型榜 → 简报页</text>

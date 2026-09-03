@@ -16,7 +16,7 @@ created_at 落在窗口里的，邮件只取 received_ts 落在窗口里的。�
 会把攒了半天的内容一次倒出来 —— 而标题写的是「近四小时」，对不上。
 代价是失败那一轮不补发（提炼记录和邮件都还在应用里，不是丢了）。
 
-## 两个来源（默认都开）
+## 三个来源（默认都开）
 
 - **自动化提炼**：读**落盘的** ``digests.jsonl``，不是内存里的积压。提炼会话停过、
   后端重启过，只要文件里有，摘记还能补上。窗口里一条都没有（比如这段
@@ -29,8 +29,12 @@ created_at 落在窗口里的，邮件只取 received_ts 落在窗口里的。�
      并且**只提醒一次** —— 每次都提醒会变成另一种噪音。
   2. AI 语义层照常开，意味着邮件主题和正文前 400 字会**按点自动**发到云端模型，
      那一刻没有人在同意。这是取舍。
+- **语音速记**：读**已经录好的**转写记录（``voice/notes.jsonl``）。
+  **它绝不会去开麦克风。** 摘记是定时无人值守跑的，在那种上下文里触发录音是不能
+  接受的 —— 所以这一路只有"读文件"这一种能力，和自动化提炼那一路一样。
+  语音记录本身已经是提炼过的，这里直接拼，不再送一次模型。
 
-## 两条来源互不拖累
+## 三条来源互不拖累
 
 一条挂了，另一条照发。摘记的价值是「打开飞书就知道」，为了凑齐而整条不发，
 等于把一次小故障放大成一次彻底沉默。
@@ -55,7 +59,7 @@ import time
 
 from ..config import settings
 from ..llm import get_llm
-from . import auto_extract, selfpush
+from . import auto_extract, selfpush, voice
 
 log = logging.getLogger("memo")
 
@@ -68,14 +72,14 @@ _DEFAULT_EVERY = 240
 # 邮件小节每类最多列多少条。超了只说「还有 N 件」——一条飞书消息塞 40 行没人看。
 _MAIL_CAP = 8
 
-SOURCES = ("digest", "mail")
+SOURCES = ("digest", "mail", "voice")
 
 _state: dict = {
     "active": False,
     "every_min": _DEFAULT_EVERY,
     # 两个来源**默认都开**。摘记的用处是「打开飞书就知道这几小时发生了什么」，
     # 缺了邮件那一半就只剩自己的操作留痕，看不到别人推给你的事。
-    "sources": {"digest": True, "mail": True},
+    "sources": {"digest": True, "mail": True, "voice": True},
     "started_at": "",
     "last_run_at": "",
     "next_run_at": "",
@@ -118,6 +122,39 @@ def _collect_digest() -> tuple[list[dict], int]:
             if str(r.get("created_at") or "") >= lo]
     recs.reverse()                                               # 改成时间正序
     return recs, len(recs)
+
+
+# ── 来源：语音速记 ───────────────────────────────────────────────────────
+
+def _collect_voice() -> tuple[list[dict], int]:
+    """取窗口内录好的语音记录（时间正序）。
+
+    **只读文件，不碰麦克风。** 见头注。窗口内没录过就是 0 条，整段不出现。
+    """
+    recs = voice.notes_in_window(_window_start(), dt.datetime.now())
+    recs.sort(key=lambda r: str(r.get("created_at") or ""))
+    return recs, len(recs)
+
+
+def _voice_markdown(recs: list[dict]) -> str:
+    """把语音记录排成一段。
+
+    直接用每条自己的 ``summary`` —— 它在停止录音那一刻已经过一次模型了，
+    再送一次既花钱又会把细节磨平。没有 summary（提炼当时失败了）的退回逐字稿，
+    并截断：一条摘记里塞进整段逐字稿没人看。
+    """
+    out = []
+    for r in recs:
+        t = str(r.get("created_at") or "")[5:16].replace("T", " ")
+        mins = int(r.get("seconds") or 0) // 60
+        head = "**%s · %s分钟**" % (t, mins if mins else "<1")
+        body = (r.get("summary") or "").strip()
+        if not body:
+            raw = (r.get("transcript") or "").strip()
+            body = (raw[:600] + "……（逐字稿已截断）") if len(raw) > 600 else raw
+        if body:
+            out.append("%s\n\n%s" % (head, body))
+    return "\n\n".join(out)
 
 
 # ── 来源：本地邮箱 ───────────────────────────────────────────────────────
@@ -338,7 +375,7 @@ async def run_once(*, manual: bool = False) -> dict:
             src = _state["sources"]
             parts: list[str] = []
             notices: list[str] = []
-            counts = {"digest": 0, "mail": 0}
+            counts = {"digest": 0, "mail": 0, "voice": 0}
 
             if src.get("digest"):
                 recs, n = await asyncio.to_thread(_collect_digest)
@@ -390,6 +427,19 @@ async def run_once(*, manual: bool = False) -> dict:
                     _state["error"] = "邮件读取失败：%s" % e
                     log.warning("memo mail source failed: %s", e)
 
+            if src.get("voice"):
+                try:
+                    recs, n = await asyncio.to_thread(_collect_voice)
+                    if recs:
+                        counts["voice"] = n
+                        md = _voice_markdown(recs)
+                        if md:
+                            parts.append("## 语音速记 · %d 条\n\n%s" % (n, md))
+                except Exception as e:  # noqa: BLE001
+                    # 和邮件那一路一样：一条挂了不影响其它两条。
+                    _state["error"] = "语音记录读取失败：%s" % e
+                    log.warning("memo voice source failed: %s", e)
+
             _state["last_run_at"] = _now_iso()
 
             if not parts and not notices:
@@ -405,8 +455,8 @@ async def run_once(*, manual: bool = False) -> dict:
             res = await selfpush.try_send(md, key=key)
             if res.get("ok"):
                 _state["error"] = ""
-                _state["last_result"] = "已推送：提炼 %d 次 / 邮件 %d 封。" % (
-                    counts["digest"], counts["mail"])
+                _state["last_result"] = "已推送：提炼 %d 次 / 邮件 %d 封 / 语音 %d 条。" % (
+                    counts["digest"], counts["mail"], counts["voice"])
                 return {"ok": True, "sent": True, "counts": counts}
 
             # 推送失败：**把原因写进 last_result**，不要只说「失败」。
@@ -463,7 +513,7 @@ async def start(every_min: int = _DEFAULT_EVERY, sources: dict | None = None) ->
     every_min = max(_MIN_EVERY, min(_MAX_EVERY, int(every_min or _DEFAULT_EVERY)))
     src = {k: bool((sources or {}).get(k)) for k in SOURCES}
     if not any(src.values()):
-        raise ValueError("至少要选一个来源（自动化提炼 / 本地邮箱）。")
+        raise ValueError("至少要选一个来源（自动化提炼 / 本地邮箱 / 语音速记）。")
 
     if _loop_task and not _loop_task.done():
         _loop_task.cancel()
@@ -506,6 +556,7 @@ def status() -> dict:
     out["min_every"] = _MIN_EVERY
     out["max_every"] = _MAX_EVERY
     out["digest_available"] = len(auto_extract.list_digests(limit=1)) > 0
+    out["voice_available"] = len(voice.list_notes(limit=1)) > 0
     out["mail_failed"] = _mail_failed
     # 推送侧的结果单独给：needs_login 要显眼，它意味着重试无用、得去重新登录。
     out["push"] = selfpush.last()

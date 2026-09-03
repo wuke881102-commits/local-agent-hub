@@ -1,14 +1,21 @@
+/**
+ * 个人摘记 —— 「个人提炼」页的上半部分。
+ *
+ * 原本是独立页面 pages/MemoPage.tsx（路由 /memo）。合并进「个人提炼」后它不再
+ * 自带页面外壳（padding / maxWidth / h2），那些由 pages/PersonalDistillPage.tsx 提供；
+ * 除此之外内容与逻辑一字未改。合并的理由见那个文件的头注释。
+ */
 import React, { useCallback, useEffect, useState } from 'react';
-import { api, errMsg } from '../api';
-import { Icon } from '../components/icons';
-import { useToast } from '../components/Toast';
+import { api, errMsg } from '../../api';
+import { Icon } from '../icons';
+import { useToast } from '../Toast';
 
 type Push = { at: string; ok: boolean | null; error: string; needs_login: boolean; sent: number };
 
 type Status = {
   active: boolean;
   every_min: number;
-  sources: { digest: boolean; mail: boolean };
+  sources: { digest: boolean; mail: boolean; voice: boolean };
   started_at: string;
   last_run_at: string;
   next_run_at: string;
@@ -18,6 +25,7 @@ type Status = {
   min_every: number;
   max_every: number;
   digest_available: boolean;
+  voice_available: boolean;
   mail_failed: boolean;
   push: Push;
 };
@@ -29,11 +37,13 @@ const EVERY = [30, 60, 120, 240, 480, 1440];
 const everyLabel = (m: number) =>
   m >= 1440 ? '一天一次' : m >= 60 ? `${m / 60} 小时` : `${m} 分钟`;
 
-const SOURCES: { key: 'digest' | 'mail'; label: string; hint: string }[] = [
+const SOURCES: { key: 'digest' | 'mail' | 'voice'; label: string; hint: string }[] = [
   { key: 'digest', label: '自动化提炼',
     hint: '窗口内的工作留痕（比如 15 分钟一次，四小时就是 16 条）由模型合并成一段。这段时间没开提炼 → 这一段不出现。' },
   { key: 'mail', label: '本地邮箱',
     hint: '窗口内收到的邮件合并成一段；窗口内没新邮件则退回「谁在等你」。会真去读一次 Outlook。' },
+  { key: 'voice', label: '语音速记',
+    hint: '窗口内录好的语音记录，直接用它自己的提炼结果拼进来。只读已录好的文字，不会去开麦克风。' },
 ];
 
 function fmtTime(iso: string): string {
@@ -41,13 +51,14 @@ function fmtTime(iso: string): string {
   return iso.replace('T', ' ').slice(5, 16);
 }
 
-const MemoPage: React.FC = () => {
+const MemoSection: React.FC = () => {
   const toast = useToast();
   const [st, setSt] = useState<Status | null>(null);
   const [every, setEvery] = useState<number>(240);
   // 两个来源默认都勾（与后端 _state 同步）。缺了邮件那一半就只剩自己的操作
   // 留痕，看不到别人推给你的事。
-  const [src, setSrc] = useState<{ digest: boolean; mail: boolean }>({ digest: true, mail: true });
+  const [src, setSrc] = useState<{ digest: boolean; mail: boolean; voice: boolean }>(
+    { digest: true, mail: true, voice: true });
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -57,7 +68,7 @@ const MemoPage: React.FC = () => {
       // 只在未开启时同步表单，否则用户正在改的选择会被轮询覆盖掉。
       if (!s.active) {
         setEvery(s.every_min || 240);
-        setSrc({ digest: !!s.sources?.digest, mail: !!s.sources?.mail });
+        setSrc({ digest: !!s.sources?.digest, mail: !!s.sources?.mail, voice: !!s.sources?.voice });
       }
     } catch { /* ignore */ }
   }, []);
@@ -69,7 +80,7 @@ const MemoPage: React.FC = () => {
   }, [load]);
 
   const active = !!st?.active;
-  const noSource = !src.digest && !src.mail;
+  const noSource = !src.digest && !src.mail && !src.voice;
 
   const start = async () => {
     setBusy(true);
@@ -103,9 +114,9 @@ const MemoPage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: 'var(--space-8)', maxWidth: 1080, margin: '0 auto' }}>
+    <section>
       <div style={{ marginBottom: 'var(--space-5)' }}>
-        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>个人摘记</h2>
+        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>个人摘记</h3>
         <div className="eyebrow" style={{ marginTop: 4 }}>
           按你设的频率，把各处的进展合成一条，发到你自己的飞书 · 只发给你自己，不发给任何其他人
         </div>
@@ -236,9 +247,12 @@ const MemoPage: React.FC = () => {
         <br />
         <Icon name="warning" size={12} /> 勾选「本地邮箱」意味着每次汇总会真去读一次 Outlook，
         并按现有设置把邮件主题和正文前 400 字发到云端模型做语义分析 —— 那一刻没有人在旁边确认。
+        <br />
+        <Icon name="mic" size={12} /> 勾选「语音速记」<strong>不会</strong>触发录音，它只读你已经录好的记录。
+        录音永远只能在「语音速记」页面里手动开始。
       </div>
-    </div>
+    </section>
   );
 };
 
-export default MemoPage;
+export default MemoSection;

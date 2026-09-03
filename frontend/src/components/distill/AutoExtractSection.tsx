@@ -1,9 +1,19 @@
+/**
+ * 自动化提炼 —— 「个人提炼」页的下半部分。
+ *
+ * 原本是独立页面 pages/AutoExtractPage.tsx（路由 /autoextract），同时在侧栏 AGENTS
+ * 里挂了一条伪 Agent。合并进「个人提炼」后两个旧入口都撤了：它是常驻视图，不是
+ * 「填参数跑一次」的 Agent，摆在 Agent 列表里一直是错位的。
+ *
+ * 页面外壳（padding / maxWidth / h2）由 pages/PersonalDistillPage.tsx 提供，
+ * 除此之外内容与逻辑一字未改。
+ */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { api, errMsg } from '../api';
-import { Icon } from '../components/icons';
-import { useToast } from '../components/Toast';
-import { fileUrl } from '../components/LocalSourcePicker';
-import QuickSendToChat from '../components/QuickSendToChat';
+import { api, errMsg } from '../../api';
+import { Icon } from '../icons';
+import { useToast } from '../Toast';
+import { fileUrl } from '../LocalSourcePicker';
+import QuickSendToChat from '../QuickSendToChat';
 
 type Status = {
   active: boolean;
@@ -55,7 +65,7 @@ function fmtTime(iso: string): string {
   return iso.replace('T', ' ').slice(5, 16);
 }
 
-const AutoExtractPage: React.FC = () => {
+const AutoExtractSection: React.FC = () => {
   const toast = useToast();
   const [st, setSt] = useState<Status | null>(null);
   const [digests, setDigests] = useState<Digest[]>([]);
@@ -152,9 +162,9 @@ const AutoExtractPage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: 'var(--space-8)', maxWidth: 1080, margin: '0 auto' }}>
+    <section>
       <div style={{ marginBottom: 'var(--space-5)' }}>
-        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>自动化提炼</h2>
+        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>自动化提炼</h3>
         <div className="eyebrow" style={{ marginTop: 4 }}>
           工作中按 Enter 自动留痕截图 · 每隔一段时间用大模型提炼这段时间的工作（说明 / 重点 / 操作 / 会议）
         </div>
@@ -384,8 +394,8 @@ const AutoExtractPage: React.FC = () => {
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 };
 
-export default AutoExtractPage;
+export default AutoExtractSection;

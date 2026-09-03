@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import useSWR from 'swr';
 import { Icon } from '../components/icons';
-import { api, fetcher, errMsg, Asset } from '../api';
+import { api, fetcher, errMsg, enrichDetail, RefreshResult, Asset } from '../api';
 import { useToast } from '../components/Toast';
 
 const PAGE_SIZE = 50;
@@ -140,9 +140,9 @@ const AssetsPage: React.FC = () => {
   async function refresh() {
     setRefreshing(true);
     try {
-      await api.post('/api/assets/refresh');
+      const r = await api.post<RefreshResult>('/api/assets/refresh');
       await mutate();
-      toast.success('索引刷新完成');
+      toast.success('索引刷新完成', { detail: enrichDetail(r.enrich) });
     } catch (err) {
       toast.error('索引刷新失败', { detail: errMsg(err) });
     } finally {
@@ -217,7 +217,7 @@ const AssetsPage: React.FC = () => {
         <button className="btn btn-tonal btn-sm" onClick={refresh} disabled={refreshing}>
           <Icon name="refresh" size={14} /> {refreshing ? '刷新中…' : '刷新索引'}
         </button>
-        <button className="btn btn-primary btn-sm" onClick={() => nav('/task/index-enrich')} style={{ marginLeft: 8 }} title="用 qwen3.6-flash 为资产生成摘要 / 分类 / 标签">
+        <button className="btn btn-primary btn-sm" onClick={() => nav('/task/index-enrich')} style={{ marginLeft: 8 }} title="回填现在已经跟着「刷新索引」自动跑了。这个按钮留作手动入口：想强制覆盖重跑，或想看上次回填的覆盖率 / 分类分布。">
           <Icon name="sparkle" size={14} /> AI 摘要回填
         </button>
       </div>

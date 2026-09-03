@@ -22,7 +22,6 @@ const AGENT_TASK_PATHS: Record<string, string> = {
   // 同一个数据页的两个标签：模型榜走默认标签，新闻简报直接落到 AI 新闻标签。
   'aihot-models': '/aihot?tab=board',
   'aihot-news': '/aihot?tab=news',
-  'auto-extract': '/autoextract',
 };
 
 const NAV_ITEMS = [
@@ -34,7 +33,8 @@ const NAV_ITEMS = [
   { id: 'summaries',label: '历史总结',   icon: 'calendar',path: '/summaries' },
   { id: 'org',      label: '组织架构',   icon: 'graph',   path: '/org' },
   { id: 'outlook',  label: '本地邮箱',   icon: 'bell',    path: '/outlook' },
-  { id: 'memo',     label: '个人摘记',   icon: 'calendar', path: '/memo' },
+  { id: 'distill',  label: '个人提炼',   icon: 'funnel',  path: '/distill' },
+  { id: 'voice',    label: '语音速记',   icon: 'mic',     path: '/voice' },
 ];
 
 interface Crumb { label: string; onClick?: () => void; }
@@ -51,12 +51,12 @@ export const WorkbenchShell: React.FC<Props> = ({ crumb, children, headerActions
   const { data: auth } = useSWR<AuthStatus>('/api/auth/status', fetcher, { refreshInterval: 15000 });
   const { data: agentsData } = useSWR<{ items: AgentInfo[] }>('/api/agents', fetcher);
   const agents = agentsData?.items || [];
-  // 「本地内容」(local-image) 只在内容生成页内部使用、侧栏点不开；用「自动化提炼」占其位，
-  // 既给该 Agent 一个可点入口，又避免一条灰着点不动的死项。
-  const sidebarAgents: AgentInfo[] = [
-    ...agents.filter(a => a.id !== 'local-image'),
-    { id: 'auto-extract', name: '自动化提炼', desc: '按 Enter 留痕截图 · 定时提炼工作', writeback: false, status: 'ready', color: '#0EA5E9' },
-  ];
+  // 「本地内容」(local-image) 只在内容生成页内部使用、侧栏点不开，所以从 AGENTS 里滤掉。
+  //
+  // 这里曾经补一条伪 Agent「自动化提炼」顶上它的位置。现在不补了：自动化提炼已经并入
+  // 上方导航的「个人提炼」，它是常驻视图不是 Agent（没有「填参数跑一次」这回事），
+  // 挂在 AGENTS 里始终是错位的。少一条真 Agent 没有的项，比多一条名不副实的强。
+  const sidebarAgents: AgentInfo[] = agents.filter(a => a.id !== 'local-image');
   // 重新授权（补授新增 scope，如发群消息 im:message）。已授权状态下也可触发。
   const { startLogin, loginInfo, loggingIn, polling, refresh: refreshAuth } = useAuth();
   const toast = useToast();

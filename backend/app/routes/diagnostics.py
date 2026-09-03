@@ -88,6 +88,14 @@ async def diagnostics() -> dict:
             # 就说明主档正在失败、现在是兜底在顶 —— 这是排查时第一个该看的地方。
             "vision_fallback_model": settings.vision_fallback_model,
             "vision_last_model": llm.vision_last_model,
+            # 生图和语音这两路以前在界面上任何一处都看不到，只能翻 .env 才知道
+            # 在用哪个模型。生图不做 live 探测（images.generate 真扣费），
+            # 只报配置状态；语音是 realtime WebSocket，也不在 llm.ping 的覆盖里。
+            "image_provider": settings.image_model_provider,
+            "image_model": settings.image_model,
+            "image_endpoint": settings.image_model_azure_endpoint or settings.image_model_base_url,
+            "audio_model": settings.audio_model,
+            "audio_endpoint": settings.audio_model_ws_url,
             "mock_fallback": settings.enable_mock_fallback,
         },
     }

@@ -1,7 +1,7 @@
 import React from 'react';
 import useSWR from 'swr';
 import { Icon } from '../components/icons';
-import { api, fetcher, errMsg } from '../api';
+import { api, fetcher, errMsg, enrichDetail, RefreshResult } from '../api';
 import { useToast } from '../components/Toast';
 import { DIR_KEY } from '../components/LocalSourcePicker';
 
@@ -67,9 +67,10 @@ const SummariesPage: React.FC = () => {
   async function refreshIndex() {
     setRefreshing(true);
     try {
-      await api.post('/api/assets/refresh');
+      const r = await api.post<RefreshResult>('/api/assets/refresh');
       await mutate();
-      toast.success('索引已刷新', { detail: '已拉取飞书最新改动' });
+      const tail = enrichDetail(r.enrich);
+      toast.success('索引已刷新', { detail: '已拉取飞书最新改动' + (tail ? ' · ' + tail : '') });
     } catch (e) {
       toast.error('索引刷新失败', { detail: errMsg(e) });
     } finally {

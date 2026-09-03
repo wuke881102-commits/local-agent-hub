@@ -2502,6 +2502,8 @@ const AihotProvenance: React.FC<{ p: any; taskId?: string | null; accent: string
 const AihotModelsResult: React.FC<{ p: any; taskId?: string | null }> = ({ p, taskId }) => {
   const rows: any[] = p.rows || [];
   const local: any[] = p.local_models || [];
+  // 读图 / 兜底读图 / 生图 / 语音：本机也在用，但这张榜不比它们，所以没有名次列。
+  const others: any[] = p.other_models || [];
   const a = p.advice || {};
   const mine = new Set(local.filter(m => m.on_board).map(m => m.board_name));
   const [byValue, setByValue] = useState(false);
@@ -2551,6 +2553,35 @@ const AihotModelsResult: React.FC<{ p: any; taskId?: string | null }> = ({ p, ta
               </tbody>
             </table>
           </div>
+
+          {/* 不参与比较的那几路。**不给它们塞进上面那张表**：那张表每行都有名次和
+              性价比，这几路一个都没有，混进去空着的名次会被读成「查不到」，
+              而实情是这张榜只比通用文本模型、根本不管这类模型。 */}
+          {others.length > 0 && (
+            <>
+              <div style={{ fontSize: 12, color: 'var(--text-tertiary)', margin: '12px 0 6px' }}>
+                下面几路本机也在用，但这张榜只比通用文本模型，没有名次和性价比可对照
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table className="table">
+                  <thead><tr>
+                    <th>用途</th><th>.env 配置项</th><th>模型</th><th>厂商</th><th>干什么</th>
+                  </tr></thead>
+                  <tbody>
+                    {others.map(m => (
+                      <tr key={m.setting}>
+                        <td><strong>{m.kind}</strong></td>
+                        <td><code style={{ fontSize: 12 }}>{m.setting}</code></td>
+                        <td><code>{m.model || '—'}</code></td>
+                        <td style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>{m.provider || '—'}</td>
+                        <td style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>{m.usage}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </div>
       )}
 

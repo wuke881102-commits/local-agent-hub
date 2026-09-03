@@ -5,7 +5,7 @@ import LocalSourcePicker, { DIR_KEY, fileUrl, LocalFile } from '../components/Lo
 
 /**
  * 本地目录页：纯文件浏览 / 数据源。
- * - 截图采集（按 Enter 留痕 + 定时提炼）已独立为「自动化提炼」场景。
+ * - 截图采集（按 Enter 留痕 + 定时提炼）已独立为「个人提炼」场景的下半部分。
  * - 内容生产已迁到各任务场景（内容生成 / PDF 识别 / 表格分析 / 协作分发），
  *   在那里把「本地目录」作为数据源即可选用此处的文件。
  */
@@ -32,13 +32,13 @@ const LocalDirPage: React.FC = () => {
         <button className="btn btn-secondary btn-sm" onClick={() => nav('/scenes')}>去任务场景 <Icon name="chevron-right" size={13} /></button>
       </div>
 
-      {/* 指引：截图采集已迁到「自动化提炼」 */}
+      {/* 指引：截图采集已迁到「个人提炼」 */}
       <div className="card" style={{ padding: 'var(--space-4)', marginBottom: 'var(--space-5)', display: 'flex', alignItems: 'center', gap: 12, background: 'var(--surface-subtle)' }}>
         <Icon name="scan" size={18} style={{ color: '#0EA5E9', flexShrink: 0 }} />
         <div style={{ flex: 1, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-          想边工作边按 <kbd className="kbd">Enter</kbd> 自动留痕、再定时提炼工作内容？请到 <strong>「自动化提炼」</strong> 场景——它的截图独立存放，不会出现在这里。
+          想边工作边按 <kbd className="kbd">Enter</kbd> 自动留痕、再定时提炼工作内容？请到 <strong>「个人提炼」</strong> 场景——它的截图独立存放，不会出现在这里。
         </div>
-        <button className="btn btn-secondary btn-sm" onClick={() => nav('/autoextract')}>去自动化提炼 <Icon name="chevron-right" size={13} /></button>
+        <button className="btn btn-secondary btn-sm" onClick={() => nav('/distill')}>去个人提炼 <Icon name="chevron-right" size={13} /></button>
       </div>
 
       {/* 目录 + 文件列表（点击行打开预览；右侧操作与「飞书文档」一致：分析 / 识别 / 生成 HTML / 打开） */}

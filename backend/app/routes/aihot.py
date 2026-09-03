@@ -61,6 +61,9 @@ async def leaderboard(
         "providers": sorted({r["provider"] for r in rows_all if r["provider"]}),
         "rows": rows[:limit],
         "local_models": aihot.match_local_models(rows_all) if compare_local else [],
+        # 本机还在用、但这张榜不管的那几路（读图 / 生图 / 语音）。分开一个字段，
+        # 免得前端把没有名次的行画成「查不到名次」。
+        "other_models": aihot.other_models() if compare_local else [],
     }
 
 

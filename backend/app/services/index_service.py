@@ -485,6 +485,25 @@ async def filter_options() -> dict:
     return {"categories": cats, "spaces": spaces, "owners": owners}
 
 
+async def count_unenriched() -> int:
+    """索引里还没回填过 summary 的活跃资产条数。
+
+    口径必须和 index-enrich Agent 实际会处理的集合一致：它拿的是
+    ``list_assets()``（隐含 ``index_state='active'``）里 summary 为空的那些，
+    所以这里也只数 active。
+
+    存在的意义只有一个：刷新索引之后决定「要不要顺手起一次回填」。为 0 就别起
+    ——否则每点一次刷新，「运行记录」里就多一条什么也没干的任务。
+    """
+    async with get_db() as db:
+        async with db.execute(
+            "SELECT COUNT(*) FROM asset WHERE index_state='active' "
+            "AND (summary IS NULL OR TRIM(summary) = '')"
+        ) as cur:
+            row = await cur.fetchone()
+            return int(row[0]) if row else 0
+
+
 async def save_enrichment(rows: list[dict]) -> int:
     """批量写回 AI 生成的 summary / category / tags（PRD §10 元信息富集）。
 

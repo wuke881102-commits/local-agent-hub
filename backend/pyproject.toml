@@ -35,6 +35,26 @@ dependencies = [
     # 它此前只是恰好装在开发机的 venv 里，全新环境重建 venv 后打包会得到一个
     # 「本地邮箱一点就报 ModuleNotFoundError」的安装包，而构建本身不报错。
     "pywin32>=306",
+    # 语音速记：WASAPI 采集。**必须是 pyaudiowpatch，不能换成 sounddevice** ——
+    # sounddevice 0.5.6 捆的 PortAudio V19.7.0-devel 里 WasapiSettings 没有
+    # loopback 参数，压根不提供系统回环采集，而「录会议里对方的声音」只能靠回环。
+    # 详细实测记录见 app/services/voice_capture.py 头注。
+    #
+    # 它的原生扩展是**顶层**模块 _portaudiowpatch（不在包里面），打包时两个都要
+    # 显式列进 launcher.spec 的 hiddenimports —— voice_capture.py 是在函数内部
+    # 惰性 import 的，PyInstaller 的静态分析看不见。
+    "pyaudiowpatch>=0.2.12",
+    # 语音速记：传进来的音频 / 视频文件解码。**AAC 这一格把别的选项全筛掉了** ——
+    # 要覆盖的是手机录音（iPhone 语音备忘录是 .m4a）和会议回放（.mp4），而
+    # soundfile / miniaudio 都不支持 AAC，系统 ffmpeg 不能假定装了，
+    # Windows Media Foundation 在 Server 上默认没装（验不了）。
+    # PyAV 自带 ffmpeg，pip 就能装，连视频的音轨也能直接取。
+    #
+    # 代价：落盘 68 MB，其中 63 MB 是 ffmpeg 的 DLL，而里面约 30 MB 是我们完全
+    # 用不到的**视频编码器**（libx265 12.2 MB、libSvtAv1Enc 7.3 MB、libx264、
+    # libvpx、libdav1d、swscale）。想砍要先打包实测：PyAV 的扩展模块是链着
+    # avfilter / swscale 的，乱排除会变成 import 就炸。
+    "av>=15",
 ]
 
 [project.optional-dependencies]

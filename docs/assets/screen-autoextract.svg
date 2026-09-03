@@ -19,7 +19,7 @@
       <rect x="22" y="22" width="40" height="40" rx="11" class="grn"/>
       <text class="t" x="42" y="48" font-size="20" font-weight="800" fill="#fff" text-anchor="middle">本</text>
       <text class="t dk" x="74" y="40" font-size="15" font-weight="800">本地 Agent 工作台</text>
-      <text class="t mut" x="74" y="57" font-size="10" letter-spacing="1">LOCAL AGENT HUB · v6.6</text>
+      <text class="t mut" x="74" y="57" font-size="10" letter-spacing="1">LOCAL AGENT HUB · v7.5</text>
       <text class="t mut" x="24" y="96" font-size="11" letter-spacing="2">导航</text>
       <g class="t sub" font-size="13.5">
         <text x="30" y="128">⌂  工作台</text>
@@ -30,7 +30,7 @@
         <text x="30" y="298">▦  历史总结</text>
         <text x="30" y="332">⋔  组织架构</text>
         <text x="30" y="366">△  本地邮箱</text>
-        <text x="30" y="400">▤  个人摘记</text>
+        <text x="30" y="400">▽  个人提炼</text>
       </g>
       <text class="t mut" x="24" y="442" font-size="11" letter-spacing="2">AGENTS</text>
       <g class="t" font-size="13">

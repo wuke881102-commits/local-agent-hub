@@ -28,11 +28,14 @@ type LocalModel = {
   on_board: boolean; rank: number | null; score: number | null; value: number | null;
   confidence: string; board_name: string;
 };
+/** 本机在用、但这张榜不比的那几路（读图 / 兜底读图 / 生图 / 语音）。没有名次和性价比。 */
+type OtherModel = { kind: string; setting: string; model: string; provider: string; usage: string };
 type Policy = { commercial_use: string; contact: string; policy_version: string };
 type Board = {
   source_url: string; updated_label: string; board_count: number; fetched_at: string;
   cached: boolean; cache_age_s: number; policy: Policy; in_out_ratio: number;
   total_on_board: number; providers: string[]; rows: Row[]; local_models: LocalModel[];
+  other_models: OtherModel[];
 };
 type NewsItem = {
   id: string; title: string; summary: string; reason: string; category_zh: string;
@@ -197,7 +200,15 @@ const LeaderboardTab: React.FC = () => {
       {/* 本机三档模型在榜位置 */}
       {data.local_models.length > 0 && (
         <div className="card" style={{ marginBottom: 'var(--space-4)' }}>
-          <h3 style={{ marginTop: 0, fontSize: 15 }}>本机在用的模型</h3>
+          <h3 style={{ marginTop: 0, marginBottom: 4, fontSize: 15 }}>
+            本机在用的模型
+            <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--text-tertiary)' }}> · 读自 backend/.env</span>
+          </h3>
+          {data.other_models?.length > 0 && (
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 10 }}>
+              三档文本模型能在榜上对号，下面几路不能 —— 但都在跑
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {data.local_models.map(m => (
               <div key={m.setting} style={{
@@ -215,6 +226,42 @@ const LeaderboardTab: React.FC = () => {
               </div>
             ))}
           </div>
+
+          {/* 不参与比较的那几路。
+              以前这张卡只有三档文本模型，标题却是「本机在用的模型」—— 读起来像一份
+              完整清单，实际是「参与榜单比较的模型」。读图/生图/语音也在本机跑，
+              生图和语音更是在整个界面里没有第二处能看到。
+              这里**不给它们标「未上榜」**：那读起来是排名靠后或查不到，
+              而实情是这张榜只比通用文本模型，根本不管这类模型。 */}
+          {data.other_models?.length > 0 && (
+            <>
+              <div style={{ height: 1, background: 'var(--border-subtle)', margin: '14px 0 10px' }} />
+              <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 8 }}>
+                下面几路本机也在用，但这张榜只比通用文本模型，没有名次和性价比可对照
+              </div>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                {data.other_models.map(m => (
+                  <div key={m.setting} style={{
+                    border: '1px solid var(--border-subtle)', borderRadius: 10, padding: '8px 12px',
+                    minWidth: 190, background: 'var(--surface-subtle)',
+                  }}>
+                    <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
+                      {m.kind} · <code>{m.setting}</code>
+                    </div>
+                    <div style={{ fontWeight: 600, margin: '2px 0' }}>
+                      {m.model || '—'}
+                      {m.provider && (
+                        <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--text-tertiary)' }}>
+                          {' '}· {m.provider}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>{m.usage}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 

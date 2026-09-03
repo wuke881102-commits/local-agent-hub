@@ -120,6 +120,24 @@ def _resolve_bin(bin_path: str) -> str:
     return bin_path  # let subprocess fail with a clear error
 
 
+def _scope_list(user_iden: dict, raw: dict) -> list[str]:
+    """授权范围统一成数组。
+
+    lark-cli 给的是哪种取决于版本和字段：`scope`（单数）按 OAuth 惯例是
+    **空格分隔的字符串**，`scopes`（复数）是数组。之前这里直接原样透出，
+    于是 /api/diagnostics 的 auth.scopes 有时是字符串 —— 前端 AuthStatus
+    声明的是 string[]，拿到字符串就会 `.slice(0,8).map(...)`，
+    字符串没有 map，**整个系统诊断页白屏**。真发生过，所以在边界上收口。
+    """
+    v = (user_iden.get("scope") or user_iden.get("scopes")
+         or raw.get("scopes") or [])
+    if isinstance(v, str):
+        return [x for x in v.split() if x]
+    if isinstance(v, list):
+        return [str(x) for x in v if str(x).strip()]
+    return []
+
+
 class LarkCLI:
     def __init__(self, bin_path: str | None = None):
         self.bin = _resolve_bin(bin_path or settings.lark_cli_bin)
@@ -315,8 +333,7 @@ class LarkCLI:
                           or user_iden.get("open_id") or raw.get("user_id")),
             "user_name": (user_iden.get("userName") or user_iden.get("user_name")
                           or user_iden.get("name") or raw.get("user_name")),
-            "scopes":    (user_iden.get("scope") or user_iden.get("scopes")
-                          or raw.get("scopes") or []),
+            "scopes":    _scope_list(user_iden, raw),
             # refresh token 的到期时间。透出来是为了让诊断能显示「授权还剩几天」
             # —— 应用一直知道这个数，之前只是没往外说，于是用户只能等它挂了才发现。
             "refresh_expires_at": (user_iden.get("refreshExpiresAt")

@@ -166,6 +166,10 @@ class AihotModelsAgent:
             "total_on_board": len(entries),
             "rows": rows,
             "local_models": local,
+            # 读图 / 生图 / 语音这几路也在本机跑，只是这张榜不比它们。
+            # 不进 advice 的提示词（榜上没有它们的数据，让模型去建议换型号是瞎猜），
+            # 只如实列出来。
+            "other_models": aihot.other_models() if compare_local else [],
             "advice": advice,
         }
 
@@ -380,6 +384,18 @@ def _write_html(task_id: str, p: dict):
                            '<span class="pill p-md">未上榜</span> '
                            "<span class=\"src\">用途：%s</span></li>"
                            % (esc(m["tier"]), esc(m["setting"]), esc(m["model"]), esc(m["usage"])))
+        others = p.get("other_models") or []
+        if others:
+            # 这张榜只比通用文本模型，所以这几路不给名次也不给性价比 —— 标「未上榜」
+            # 会被读成排名靠后，而它们根本不在评比范围里。
+            lis.append('<li class="src" style="list-style:none;margin-top:8px">'
+                       "以下几路本机也在用，但这张榜不比它们（没有名次和性价比可对照）：</li>")
+            for m in others:
+                prov = ("（%s）" % esc(m["provider"])) if m["provider"] else ""
+                lis.append("<li><b>%s</b>（<code>%s</code>）= <code>%s</code>%s "
+                           "<span class=\"src\">用途：%s</span></li>"
+                           % (esc(m["kind"]), esc(m["setting"]), esc(m["model"] or "—"),
+                              prov, esc(m["usage"])))
         body.append('<div class="card"><h2>本机在用的模型<span class="n">来自 backend/.env</span></h2>'
                     "<ul>%s</ul></div>" % "".join(lis))
 
