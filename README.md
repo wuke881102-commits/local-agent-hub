@@ -142,6 +142,10 @@ flowchart LR
 
 <p align="center"><sub>「内容生成」：左侧选资产、输出格式（HTML 页面 / 可编辑 PPT）与模板，右侧实时预览 Agent 生成的页面。<b>示例数据</b></sub></p>
 
+<p align="center"><img src="docs/assets/screen-ppt.svg" alt="讲稿模式：文字型文档生成可编辑 PPT（示例数据）" width="100%"></p>
+
+<p align="center"><sub>输出选 PPT、文档以文字为主时走<b>讲稿模式</b>：整篇读一次，重组成 8–12 页可编辑的 .pptx（封面 / 要点 / 数据卡 / 原生表格），没用上的章节列在末页；数字和表格要在原文里对得上，原文细节进演讲者备注。右下是下载后用 PowerPoint / WPS 打开的样子。<b>示例数据</b></sub></p>
+
 ---
 
 ## 📁 支持的文件类型

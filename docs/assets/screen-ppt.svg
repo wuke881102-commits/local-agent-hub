@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" role="img" aria-label="HTML 与 PPT 生成 · 讲稿 (示例数据)">
+  <defs>
+    <linearGradient id="cov" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00AA4F"/><stop offset=".6" stop-color="#008E43"/><stop offset="1" stop-color="#006845"/>
+    </linearGradient>
+    <linearGradient id="bar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#30AA60"/><stop offset="1" stop-color="#008E43"/>
+    </linearGradient>
+    <style>
+      .t{font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+      .m{font-family:Consolas,"SF Mono",Menlo,"Microsoft YaHei",monospace}
+      .mut{fill:#8A968F} .dk{fill:#0F2A1C} .sub{fill:#5B6B62} .grn{fill:#00AA4F}
+      .card{fill:#fff;stroke:#E6EBE8;stroke-width:1.5}
+    </style>
+  </defs>
+  <rect x="6" y="6" width="1428" height="888" rx="16" fill="#fff" stroke="#DDE3DF" stroke-width="1.5"/>
+  <rect x="6" y="6" width="1428" height="44" rx="16" fill="#F3F6F4"/><rect x="6" y="34" width="1428" height="16" fill="#F3F6F4"/>
+  <g><circle cx="34" cy="28" r="6" fill="#FF5F57"/><circle cx="56" cy="28" r="6" fill="#FEBC2E"/><circle cx="78" cy="28" r="6" fill="#28C840"/></g>
+  <rect x="520" y="17" width="400" height="24" rx="12" fill="#E7ECE9"/>
+  <text class="t mut" x="720" y="33" font-size="12" text-anchor="middle">127.0.0.1:8787 · HTML 与 PPT 生成</text>
+  <rect x="7" y="50" width="1426" height="843" fill="#F4F7F5"/>
+
+  <!-- sidebar -->
+  <g transform="translate(7,50)">
+      <rect width="248" height="843" fill="#FBFCFC" stroke="#EAEFEC" stroke-width="1.5"/>
+      <rect x="22" y="22" width="40" height="40" rx="11" class="grn"/>
+      <text class="t" x="42" y="48" font-size="20" font-weight="800" fill="#fff" text-anchor="middle">本</text>
+      <text class="t dk" x="74" y="40" font-size="15" font-weight="800">本地 Agent 工作台</text>
+      <text class="t mut" x="74" y="57" font-size="10" letter-spacing="1">LOCAL AGENT HUB · v8.5</text>
+      <text class="t mut" x="24" y="96" font-size="11" letter-spacing="2">导航</text>
+      <g class="t sub" font-size="13.5">
+        <text x="30" y="128">⌂  工作台</text>
+        <text x="30" y="162">✧  任务场景</text>
+        <text x="30" y="196">≣  运行记录</text>
+        <text x="30" y="230">▤  飞书文档</text>
+        <text x="30" y="264">▢  本地目录</text>
+        <text x="30" y="298">▦  历史总结</text>
+        <text x="30" y="332">⋔  组织架构</text>
+        <text x="30" y="366">△  本地邮箱</text>
+        <text x="30" y="400">▽  个人提炼</text>
+        <text x="30" y="434">◉  语音速记</text>
+      </g>
+      <text class="t mut" x="24" y="476" font-size="11" letter-spacing="2">AGENTS</text>
+      <g class="t" font-size="13">
+        <rect x="14" y="487" width="220" height="30" rx="8" fill="#E8F7EE"/>
+        <g><circle cx="30" cy="502" r="5" fill="#16A34A"/><text class="grn" x="46" y="506" font-weight="700">HTML 与 PPT 生成</text><text class="mut" x="196" y="506" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="532" r="5" fill="#2563EB"/><text class="dk" x="46" y="536">文档地图</text><text class="mut" x="196" y="536" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="562" r="5" fill="#0D9488"/><text class="dk" x="46" y="566">知识治理</text><text class="mut" x="196" y="566" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="592" r="5" fill="#F0A800"/><text class="dk" x="46" y="596">多维表格分析</text><text class="mut" x="196" y="596" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="622" r="5" fill="#6A4DD4"/><text class="dk" x="46" y="626">PDF 识别</text><text class="mut" x="196" y="626" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="652" r="5" fill="#EA580C"/><text class="dk" x="46" y="656">会议纪要</text><text class="mut" x="196" y="656" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="682" r="5" fill="#C83A3A"/><text class="dk" x="46" y="686">协作分发</text><text class="mut" x="196" y="686" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="712" r="5" fill="#4F46E5"/><text class="dk" x="46" y="716">AIHot 模型榜</text><text class="mut" x="196" y="716" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="742" r="5" fill="#0891B2"/><text class="dk" x="46" y="746">AIHot 新闻简报</text><text class="mut" x="196" y="746" font-size="11">就绪</text></g>
+      </g>
+      <rect x="14" y="784" width="220" height="44" rx="10" fill="#F2FAF5" stroke="#DCEDE3"/>
+      <circle cx="40" cy="806" r="14" class="grn"/>
+      <text class="t" x="40" y="811" font-size="12" font-weight="800" fill="#fff" text-anchor="middle">A</text>
+      <text class="t dk" x="64" y="802" font-size="12" font-weight="700">Alex</text>
+      <text class="t grn" x="64" y="818" font-size="10">● 已授权 · 飞书</text>
+    </g>
+
+  <g transform="translate(255,50)">
+    <rect width="1178" height="52" fill="#FBFCFC" stroke="#EAEFEC" stroke-width="1.5"/>
+    <text class="t sub" x="36" y="32" font-size="13.5">☰   工作台  ›  任务详情</text>
+
+    <!-- config panel -->
+      <g transform="translate(28,72)" class="t">
+      <text class="dk" x="0" y="24" font-size="19" font-weight="800">PPT 幻灯片生成</text>
+      <text class="sub" x="0" y="50" font-size="12">选一篇飞书文档，产出可编辑的 .pptx。图片为主的每张图</text>
+      <text class="sub" x="0" y="68" font-size="12">还原成一页、后面紧跟原图；文字为主的重组成 8–12 页讲稿。</text>
+      <rect x="0" y="84" width="330" height="38" rx="10" fill="#EEF2F0"/>
+      <rect x="4" y="88" width="161" height="30" rx="8" fill="#fff" stroke="#E0E6E2"/>
+      <text class="dk" x="84" y="108" font-size="12.5" font-weight="700" text-anchor="middle">◔ 飞书</text>
+      <text class="mut" x="247" y="108" font-size="12.5" text-anchor="middle">▢ 本地目录</text>
+      <text class="sub" x="0" y="148" font-size="12">来源文档</text><text class="mut" x="330" y="148" font-size="12" text-anchor="end">1/3</text>
+      <rect x="0" y="158" width="330" height="30" rx="8" fill="#E8F7EE"/>
+      <text class="grn" x="14" y="178" font-size="12">📄 示例：客服中心季度复盘</text>
+      <text class="sub" x="0" y="214" font-size="12">输出格式</text>
+      <rect x="0" y="224" width="161" height="48" rx="10" fill="#fff" stroke="#E0E6E2"/>
+      <text class="dk" x="14" y="245" font-size="13" font-weight="700">HTML 页面</text><text class="mut" x="14" y="262" font-size="10.5">单页长文</text>
+      <rect x="169" y="224" width="161" height="48" rx="10" fill="#E8F7EE" stroke="#00AA4F" stroke-width="1.5"/>
+      <text class="grn" x="183" y="245" font-size="13" font-weight="700">PPT 幻灯片</text><text class="mut" x="183" y="262" font-size="10.5">.pptx · 可编辑</text>
+      <circle cx="5" cy="290.5" r="1.8" fill="#8A968F"/>
+      <text class="sub" x="12" y="294" font-size="10.5">产出 .pptx，可直接编辑；不写回飞书（需要三项当前没有的权限）</text>
+      <circle cx="5" cy="307.5" r="1.8" fill="#8A968F"/>
+      <text class="sub" x="12" y="311" font-size="10.5">一张图一页还原，另附一页原图供核对</text>
+      <circle cx="5" cy="324.5" r="1.8" fill="#8A968F"/>
+      <text class="sub" x="12" y="328" font-size="10.5">只还原网格结构 —— 箭头、图标、渐变、自由摆放不还原</text>
+      <circle cx="5" cy="341.5" r="1.8" fill="#8A968F"/>
+      <text class="sub" x="12" y="345" font-size="10.5">文字会有形近字错误，原图页就是用来核对的</text>
+      <circle cx="5" cy="358.5" r="1.8" fill="#8A968F"/>
+      <text class="sub" x="12" y="362" font-size="10.5">慢：每张图 5–7 次模型调用，十几张图是十分钟量级</text>
+      <circle cx="5" cy="375.5" r="1.8" fill="#8A968F"/>
+      <text class="sub" x="12" y="379" font-size="10.5">文字为主的文档会被重组成 8–12 页讲稿，内容有取舍；</text>
+      <text class="sub" x="12" y="396" font-size="10.5">没用上的章节列在最后一页</text>
+      <circle cx="5" cy="409.5" r="1.8" fill="#8A968F"/>
+      <text class="sub" x="12" y="413" font-size="10.5">讲稿里的数字和表格都要在原文里对得上，</text>
+      <text class="sub" x="12" y="430" font-size="10.5">对不上的会被丢掉（日志里写明）</text>
+      <rect x="0" y="456" width="120" height="38" rx="10" class="grn"/>
+      <text x="60" y="480" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">✧ 生成 PPT</text>
+      <rect x="130" y="456" width="84" height="38" rx="10" fill="#fff" stroke="#E0E6E2"/>
+      <text class="sub" x="172" y="480" font-size="12.5" text-anchor="middle">⇩ 下载</text>
+      <text class="mut" x="0" y="526" font-size="10.5" letter-spacing="1">运行日志</text>
+      <rect x="0" y="536" width="330" height="206" rx="10" fill="#10231A"/>
+      <text class="m" x="12" y="556" font-size="10" fill="#5F7A6B">10:02:11</text>
+      <text class="m" x="70" y="556" font-size="10" fill="#B8F0CD">抽取「示例：客服中心季度复盘」（docx）…</text>
+      <text class="m" x="12" y="575" font-size="10" fill="#5F7A6B">10:02:13</text>
+      <text class="m" x="70" y="575" font-size="10" fill="#B8F0CD">正文 8,600 字 / 图片 3 张</text>
+      <text class="m" x="70" y="590" font-size="10" fill="#B8F0CD">= 2867 字每张 → 重组成讲稿</text>
+      <text class="m" x="12" y="609" font-size="10" fill="#5F7A6B">10:02:13</text>
+      <text class="m" x="70" y="609" font-size="10" fill="#B8F0CD">文字为主的文档，交给模型重组成讲稿</text>
+      <text class="m" x="70" y="624" font-size="10" fill="#B8F0CD">（整篇读一次，约 1–3 分钟）…</text>
+      <text class="m" x="12" y="643" font-size="10" fill="#5F7A6B">10:03:58</text>
+      <text class="m" x="70" y="643" font-size="10" fill="#B8F0CD">模型给出 9 页讲稿</text>
+      <text class="m" x="70" y="658" font-size="10" fill="#B8F0CD">（原文 12 节，1 张带说明的图可选）</text>
+      <text class="m" x="12" y="677" font-size="10" fill="#5F7A6B">10:03:58</text>
+      <text class="m" x="70" y="677" font-size="10" fill="#B8F0CD">有 1 节没有用进讲稿，已列在最后一页：</text>
+      <text class="m" x="70" y="692" font-size="10" fill="#B8F0CD">附录：术语表</text>
+      <text class="m" x="12" y="711" font-size="10" fill="#5F7A6B">10:04:02</text>
+      <text class="m" x="70" y="711" font-size="10" fill="#B8F0CD">已生成 t-5c1e9a.pptx：</text>
+      <text class="m" x="70" y="726" font-size="10" fill="#B8F0CD">讲稿 11 页，配图 1 张</text>
+      </g>
+
+    <!-- result card -->
+    <g transform="translate(388,72)" class="t">
+      <rect width="762" height="250" rx="14" fill="#fff" stroke="#E6EBE8" stroke-width="1.5"/>
+      <rect x="14" y="14" width="150" height="26" rx="8" fill="#F3F6F4"/>
+      <text class="sub" x="26" y="31" font-size="11.5">task t-5c1e9a</text>
+      <rect x="112" y="17" width="48" height="20" rx="6" fill="#E8F7EE"/><text class="grn" x="136" y="31" font-size="10" text-anchor="middle" font-weight="700">PREVIEW</text>
+      <text x="381" y="84" font-size="26" fill="#8A968F" text-anchor="middle">🗎</text>
+      <text class="dk" x="381" y="116" font-size="16" font-weight="800" text-anchor="middle">示例：客服中心季度复盘</text>
+      <text class="sub" x="381" y="140" font-size="12.5" text-anchor="middle">共 11 页讲稿 · 配图 1 张</text>
+      <text class="sub" x="381" y="158" font-size="12" text-anchor="middle">有 1 节没用上，列在最后一页</text>
+      <rect x="320" y="172" width="122" height="34" rx="9" class="grn"/>
+      <text x="381" y="194" font-size="12.5" font-weight="700" fill="#fff" text-anchor="middle">⇩ 下载 .pptx</text>
+      <text class="mut" x="381" y="226" font-size="10.5" text-anchor="middle">PPT 没法在网页里预览，下载后用 PowerPoint / WPS 打开。讲稿是模型重组的，原文细节在每页的演讲者备注里。</text>
+    </g>
+  </g>
+
+  <!-- 下载后打开的演示文稿窗口 -->
+  <g class="t">
+  <rect x="682" y="412" width="744" height="476" rx="12" fill="#0F2A1C" fill-opacity=".10"/>
+  <rect x="676" y="404" width="744" height="476" rx="12" fill="#fff" stroke="#C8D0D8" stroke-width="1.5"/>
+  <rect x="676" y="404" width="744" height="34" rx="12" fill="#EEF1F4"/><rect x="676" y="426" width="744" height="12" fill="#EEF1F4"/>
+  <circle cx="696" cy="421" r="5" fill="#FF5F57"/><circle cx="713" cy="421" r="5" fill="#FEBC2E"/><circle cx="730" cy="421" r="5" fill="#28C840"/>
+  <text class="sub" x="1048.0" y="426" font-size="12" text-anchor="middle">示例：客服中心季度复盘.pptx — 演示文稿（PowerPoint / WPS）</text>
+  <rect x="676" y="438" width="132" height="442" fill="#F6F7F9"/>
+  <line x1="808" y1="438" x2="808" y2="880" stroke="#E2E6EA"/>
+  <text class="mut" x="690" y="462" font-size="10">1</text>
+  <g transform="translate(702,450) scale(0.2400)"><svg width="400" height="225" overflow="hidden"><rect width="400" height="225" fill="url(#cov)"/><circle cx="372" cy="12" r="70" fill="#fff" fill-opacity=".10"/><circle cx="18" cy="232" r="78" fill="#82BC00" fill-opacity=".18"/><text class="t" x="34" y="104" font-size="19" font-weight="800" fill="#fff">示例：客服中心季度复盘</text><text class="t" x="34" y="128" font-size="9.5" fill="#E3F5EA">目标、成效与下季度计划 · 示例团队</text></svg></g><rect x="702" y="450" width="96" height="54.0" fill="none" stroke="#DDE3EA" stroke-width="1"/>
+  <text class="mut" x="690" y="536" font-size="10">2</text>
+  <g transform="translate(702,524) scale(0.2400)"><svg width="400" height="225" overflow="hidden"><rect width="400" height="225" fill="#F9FAFC"/><rect x="14" y="13" width="2.6" height="15" rx="1.3" fill="url(#bar)"/><text class="t" x="22" y="25.5" font-size="11" font-weight="700" fill="#42464A">本季度做了什么</text><rect x="14" y="42" width="372" height="100" rx="6" fill="#fff" stroke="#E8ECF0"/><circle cx="28" cy="63" r="2" fill="#00AA4F"/><text class="t" x="36" y="66.5" font-size="8.6" fill="#555B61">知识库补全 120 条常见问题，覆盖九成高频咨询</text><circle cx="28" cy="85" r="2" fill="#00AA4F"/><text class="t" x="36" y="88.5" font-size="8.6" fill="#555B61">在线渠道接入智能分流，高峰期排队时间明显缩短</text><circle cx="28" cy="107" r="2" fill="#00AA4F"/><text class="t" x="36" y="110.5" font-size="8.6" fill="#555B61">建立周度质检抽样，问题工单 48 小时内复盘</text><circle cx="28" cy="129" r="2" fill="#00AA4F"/><text class="t" x="36" y="132.5" font-size="8.6" fill="#555B61">新人带教改为「影子坐席」两周制</text></svg></g><rect x="702" y="524" width="96" height="54.0" fill="none" stroke="#DDE3EA" stroke-width="1"/>
+  <text class="mut" x="690" y="610" font-size="10">5</text>
+  <g transform="translate(702,598) scale(0.2400)"><svg width="400" height="225" overflow="hidden"><rect width="400" height="225" fill="#F9FAFC"/><rect x="14" y="13" width="2.6" height="15" rx="1.3" fill="url(#bar)"/><text class="t" x="22" y="25.5" font-size="11" font-weight="700" fill="#42464A">关键数字</text><rect x="14" y="72" width="120" height="78" rx="4.5" fill="#fff" stroke="#E8ECF0"/><text class="t" x="74" y="110" font-size="21" font-weight="800" fill="#008E43" text-anchor="middle">92%</text><text class="t" x="74" y="132" font-size="7.6" fill="#737A82" text-anchor="middle">首次解决率</text><rect x="140" y="72" width="120" height="78" rx="4.5" fill="#fff" stroke="#E8ECF0"/><text class="t" x="200" y="110" font-size="21" font-weight="800" fill="#008E43" text-anchor="middle">38 秒</text><text class="t" x="200" y="132" font-size="7.6" fill="#737A82" text-anchor="middle">平均响应时长</text><rect x="266" y="72" width="120" height="78" rx="4.5" fill="#fff" stroke="#E8ECF0"/><text class="t" x="326" y="110" font-size="21" font-weight="800" fill="#008E43" text-anchor="middle">4.8</text><text class="t" x="326" y="132" font-size="7.6" fill="#737A82" text-anchor="middle">满意度评分（5 分制）</text></svg></g><rect x="702" y="598" width="96" height="54.0" fill="none" stroke="#00AA4F" stroke-width="2"/>
+  <text class="mut" x="690" y="684" font-size="10">7</text>
+  <g transform="translate(702,672) scale(0.2400)"><svg width="400" height="225" overflow="hidden"><rect width="400" height="225" fill="#F9FAFC"/><rect x="14" y="13" width="2.6" height="15" rx="1.3" fill="url(#bar)"/><text class="t" x="22" y="25.5" font-size="11" font-weight="700" fill="#42464A">各渠道对比</text><rect x="14" y="42" width="372" height="96" rx="4.5" fill="#fff" stroke="#E8ECF0"/><rect x="18" y="46" width="364" height="20" fill="#F0F1F3"/><line x1="18" y1="66" x2="382" y2="66" stroke="#DDE3EA"/><text class="m" x="24" y="59.5" font-size="7" font-weight="700" fill="#737A82">渠道</text><text class="m" x="110" y="59.5" font-size="7" font-weight="700" fill="#737A82">工单量</text><text class="m" x="200" y="59.5" font-size="7" font-weight="700" fill="#737A82">平均时长</text><text class="m" x="300" y="59.5" font-size="7" font-weight="700" fill="#737A82">满意度</text><text class="t" x="24" y="82" font-size="8" fill="#555B61">电话</text><text class="t" x="110" y="82" font-size="8" fill="#555B61">3,420</text><text class="t" x="200" y="82" font-size="8" fill="#555B61">6 分 10 秒</text><text class="t" x="300" y="82" font-size="8" fill="#555B61">4.7</text><line x1="18" y1="92" x2="382" y2="92" stroke="#E8ECF0"/><text class="t" x="24" y="104" font-size="8" fill="#555B61">在线客服</text><text class="t" x="110" y="104" font-size="8" fill="#555B61">8,960</text><text class="t" x="200" y="104" font-size="8" fill="#555B61">3 分 05 秒</text><text class="t" x="300" y="104" font-size="8" fill="#555B61">4.9</text><line x1="18" y1="114" x2="382" y2="114" stroke="#E8ECF0"/><text class="t" x="24" y="126" font-size="8" fill="#555B61">邮件</text><text class="t" x="110" y="126" font-size="8" fill="#555B61">1,150</text><text class="t" x="200" y="126" font-size="8" fill="#555B61">1 天内</text><text class="t" x="300" y="126" font-size="8" fill="#555B61">4.5</text></svg></g><rect x="702" y="672" width="96" height="54.0" fill="none" stroke="#DDE3EA" stroke-width="1"/>
+  <text class="mut" x="690" y="758" font-size="10">11</text>
+  <g transform="translate(702,746) scale(0.2400)"><svg width="400" height="225" overflow="hidden"><rect width="400" height="225" fill="#F9FAFC"/><rect x="14" y="13" width="2.6" height="15" rx="1.3" fill="url(#bar)"/><text class="t" x="22" y="25.5" font-size="11" font-weight="700" fill="#42464A">未收录章节</text><text class="t" x="16" y="48" font-size="7.5" fill="#737A82">以下章节在讲稿里没有用上，需要的话手动补回。</text><rect x="14" y="58" width="372" height="34" rx="6" fill="#fff" stroke="#E8ECF0"/><circle cx="28" cy="75" r="2" fill="#00AA4F"/><text class="t" x="36" y="78.5" font-size="8.6" fill="#555B61">附录：术语表</text></svg></g><rect x="702" y="746" width="96" height="54.0" fill="none" stroke="#DDE3EA" stroke-width="1"/>
+  <rect x="809" y="438" width="611" height="350" fill="#E9ECEF"/>
+  <g transform="translate(828,454) scale(1.4300)"><svg width="400" height="225" overflow="hidden"><rect width="400" height="225" fill="#F9FAFC"/><rect x="14" y="13" width="2.6" height="15" rx="1.3" fill="url(#bar)"/><text class="t" x="22" y="25.5" font-size="11" font-weight="700" fill="#42464A">关键数字</text><rect x="14" y="72" width="120" height="78" rx="4.5" fill="#fff" stroke="#E8ECF0"/><text class="t" x="74" y="110" font-size="21" font-weight="800" fill="#008E43" text-anchor="middle">92%</text><text class="t" x="74" y="132" font-size="7.6" fill="#737A82" text-anchor="middle">首次解决率</text><rect x="140" y="72" width="120" height="78" rx="4.5" fill="#fff" stroke="#E8ECF0"/><text class="t" x="200" y="110" font-size="21" font-weight="800" fill="#008E43" text-anchor="middle">38 秒</text><text class="t" x="200" y="132" font-size="7.6" fill="#737A82" text-anchor="middle">平均响应时长</text><rect x="266" y="72" width="120" height="78" rx="4.5" fill="#fff" stroke="#E8ECF0"/><text class="t" x="326" y="110" font-size="21" font-weight="800" fill="#008E43" text-anchor="middle">4.8</text><text class="t" x="326" y="132" font-size="7.6" fill="#737A82" text-anchor="middle">满意度评分（5 分制）</text></svg></g><rect x="828" y="454" width="572" height="321.8" fill="none" stroke="#D5DAE0" stroke-width="1"/>
+  <line x1="809" y1="788" x2="1420" y2="788" stroke="#D5DAE0"/>
+  <text class="mut" x="826" y="810" font-size="10.5" letter-spacing="1">演讲者备注</text>
+  <text class="sub" x="826" y="832" font-size="11.5">首次解决率 92% 出自原文「服务质量」一节：较上季度提升 4 个百分点，</text>
+  <text class="sub" x="826" y="850" font-size="11.5">主要来自知识库补全与智能分流。平均响应 38 秒为工作日 9–18 点口径。</text>
+  <text class="mut" x="826" y="868" font-size="10.5">页上的每个数字都在原文里核对过；找不到出处的会被丢掉并写进日志。</text>
+  </g>
+</svg>
