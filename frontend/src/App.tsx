@@ -33,7 +33,7 @@ const App: React.FC = () => {
   const crumb: { label: string; onClick?: () => void }[] = [{ label: '工作台', onClick: () => nav('/') }];
   const path = loc.pathname;
   if (path === '/') crumb.length = 1;
-  else if (path.startsWith('/task/html-page')) crumb.push({ label: '内容生成', onClick: () => nav('/scenes') }, { label: 'HTML 页面生成' });
+  else if (path.startsWith('/task/html-page')) crumb.push({ label: '内容生成', onClick: () => nav('/scenes') }, { label: 'HTML 与 PPT 生成' });
   else if (path.startsWith('/task/document-map')) crumb.push({ label: '知识库治理', onClick: () => nav('/scenes') }, { label: '文档地图' });
   else if (path.startsWith('/task/index-enrich')) crumb.push({ label: '知识库治理', onClick: () => nav('/scenes') }, { label: '摘要 / 标签回填' });
   else if (path.startsWith('/task/knowledge-governance')) crumb.push({ label: '知识库治理', onClick: () => nav('/scenes') }, { label: '知识治理' });
@@ -41,7 +41,7 @@ const App: React.FC = () => {
   else if (path.startsWith('/task/meeting-minutes')) crumb.push({ label: '会议沉淀', onClick: () => nav('/scenes') }, { label: '会议纪要' });
   else if (path.startsWith('/task/pdf-recognition')) crumb.push({ label: 'PDF 识别', onClick: () => nav('/scenes') }, { label: 'PDF 识别' });
   else if (path.startsWith('/task/collab-dispatch')) crumb.push({ label: '协作分发', onClick: () => nav('/scenes') }, { label: '协作分发' });
-  else if (path.startsWith('/task/local-image')) crumb.push({ label: '内容生成', onClick: () => nav('/scenes') }, { label: 'HTML 页面生成' });
+  else if (path.startsWith('/task/local-image')) crumb.push({ label: '内容生成', onClick: () => nav('/scenes') }, { label: 'HTML 与 PPT 生成' });
   else if (path.startsWith('/task')) crumb.push({ label: '任务详情' });
   else if (path.startsWith('/assets')) crumb.push({ label: '飞书文档' });
   else if (path.startsWith('/localdir')) crumb.push({ label: '本地目录' });
@@ -79,6 +79,9 @@ const App: React.FC = () => {
         <Route path="/task/html-page" element={<TaskHtmlPage />} />
         <Route path="/task/html-page/:taskId" element={<TaskHtmlPage />} />
         <Route path="/task/local-image/:taskId" element={<TaskHtmlPage />} />
+        {/* PPT 是「内容生成」的一个输出格式，任务详情也落在同一页。运行记录拼的链接是
+            /task/{agent_id}/{task_id}，不登记这一条就掉进通用 agent 页，显示「未知 Agent」。 */}
+        <Route path="/task/slides-page/:taskId" element={<TaskHtmlPage />} />
         <Route path="/task/:agentId" element={<TaskAgentRoute />} />
         <Route path="/task/:agentId/:taskId" element={<TaskAgentRoute />} />
         <Route path="*" element={<Navigate to="/" replace />} />

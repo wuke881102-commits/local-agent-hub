@@ -58,7 +58,7 @@ import logging
 import time
 
 from ..config import settings
-from ..llm import get_llm
+from ..llm import get_llm, strip_md_fence
 from . import auto_extract, selfpush, voice
 
 log = logging.getLogger("memo")
@@ -315,7 +315,9 @@ async def _llm_join(material: str, ask: str, *, max_tokens: int = 700) -> str:
     except Exception as e:  # noqa: BLE001
         log.warning("memo llm join failed: %s", e)
         return ""
-    return (out or "").strip()
+    # 这一路的正文**会直接发到飞书**，所以围栏更不能留：发出去的消息外面裹一层
+    # ```markdown，收到的人只会以为工具坏了。
+    return strip_md_fence(out or "")
 
 
 def _digest_material(recs: list[dict]) -> str:

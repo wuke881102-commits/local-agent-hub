@@ -1,7 +1,7 @@
 import React from 'react';
 import useSWR from 'swr';
 import { Icon } from '../components/icons';
-import { fetcher, Diagnostics } from '../api';
+import { authUsable, fetcher, Diagnostics } from '../api';
 import { useAuth } from '../hooks/useAuth';
 
 const DiagnosticsPage: React.FC = () => {
@@ -39,6 +39,23 @@ const DiagnosticsPage: React.FC = () => {
             </span>
           } />
           <KV k="版本" v={<span className="mono">{data.cli.version || '—'}</span>} />
+          {/* 捆绑的 CLI 落后多少。这一栏是有来历的：构建脚本曾把它冻在首次构建那版，
+              一路落后 45 个小版本没人发现，等某次发版一口气跨过去，文档抽取、错误信息、
+              图片下载同一天全坏，而每一项的表象都像是「你的文档有问题」。
+              问不出来时显示「未获知」而不是「已最新」—— 编一个安心的结论最要不得。 */}
+          <KV k="CLI 更新" v={
+            !data.cli.update
+              ? <span style={{ color: 'var(--text-secondary)' }} title="mock 模式、网络不通或命令超时时问不出来。这不等于已是最新。">未获知</span>
+              : data.cli.update.behind === 0
+                ? <span className="badge badge-success">已是最新</span>
+                : <a href={data.cli.update.url || undefined} target="_blank" rel="noreferrer"
+                     className={'badge' + ((data.cli.update.behind ?? 99) >= 10 ? ' badge-warning' : '')}
+                     title={`捆绑 ${data.cli.update.current} · 最新 ${data.cli.update.latest}。飞书的所有功能都踩在它上面；落后太多时一次性升级会同时吞下多处破坏性改动。升级方式：改 build\\build_installer.cmd 的 LARKCLIVER 后重新打包。`}>
+                    {data.cli.update.behind === null
+                      ? `${data.cli.update.current} → ${data.cli.update.latest}`
+                      : `落后 ${data.cli.update.behind} 个版本`}
+                  </a>
+          } />
           <KV k="二进制" v={<span className="mono">{data.cli.bin}</span>} />
           {data.cli.mode !== 'live' && (
             <div className="alert alert-warning" style={{ marginTop: 8 }}>
@@ -51,10 +68,25 @@ const DiagnosticsPage: React.FC = () => {
           )}
         </Section>
 
-        <Section title="飞书授权" tone={data.auth.authenticated ? 'success' : 'warning'}>
-          <KV k="状态" v={data.auth.authenticated ?
-            <span className="badge badge-success">已授权</span> :
-            <span className="badge badge-warning">未授权</span>} />
+        {/* 这一页是用来排查的，所以三个状态要分开显示；但 needs_refresh 的**色调是绿的**
+            —— 它不需要用户做任何事，标黄只会让人以为出了问题、又去点一次授权。
+            剩余天数来自保活服务（authkeep），它是「还剩几天必须产生一次用户调用」的真答案。 */}
+        <Section title="飞书授权" tone={authUsable(data.auth) ? 'success' : 'warning'}>
+          <KV k="状态" v={
+            data.auth.user_status === 'ready' || data.auth.authenticated
+              ? <span className="badge badge-success">已授权</span>
+              : data.auth.user_recoverable
+                ? <span className="badge badge-success" title="access token 过期了，但 refresh token 还在；下一次真实的用户身份调用会自动续期，不需要你做任何事">
+                    已授权 · 令牌将自动续期
+                  </span>
+                : <span className="badge badge-warning">未授权</span>} />
+          {data.auth_keepalive?.days_left !== null && data.auth_keepalive?.days_left !== undefined && (
+            <KV k="授权剩余" v={
+              <span className={"badge " + (data.auth_keepalive.days_left > 2 ? "badge-success" : "badge-warning")}
+                    title="7 天滚动窗口：每次真实的用户身份调用都会把它推到 7 天后。保活服务每 12 小时自动做一次。">
+                {data.auth_keepalive.days_left} 天
+              </span>} />
+          )}
           <KV k="用户" v={data.auth.user_name || data.auth.user_id || '—'} />
           <KV k="权限范围" v={
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
@@ -64,7 +96,7 @@ const DiagnosticsPage: React.FC = () => {
               {!scopes.length && '—'}
             </div>
           } />
-          {!data.auth.authenticated ? (
+          {!authUsable(data.auth) ? (
             <button className="btn btn-primary btn-sm" onClick={() => startLogin()} disabled={loggingIn || polling} style={{ marginTop: 12 }}>
               <Icon name="check" size={12} />
               {loggingIn ? '获取链接中…' : polling ? '等待浏览器完成…' : '立即授权'}

@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import re
 import shutil
 import sys
@@ -120,6 +121,126 @@ def _resolve_bin(bin_path: str) -> str:
     return bin_path  # let subprocess fail with a clear error
 
 
+# 常见 scope → 用户能看懂的中文名。命中才翻译，未命中原样显示 scope id。
+SCOPE_ZH = {
+    "im:message": "发送消息",
+    "im:message.send_as_user": "发送消息",
+    "im:message:send_as_bot": "以机器人身份发送消息",
+    "task:task:write": "创建任务",
+    "docx:document:create": "创建文档",
+    "docs:document.media:download": "下载文档内的图片",
+    "docs:permission.member:auth": "文档权限成员授权",
+}
+
+
+def explain_error(e: Exception) -> str:
+    """把 lark-cli 的结构化报错翻成可读、可操作的中文。
+
+    lark-cli 失败时 stderr 带 ``{"ok":false,"error":{"type","message","hint",...}}``。
+    真正的原因**只在 stderr 里**：LarkCLIError 的 str() 是 "lark-cli exited N"，
+    拿它当错误信息给用户看，等于什么都没说（个人摘记的推送失败原先就是这样）。
+
+    ## 分支是按 lark-cli.log 里真实出现过的 type 写的，不是猜的
+
+    实际见过：``permission`` / ``config`` / ``api_error`` / ``validation`` /
+    ``mcp_error`` / ``unknown_subcommand``。
+
+    **权限不足的真实 type 是 permission，不是 missing_scope。** 形状是：
+
+        {"type":"permission","code":99991672,
+         "message":"App scope not enabled: required scope xxx [99991672]",
+         "hint":"enable the scope in developer console (see console_url)",
+         "console_url":"https://open.feishu.cn/page/scope-apply?..."}
+
+    这一类**点「重新授权」是没用的** —— 那个按钮走用户 OAuth，只能补用户级
+    scope；``App scope not enabled`` 指的是应用级权限，必须去开放平台后台开。
+    把这两种情况指到同一个按钮，用户会反复点、反复失败。所以这里把 console_url
+    原样带出来。``missing_scope`` 那一支保留：它是用户级 scope 缺失的形状，
+    那种才该去点「重新授权」。
+    """
+    stderr = getattr(e, "stderr", "") or ""
+    m = re.search(r"\{[\s\S]*\}", stderr)
+    if m:
+        try:
+            err = (json.loads(m.group(0)).get("error") or {})
+            msg = (err.get("message") or "").strip()
+            # 新版 lark-cli 把分类拆成了两层：type 变成大类（authorization /
+            # validation …），原先那个值挪进了 subtype。例如缺用户 scope 现在是
+            # {"type":"authorization","subtype":"missing_scope"}，而老版本是
+            # {"type":"missing_scope"}。只看 type 的话，下面所有分支都会落空，
+            # 用户拿到的是没头没尾的原文。subtype 优先，两代都认。
+            typ = (str(err.get("subtype") or "").strip()
+                   or str(err.get("type") or "").strip())
+
+            # 用户级 scope 缺失 → 去点「重新授权」
+            if typ == "missing_scope":
+                sm = re.search(r"scope\(s\):\s*([\w:.\-,\s]+)", msg)
+                scope = (sm.group(1).strip().rstrip(".") if sm else "")
+                if scope:
+                    friendly = "、".join(SCOPE_ZH.get(x, x) for x in re.split(r"[,\s]+", scope) if x)
+                    return ("缺少飞书权限「%s」。请点击左下角的「重新授权」按钮，"
+                            "在飞书授权页同意后再试。（技术细节：%s）" % (friendly, scope))
+                return "缺少飞书权限：%s。请点击左下角「重新授权」后再试。" % msg
+
+            # 应用级权限没开 → 只能去开放平台后台开，点「重新授权」没用
+            if typ == "permission":
+                sm = re.search(r"required scope\s+([\w:.\-]+)", msg)
+                scope = sm.group(1) if sm else ""
+                url = str(err.get("console_url") or "").strip()
+                if scope:
+                    friendly = SCOPE_ZH.get(scope, scope)
+                    out = ("应用没有开通「%s」这项权限（%s）。这是**应用级**权限，"
+                           "点「重新授权」补不了 —— 需要在飞书开放平台后台给这个应用"
+                           "开通后重试。" % (friendly, scope))
+                else:
+                    out = "飞书权限不足：%s" % msg
+                return "%s申请地址：%s" % (out + " ", url) if url else out
+
+            if typ == "config":
+                return ("飞书 CLI 还没配置好（%s）。先在工作台完成一次飞书登录 / 授权。"
+                        % (msg or "not configured"))
+
+            if msg:
+                # 带上 type：同一句 message 在不同 type 下处置不同（授权失效要重新登录、
+                # 限流等一会儿就好），页面上至少要能分开。
+                out = "%s（%s）" % (msg, typ) if typ else msg
+                hint = str(err.get("hint") or "").strip()
+                return "%s %s" % (out, hint) if hint else out
+        except (json.JSONDecodeError, AttributeError):
+            pass
+    # 连 JSON 都没有：把 stderr 头部原样带出来，也比一个退出码有用。
+    tail = " ".join(stderr.split())[:200]
+    return "%s%s" % (str(e)[:80], "：" + tail if tail else "")
+
+
+def _loads_or_none(blob: str) -> Any:
+    """从一段可能夹着杂音的输出里取出 JSON 对象；取不到返回 None。
+
+    lark-cli 的报错 stderr 常常是「一行 warning + 一坨 JSON」，直接 json.loads 会炸。
+    """
+    m = re.search(r"\{[\s\S]*\}", blob or "")
+    if not m:
+        return None
+    try:
+        return json.loads(m.group(0))
+    except json.JSONDecodeError:
+        return None
+
+
+def needs_relogin(e: Exception) -> bool:
+    """这个失败是不是「要用户重新登录」——重试无用的那一类。
+
+    判据必须看 **stderr**。原先 selfpush 是在 str(e) 里找 invalid_token / 20005，
+    而 str(e) 永远是 "lark-cli exited N"，所以那个判断**从来没有为真过**：
+    真的授权过期也被当成暂时性故障，页面上不会提示去重新登录。
+    """
+    blob = (getattr(e, "stderr", "") or "") + " " + str(e)
+    low = blob.lower()
+    return any(m in low for m in ("needs_login", "invalid_token", "token expired",
+                                 "invalid access token", "20005", "99991671",
+                                 "user identity: needs login"))
+
+
 def _scope_list(user_iden: dict, raw: dict) -> list[str]:
     """授权范围统一成数组。
 
@@ -138,11 +259,92 @@ def _scope_list(user_iden: dict, raw: dict) -> list[str]:
     return []
 
 
+# cmd.exe 会当成操作符、从而把命令切断的字符。
+CMD_BREAKERS = ("&", "|", "<", ">")
+
+
+def _resolve_argv(bin_path: str) -> list[str]:
+    """把可执行入口解成一串 argv 前缀。**Windows 上要绕开 npm 那个 .CMD shim。**
+
+    ## 为什么必须绕
+
+    npm 装出来的 ``lark-cli.CMD`` 最后一行是：
+
+        ... & "%_prog%" ".../scripts/run.js" %*
+
+    ``%*`` 意味着参数**被 cmd.exe 再解析一遍**。而 Python 的 list2cmdline 把参数里的
+    ``"`` 转义成 ``\"`` —— cmd.exe 不认这个转义，它只数引号，于是引号状态在每个
+    ``\"`` 处翻转，后面的正文就落到「未加引号」的状态里。这时正文里的
+    ``&`` ``|`` ``<`` ``>`` 就成了操作符，**命令在那里被切断，后面的参数直接消失**。
+
+    实测（复刻 shim 的探针）：正文含 ``&`` 时 11 个参数只有 6 个到达，``--user-id``
+    正好在被切掉的那一半。个人摘记推送失败报的
+    ``specify at least one of --chat-id or --user-id`` 就是这么来的 ——
+    邮件标题里一个「预算 & 编制」就够。``%`` ``^`` ``()`` ``"`` 反而是安全的。
+
+    ## 绕法
+
+    直接跑 shim 里那两样：``node`` + ``run.js``。走 CreateProcess，不经过 cmd.exe，
+    参数逐字送达（实测 ``& | < >`` 四个一起也是 11/11），顺带把命令行上限从
+    cmd.exe 的 8191 提到 32767。
+
+    找不到 node 或 run.js 就退回 .CMD —— 那条路仍然会截断，所以 _exec 里对含这些
+    字符的参数**直接拒绝**，而不是发一条被截断的命令出去。
+    """
+    if not bin_path.lower().endswith((".cmd", ".bat")):
+        return [bin_path]
+    d = os.path.dirname(bin_path)
+
+    # run.js 的位置**取决于 shim 是哪种布局**，两种都要认：
+    #
+    #   全局 npm 装的：  <npm 根>/lark-cli.CMD
+    #                    -> <npm 根>/node_modules/@larksuite/cli/scripts/run.js
+    #   打包自带的：     <...>/node_modules/.bin/lark-cli.cmd
+    #                    -> <...>/node_modules/@larksuite/cli/scripts/run.js（上一级）
+    #
+    # 只认第一种的代价很实在：**装机版用的正是第二种**（自带 CLI 在
+    # runtime/lark-cli/node_modules/.bin 下），于是解析失败、退回 .CMD，
+    # 这个修复在真正的装机环境里根本不生效 —— 而开发机上一切正常，因为那里是
+    # 全局 npm 装的。所以候选路径按两种布局各列一条，别赌某一种。
+    # 自带 shim 里那一行原话，指的就是上一级的 @larksuite/cli/scripts/run.js。
+    tail = os.path.join("@larksuite", "cli", "scripts", "run.js")
+    run_js = ""
+    for cand in (os.path.join(d, "node_modules", tail),   # 全局 npm
+                 os.path.join(d, "..", tail),             # node_modules\.bin
+                 os.path.join(d, tail)):
+        cand = os.path.normpath(cand)
+        if os.path.exists(cand):
+            run_js = cand
+            break
+    if not run_js:
+        return [bin_path]
+
+    # node：先看 shim 旁边，再看 PATH。打包版的 launcher 已经把自带的
+    # runtime/node 塞到 PATH 最前面（见 launcher._prepare_runtime_path），
+    # 所以 which 拿到的是自带那个 —— 不依赖用户机器上有没有装 Node。
+    node = os.path.join(d, "node.exe")
+    if not os.path.exists(node):
+        node = shutil.which("node") or ""
+    if not node:
+        return [bin_path]
+    return [node, run_js]
+
+
 class LarkCLI:
     def __init__(self, bin_path: str | None = None):
         self.bin = _resolve_bin(bin_path or settings.lark_cli_bin)
+        self._argv = _resolve_argv(self.bin)
+        # 是不是还在走 cmd.exe（.CMD / .bat）。走的话参数会被重新解析，见 _resolve_argv。
+        self._via_shell = self._argv[0].lower().endswith((".cmd", ".bat"))
+        if self._via_shell:
+            log.warning("lark-cli 仍经 %s 调用（没找到 node/run.js）："
+                        "正文含 & | < > 的命令会被 cmd.exe 截断，届时会直接报错而不是发出截断的命令",
+                        os.path.basename(self._argv[0]))
+        else:
+            log.info("lark-cli 直接经 node 调用，绕开 .CMD shim：%s", self._argv[1])
         self._version: str | None = None
         self._available: bool | None = None
+        self._update: dict | None = None      # CLI 自己播报的版本信息，见 _note_update
         self._stderr_log = settings.log_path / "lark-cli.log"
 
     # ── Low-level ────────────────────────────────────────────────────
@@ -178,13 +380,94 @@ class LarkCLI:
     def version(self) -> str | None:
         return self._version
 
+    # ── 捆绑的 CLI 落后多少 ───────────────────────────────────────────
+    # 这个信号一直是白给的：lark-cli 的**每个子命令**响应里都挂着
+    #     "_notice": {"update": {"current": "1.0.89", "latest": "1.0.96", ...}}
+    # 我们一直原样扔掉。代价是实打实的：构建脚本曾经「目录存在就跳过安装」，
+    # 把捆绑的 CLI 冻在首次构建那版，一路落后 45 个小版本没人发现；等到某次
+    # 发版一口气跨过去，docs v1 API 被删、错误信封改形状、media-download 多出
+    # 一道 scope 预检，三件事同一天砸下来，而每一件的表象都是「你的文档有问题」。
+    #
+    # 现在把它读出来挂到诊断页：落后就是个明牌，而不是等下一次跨版本爆炸。
+
+    def _note_update(self, out: Any) -> None:
+        """从任意一次 CLI 响应里顺手记下版本播报。不额外发一条命令。"""
+        if not isinstance(out, dict):
+            return
+        upd = ((out.get("_notice") or {}).get("update") or {}) if isinstance(out.get("_notice"), dict) else {}
+        cur, latest = str(upd.get("current") or ""), str(upd.get("latest") or "")
+        if cur and latest:
+            self._update = {"current": cur, "latest": latest,
+                            "url": str(upd.get("url") or ""), "source": "notice"}
+
+    @staticmethod
+    def _behind(current: str, latest: str) -> int | None:
+        """落后几个版本。两边都是 X.Y.Z 且只有末段不同才给数，否则给 None。
+
+        宁可不给，也不给一个错的数：版本号形状一变（真出现过 1.0.x → 1.1.x）
+        按末段相减就会算出负数或荒谬的大数，比不显示更误导。
+        """
+        a, b = current.split("."), latest.split(".")
+        if len(a) != 3 or len(b) != 3 or a[:2] != b[:2]:
+            return None
+        try:
+            n = int(b[2]) - int(a[2])
+        except ValueError:
+            return None
+        return n if n > 0 else 0
+
+    async def update_status(self) -> dict | None:
+        """诊断页用：当前版本 / 最新版本 / 落后几个。问不出来就返回 None。
+
+        优先用**白给的**那一份：任何一次子命令调用顺手记下的 `_notice.update`。
+        没有的话才显式问一次 ``update --check``。
+
+        为什么还需要显式问：`_notice` 只挂在**一部分**子命令上（实测 ``docs +fetch``
+        有、``auth status`` 没有），所以「这次没看到播报」既可能是已经最新，也可能
+        只是这条命令不带 —— 拿它当「已最新」会说谎。
+
+        ``update --check`` 的 help 写明 only check, do not install；这里也只在诊断
+        这一个入口调，别处一律不碰 ``update``（不带 --check 它是真装）。
+        结果在进程内缓存：CLI 不会在进程活着的时候自己换版本。
+        """
+        if self._update:
+            u = self._update
+            return {**u, "behind": self._behind(u["current"], u["latest"])}
+        try:
+            out = await asyncio.wait_for(
+                self.run("update", "--check", "--json", parse_json=True, timeout=10),
+                timeout=12,
+            )
+        except Exception:  # noqa: BLE001  网络不通 / 命令没了都不该让诊断页挂掉
+            return None
+        if not isinstance(out, dict):
+            return None
+        cur, latest = str(out.get("current_version") or ""), str(out.get("latest_version") or "")
+        if not (cur and latest):
+            return None
+        self._update = {"current": cur, "latest": latest,
+                        "url": str(out.get("url") or ""), "source": "check"}
+        return {**self._update, "behind": self._behind(cur, latest)}
+
     async def _exec(self, *args: str, timeout: float = 60, cwd: str | None = None) -> tuple[int, str, str]:
         """底层执行，返回 (returncode, stdout, stderr)。
 
         ``cwd`` 用于 ``docs +media-download`` 这类要求 ``--output`` 为相对路径
         （沙箱限制：只能写当前目录）的命令。
         """
-        cmd = [self.bin, *args]
+        cmd = [*self._argv, *args]
+        if self._via_shell:
+            # 还在走 cmd.exe：含这些字符的参数会让命令在那里断掉，尾部参数消失。
+            # 断掉之后**未必是安全的失败** —— 万一切点落在 --idempotency-key 之前，
+            # 消息发出去了而幂等键没了，重试就会重复轰炸。所以宁可不发。
+            bad = [a for a in args if any(c in a for c in CMD_BREAKERS)]
+            if bad:
+                raise LarkCLIError(
+                    "参数里含 cmd.exe 会当成操作符的字符（%s），而当前只能经 .CMD "
+                    "调用 lark-cli —— 这条命令会被截断，已拒绝执行。"
+                    "装好 Node.js 并让 node 在 PATH 上即可绕开。"
+                    % "、".join(sorted({c for a in bad for c in CMD_BREAKERS if c in a})),
+                    cmd=cmd)
         log.debug("lark-cli exec: %s", " ".join(cmd))
         try:
             proc = await asyncio.create_subprocess_exec(
@@ -234,6 +517,8 @@ class LarkCLI:
             code, stdout, stderr = await self._exec(*args, timeout=timeout)
 
         if code != 0:
+            # 失败的响应里也带版本播报，而「CLI 太老」恰恰是最该在失败时知道的事。
+            self._note_update(_loads_or_none(stderr))
             raise LarkCLIError(
                 f"lark-cli exited {code}",
                 exit_code=code,
@@ -247,10 +532,12 @@ class LarkCLI:
         if not text:
             return None
         try:
-            return json.loads(text)
+            out = json.loads(text)
         except json.JSONDecodeError as e:
             log.debug("lark-cli output is not JSON. args=%s", args)
             return {"_raw": text, "_json_error": str(e)}
+        self._note_update(out)
+        return out
 
     # ── Auth ─────────────────────────────────────────────────────────
 
@@ -662,53 +949,139 @@ class LarkCLI:
         items = await self._drive_walk()
         return [i for i in items if i.get("type") not in ("bitable", "folder")]
 
+    # ``docs +fetch`` 的正文格式档位。lark-cli v1.0.49（2026-06-08，
+    # "doc: Remove docs v1 API"）之后 ``--doc-format`` 默认是 xml（DocxXML），
+    # 要 Markdown 必须显式点名。按「越干净越优先」排：
+    #   im-markdown —— 纯 Markdown，表格是管道表，DocxXML 结构全部降级掉（v1.0.58+）
+    #   markdown    —— 正文是 Markdown，但 <grid>/<figure>/<callout> 等原样保留
+    #   ""          —— 不带这个 flag，留给不认它的更老 CLI
+    # 实测同一篇文档：xml 51374 字 / markdown 44770 字（22 个 <table> 残留）/
+    # im-markdown 28534 字（0 残留，72 行管道表）——喂给文本模型差别很大。
+    _DOC_FORMATS = ("im-markdown", "markdown", "")
+
+    @staticmethod
+    def _no_such_subcommand(stderr: str) -> bool:
+        """CLI 说「没有这个子命令」= 它太老，调用方该走回退命令。
+
+        判据只认这句话本身。上一版还额外认 ``"+fetch" in stderr``，而 unknown flag
+        的报错里也带着 ``for "lark-cli docs +fetch"`` —— 于是一个拼错的 flag 会被
+        当成「CLI 太老」，静默走进早就被移除的回退命令，报出来的错和真因毫无关系。
+        """
+        s = stderr or ""
+        return "unknown subcommand" in s or "unknown command" in s
+
+    async def _docs_fetch(self, token: str, *, timeout: float, scope: str = "") -> Any:
+        """跑 ``docs +fetch``，按 :attr:`_DOC_FORMATS` 逐档降级。
+
+        **只有**当 CLI 抱怨 ``--doc-format`` 本身（不认这个 flag，或不认这个取值）时
+        才降档重试；其它错误直接抛出——不能把「没权限」「文档不存在」也吞成重试，
+        那样既慢，又会把真实原因替换成最后一档的报错。
+        """
+        last = len(self._DOC_FORMATS) - 1
+        for i, fmt in enumerate(self._DOC_FORMATS):
+            args = ["docs", "+fetch", "--doc", token, "--format", "json"]
+            if scope:
+                args += ["--scope", scope]
+            if fmt:
+                args += ["--doc-format", fmt]
+            try:
+                return await self.run(*args, timeout=timeout)
+            except LarkCLIError as e:
+                if i == last or "--doc-format" not in (e.stderr or ""):
+                    raise
+                log.debug("lark-cli 不接受 --doc-format %s，降一档重试", fmt)
+
+    @staticmethod
+    def _doc_body(out: Any) -> tuple[str, str]:
+        """从 ``docs +fetch`` 的响应里取正文，返回 ``(正文, 取不到时的诊断)``。
+
+        新旧两种形状都认：
+
+          v2（lark-cli ≥ 1.0.49）   ``data.document.content``
+          v1（更老）                ``data.markdown``
+
+        取不到时，诊断必须说清是**文档真的空**，还是**响应里压根没这个字段**
+        （= CLI 又改了结构）。两者的处置完全不同，混成一句「没有正文」会让人
+        去翻文档，而问题在 CLI。
+        """
+        if isinstance(out, str):
+            return out, ""
+        if not isinstance(out, dict):
+            return "", f"响应不是 JSON 对象，而是 {type(out).__name__}"
+        data = out.get("data") if isinstance(out.get("data"), dict) else {}
+        doc = data.get("document") if isinstance(data.get("document"), dict) else {}
+        for holder in (doc, data):
+            for key in ("content", "markdown", "text"):
+                v = holder.get(key)
+                if isinstance(v, str) and v.strip():
+                    return v, ""
+        raw = out.get("_raw")
+        if isinstance(raw, str) and raw.strip():
+            return raw, ""
+        if "content" in doc or "markdown" in data:
+            return "", "字段在，但正文长度为 0——这篇文档确实是空的"
+        return "", (
+            "响应里没有正文字段：data.document.content 和 data.markdown 都不存在。"
+            f"实际拿到的是 data={sorted(data)}、data.document={sorted(doc)}。"
+            "多半是 lark-cli 又改了响应结构"
+        )
+
     async def docs_get(self, token: str) -> dict:
         """获取文档元数据（标题等）。
 
         lark-cli 1.0.43 移除了 ``docs +get``，文档信息合并进 ``docs +fetch``
         （同一命令既返正文也返标题）。这里只取元数据；owner/space/updated/url
         等 +fetch 不返回，仍由本地索引提供。旧版本回退到 ``docs +get``。
+
+        v2 起连 title 都不返回了，只剩 ``document_id``——留空交给本地索引兜底。
+        因此这里用 ``--scope outline`` 只拉目录：默认的 full scope 会把整篇正文
+        一起带下来（实测 51374 字 vs outline 2589 字），而调用方一句正文都用不上。
         """
         try:
-            out = await self.run("docs", "+fetch", "--doc", token, "--format", "json", timeout=60)
+            out = await self._docs_fetch(token, timeout=60, scope="outline")
         except LarkCLIError as e:
-            if "unknown subcommand" in (e.stderr or "") or "+fetch" in (e.stderr or ""):
+            if self._no_such_subcommand(e.stderr):
                 return await self.run("docs", "+get", token)
             raise
         if isinstance(out, dict):
-            data = out.get("data") or {}
+            data = out.get("data") if isinstance(out.get("data"), dict) else {}
+            doc = data.get("document") if isinstance(data.get("document"), dict) else {}
             return {
-                "title": data.get("title"),
-                "doc_token": data.get("doc_id") or token,
-                "length": data.get("length"),
+                "title": doc.get("title") or data.get("title"),
+                "doc_token": doc.get("document_id") or data.get("doc_id") or token,
+                "length": doc.get("length") or data.get("length"),
             }
         return {}
 
     async def docs_export_markdown(self, token: str) -> str:
         """导出文档正文为 Markdown。
 
-        lark-cli 1.0.43 起 ``docs +export-markdown`` 被移除，改用
-        ``docs +fetch --doc <token>``：返回 JSON，正文在 ``data.markdown``，
-        文档内图片以 ``<image token="..." width=.. height=.. align=../>`` 内联。
-        旧版本回退到 ``+export-markdown``。
+        lark-cli 1.0.43 起 ``docs +export-markdown`` 被移除，改用 ``docs +fetch``；
+        1.0.49（2026-06-08，"Remove docs v1 API"）又一次同时动了两处：正文从
+        ``data.markdown`` 挪到 ``data.document.content``，``--doc-format`` 默认成了
+        xml。两处都踩中，于是这条路从 6 月起**每一次**都返回空串。现在显式点名
+        Markdown（见 :attr:`_DOC_FORMATS`），并同时认新旧两种字段位置。
+
+        文档内嵌图片的写法也随之变了，见 ``services.doc_images``。
+
+        取不到正文时**抛异常，不再返回空串**：调用方拿到 "" 只能报成
+        「未能从该文件抽取到任何正文」，把「CLI 改了结构」说成了「这篇文档没内容」。
+        正是这条假线索，让上面那个 bug 从 6 月一直活到 8.0。
         """
         try:
-            out = await self.run("docs", "+fetch", "--doc", token, "--format", "json", timeout=120)
+            out = await self._docs_fetch(token, timeout=120)
         except LarkCLIError as e:
             # 旧版 lark-cli：回退到 +export-markdown（纯文本输出）
-            if "unknown subcommand" in (e.stderr or "") or "+fetch" in (e.stderr or ""):
+            if self._no_such_subcommand(e.stderr):
                 return await self.run("docs", "+export-markdown", token, parse_json=False, timeout=120)
             raise
-        if isinstance(out, dict):
-            data = out.get("data") or {}
-            md = data.get("markdown") or data.get("content") or data.get("text")
-            if md:
-                return md
-            if out.get("_raw"):
-                return out["_raw"]
-        elif isinstance(out, str):
-            return out
-        return ""
+        md, why = self._doc_body(out)
+        if md.strip():
+            return md
+        raise LarkCLIError(
+            f"docs +fetch 没有返回正文：{why}",
+            cmd=[self.bin, "docs", "+fetch", "--doc", token],
+        )
 
     async def docs_download_media(self, token: str, dest_dir: Path, filename: str) -> dict:
         """按 file_token 下载文档内嵌图片到 ``dest_dir/filename``。
@@ -919,7 +1292,7 @@ class LarkCLI:
         """批量解析 open_id → {open_id, name, email, department}。
 
         与 users_resolve_names 同走 ``contact +search-user --user-ids``，但保留完整
-        记录：姓名 / 邮箱 / 部门路径。部门路径形如 ``集团总部-数码科技-信息安全``，
+        记录：姓名 / 邮箱 / 部门路径。部门路径形如 ``总部-技术中心-信息安全``，
         供组织架构图谱拆解层级。服务端单次只返回 ~20 条且无 has_more，故按 15 个/批
         切。缺失或外部用户直接不在返回 map 中。
         """

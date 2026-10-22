@@ -32,6 +32,17 @@ async def _llm_ping_safe() -> dict:
         }
 
 
+async def _cli_update_safe(lark) -> dict | None:
+    """查捆绑的 lark-cli 落后多少。任何异常都吞掉 —— 这是一条参考信息，
+    不能因为它让整张诊断页失败（这一页尤其不该自己先死）。"""
+    if not isinstance(lark, LarkCLI):
+        return None
+    try:
+        return await lark.update_status()
+    except Exception:  # noqa: BLE001
+        return None
+
+
 @router.get("")
 async def diagnostics() -> dict:
     # get_llm() 是进程级单例，这里拿它只为读配置快照（vision_last_model）。
@@ -54,11 +65,12 @@ async def diagnostics() -> dict:
         cli_mode = "live"
 
     # 并发跑各项检查，LLM ping 已自带 12s 超时兜底，避免任一慢检查拖死整页。
-    auth_status, llm_ping, index_stats, recent_audit = await asyncio.gather(
+    auth_status, llm_ping, index_stats, recent_audit, cli_update = await asyncio.gather(
         lark_for_auth.auth_status(),
         _llm_ping_safe(),
         index_service.stats(),
         audit.recent(limit=10),
+        _cli_update_safe(lark),
     )
 
     return {
@@ -67,6 +79,9 @@ async def diagnostics() -> dict:
             "version": cli_version,
             "mode": cli_mode,
             "bin": settings.lark_cli_bin,
+            # 捆绑的 CLI 落后多少。None = 问不出来（mock 模式 / 网络不通 / 命令超时），
+            # 页面据此显示「未获知」而不是编一个「已最新」。
+            "update": cli_update,
         },
         "auth": auth_status,
         "llm": llm_ping,

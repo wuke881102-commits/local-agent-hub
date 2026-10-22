@@ -15,10 +15,11 @@ import { fetcher } from '../api';
 type Row = {
   rank: number; previous_rank: number | null; rank_change: number;
   name: string; provider: string; slug: string; detail_url: string; released: string;
-  score: number; uncertainty: number | null; rank_from: number | null; rank_to: number | null;
-  completeness: number | null; confidence: string; metric_count: number | null; summary: string;
-  context_tokens: number | null;
-  price_in: number | null; price_out: number | null; price_blended: number | null;
+  score: number; rank_from: number | null; rank_to: number | null;
+  confidence: string; metric_count: number | null; summary: string;
+  evidence_label: string; evidence_note: string;
+  price_in: number | null; price_out: number | null; price_cached: number | null;
+  price_blended: number | null;
   price_label: string; price_source: string; price_source_url: string; price_verified_at: string;
   price_basis: string; value: number | null; value_rank: number | null;
   components: Record<string, { score: number; coverage: number; metricCount: number }>;
@@ -27,12 +28,18 @@ type LocalModel = {
   tier: string; setting: string; model: string; usage: string;
   on_board: boolean; rank: number | null; score: number | null; value: number | null;
   confidence: string; board_name: string;
+  /** 不是精确命中，是按「型号 + 日期后缀」对上的（榜上写 DeepSeek V4 Flash 0731，
+   *  .env 里配的是 deepseek-v4-flash）。页面必须说出来对的是哪一行。 */
+  approx?: boolean;
 };
 /** 本机在用、但这张榜不比的那几路（读图 / 兜底读图 / 生图 / 语音）。没有名次和性价比。 */
 type OtherModel = { kind: string; setting: string; model: string; provider: string; usage: string };
 type Policy = { commercial_use: string; contact: string; policy_version: string };
+type BoardKey = { key: string; label: string };
 type Board = {
   source_url: string; updated_label: string; board_count: number; fetched_at: string;
+  board: string; board_label: string; boards: BoardKey[];
+  metric_count: number; org_count: number;
   cached: boolean; cache_age_s: number; policy: Policy; in_out_ratio: number;
   total_on_board: number; providers: string[]; rows: Row[]; local_models: LocalModel[];
   other_models: OtherModel[];
@@ -68,39 +75,29 @@ const NEWS_ACCENT = '#0891B2';
 const CONF_CN: Record<string, string> = { HIGH: '高', MEDIUM: '中', LOW: '低' };
 const CONF_BADGE: Record<string, string> = { HIGH: 'badge-success', MEDIUM: 'badge-warning', LOW: 'badge-error' };
 
-// 站点「算法规则」页（/leaderboard/rules）的原文口径。这一列最容易被误读成
-// 「模型可不可信」，实际是「证据够不够」——站点原话：描述证据充分性，而非模型能力。
+// 站点「排名怎么算」页（/leaderboard/rules）的口径，2026-09-13 重新核对过。
+// 这一列最容易被误读成「模型可不可信」，实际是「证据够不够」。
+//
+// 原先这里写死了三档判据（≥6 个证据家族 / 完整度 ≥80% / 标准误 ≤5）—— 那是改版前的
+// 规则，站点现在不那么算了。**每行自己的判词（evidence_note）是站点当下给的**，
+// 所以优先显示它；这段只作为没有判词时的兜底。
 const CONF_TIP = [
-  '证据可信度 = 这个分数背后的证据够不够，不是模型好不好（站点原话：描述证据充分性，而非模型能力）。',
-  '高：≥6 个独立证据家族 · 完整度 ≥80% · 标准误 ≤5',
-  '中：≥4 个独立证据家族 · 完整度 ≥40% · 标准误 ≤8',
-  '低：其余情况',
-  '标「中/低」只说明样本还不够、分数可能随后续评测变动，不代表模型差。',
+  '证据可信度 = 这个分数背后的证据够不够，不是模型好不好。',
+  '「证据敏感」：删掉一项评测或一家机构、把单项权重上下调 20%、或改变误差处理后，',
+  '名次范围达到三名以上、某些情景失去参评资格、或有对照未完成。',
+  '综合榜至少要三家机构 + 三个证据家族 + 三个专项覆盖；多数分类榜要两家机构。',
+  '缺测不记零分，但仍可能造成偏差；详情页的情景范围不是 95% 置信区间。',
 ].join('\n');
+
+/** 一行的身份。**不能直接用 slug** —— 站点不给模型链接时它是空串，
+ *  而 `open === ''` 对每一行都成立，点一下会把整张表全展开。 */
+function rowId(r: { slug: string; rank: number }): string {
+  return r.slug || `#${r.rank}`;
+}
 
 function cny(v: number | null, label?: string): string {
   if (v === null || v === undefined) return label || '待核验';
   return '¥' + Number(v).toFixed(2).replace(/\.?0+$/, '');
-}
-
-/**
- * 上下文窗口的短标签。
- *
- * 站点的 contextWindowTokens 是真实 token 数，且同一句「1M 上下文」在不同厂商那里
- * 有好几个写法：1000000（十进制）、1048576（2^20）、1050000、1310720。直接除以 1e6
- * 会得到 `1.048576M` 这种没人想看的数，所以四舍五入到 2 位并去掉多余的 0
- * （1000000→1M、1048576→1.05M、1310720→1.31M）。精确值放在 title 里，鼠标悬停可查，
- * 不会因为取整把 1050000 和 1048576 的区别彻底抹掉。
- */
-function ctxLabel(t: number | null): string {
-  if (!t) return '—';
-  if (t >= 1_000_000) return `${+(t / 1_000_000).toFixed(2)}M`;
-  if (t >= 1000) return `${Math.round(t / 1000)}K`;
-  return String(t);
-}
-
-function ctxExact(t: number | null): string | undefined {
-  return t ? `${t.toLocaleString('en-US')} tokens` : undefined;
 }
 
 /** 数据来源 / 抓取时间 / 缓存状态 + 商用授权提示。两个标签共用。 */
@@ -171,14 +168,21 @@ const LeaderboardTab: React.FC = () => {
   const [limit, setLimit] = useState(30);
   const [provider, setProvider] = useState('');
   const [byValue, setByValue] = useState(false);
-  const [open, setOpen] = useState<string>('');   // 展开哪一行的证据分项
+  const [open, setOpen] = useState<string>('');   // 展开哪一行
   const [bust, setBust] = useState(0);
+  // 站点 2026-09 把榜拆成五张（综合 / 编程 / 推理 / 知识 / 专业办公），各是独立页面。
+  // 一次只拉当前这张：五张一起拉要五次回源，而大多数时候只看一张。
+  const [board, setBoard] = useState('overall');
 
-  const key = `/api/aihot/leaderboard?limit=${limit}&provider=${encodeURIComponent(provider)}`
+  const key = `/api/aihot/leaderboard?board=${board}&limit=${limit}`
+    + `&provider=${encodeURIComponent(provider)}`
     + (bust ? `&refresh=true&_=${bust}` : '');
   const { data, error, isLoading, mutate } = useSWR<Board>(key, fetcher, { revalidateOnFocus: false });
 
-  if (error) return <ErrCard error={error} what="模型榜" onRetry={() => mutate()} />;
+  // 重试必须带上 refresh=true：失败的那份响应后端已经缓存了 15 分钟，
+  // 光 mutate() 是拿同一份坏东西再读一遍，用户看到的就是「怎么点都失败」。
+  if (error) return <ErrCard error={error} what="模型榜"
+                             onRetry={() => { setBust(Date.now()); mutate(); }} />;
   if (isLoading || !data) return <Loading what="模型榜" />;
 
   const mine = new Set(data.local_models.filter(m => m.on_board).map(m => m.board_name));
@@ -192,10 +196,28 @@ const LeaderboardTab: React.FC = () => {
                   ageS={data.cache_age_s} policy={data.policy} accent={ACCENT}
                   refreshing={false} onRefresh={() => { setBust(Date.now()); mutate(); }}>
         <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-          榜单更新于 <strong>{data.updated_label || '未知'}</strong> · 综合 <strong>{data.board_count || '?'}</strong> 家公开榜单
+          {data.board_label || ''}榜 · <strong>{data.metric_count || '?'}</strong> 项评测
+          · <strong>{data.org_count || '?'}</strong> 家机构
+          · 更新于 <strong>{data.updated_label || '未知'}</strong>
           · 榜上 {data.total_on_board} 个模型
         </span>
       </Provenance>
+
+      {/* 五张榜。站点自己的分法，不是我们分的 —— 编程榜第一名和综合榜第一名经常不是同一个。 */}
+      {data.boards?.length > 1 && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 'var(--space-4)' }}>
+          {data.boards.map(b => (
+            <button key={b.key}
+                    className={`btn btn-sm ${b.key === board ? 'btn-primary' : 'btn-tonal'}`}
+                    onClick={() => { setBoard(b.key); setOpen(''); }}>
+              {b.label}
+            </button>
+          ))}
+          <span style={{ fontSize: 12, color: 'var(--text-tertiary)', alignSelf: 'center', marginLeft: 4 }}>
+            分类榜的证据比综合榜少（常见只有两三项评测），名次更容易变
+          </span>
+        </div>
+      )}
 
       {/* 本机三档模型在榜位置 */}
       {data.local_models.length > 0 && (
@@ -220,7 +242,16 @@ const LeaderboardTab: React.FC = () => {
                 {m.on_board
                   ? <div style={{ fontSize: 12 }}>
                       <span className="badge badge-brand">第 {m.rank} 名</span>{' '}
-                      共识分 {m.score?.toFixed(1)} · 性价比 {m.value?.toFixed(2) ?? '—'}
+                      共识指数 {m.score?.toFixed(1)} · 性价比 {m.value?.toFixed(2) ?? '—'}
+                      {/* 按「型号 + 日期后缀」对上的要说出来对的是哪一行 ——
+                          .env 里是 deepseek-v4-flash，榜上是 DeepSeek V4 Flash 0731。
+                          不说的话，用户看到的名次其实属于另一个写法的同名模型。 */}
+                      {m.approx && m.board_name && (
+                        <div style={{ color: 'var(--text-tertiary)', marginTop: 2 }}
+                             title="榜单写的是带日期的具体版本，本机配置写的是调用用的模型 id，按型号对上的">
+                          按榜上「{m.board_name}」对照
+                        </div>
+                      )}
                     </div>
                   : <span className="badge badge-warning" title="榜单里没有这个型号，无法用榜单数据比较">未上榜</span>}
               </div>
@@ -280,8 +311,8 @@ const LeaderboardTab: React.FC = () => {
             {[10, 20, 30, 50, 100].map(n => <option key={n} value={n}>前 {n} 名</option>)}
           </select>
           <button className="btn btn-tonal btn-sm" onClick={() => setByValue(v => !v)}
-                  title="在共识分排序（站点原序）和性价比排序（本机计算）之间切换">
-            <Icon name="refresh" size={13} /> {byValue ? '按共识分排序' : '按性价比排序'}
+                  title="在共识指数排序（站点原序）和性价比排序（本机计算）之间切换">
+            <Icon name="refresh" size={13} /> {byValue ? '按共识指数排序' : '按性价比排序'}
           </button>
           <div style={{ flex: 1 }} />
           <button className="btn btn-tonal btn-sm" onClick={() => nav('/task/aihot-models')}
@@ -294,31 +325,34 @@ const LeaderboardTab: React.FC = () => {
           除<strong>性价比</strong>外都是 AIHOT 榜单口径（
           <a href={`${data.source_url}/leaderboard/rules`} target="_blank" rel="noreferrer">算法规则</a>
           ）。<strong>证据可信度</strong>说的是<strong>证据够不够</strong>，不是模型好不好——标「中 / 低」只意味着
-          样本还不足、分数可能随后续评测变动（悬停看判据）。<strong>性价比</strong>为本机计算 = 共识分 ÷ 混合价，
+          样本还不足、分数可能随后续评测变动（悬停看判据）。<strong>性价比</strong>为本机计算 = 共识指数 ÷ 混合价，
           混合价 =（输入价 + {data.in_out_ratio}×输出价）÷ {1 + Number(data.in_out_ratio)}
           （假设输入:输出 ≈ 1:{data.in_out_ratio}）；价格待核验的模型不参与。
-          点任意一行展开各评测家族的分项得分、名次区间与价格出处。
+          点任意一行看名次区间和站点对这一行证据的判词。
         </div>
 
         <div style={{ overflowX: 'auto' }}>
           <table className="table">
             <thead><tr>
               <th>排名</th><th>模型 / 厂商</th><th>上线日期</th>
-              <th title="该模型被多少评测覆盖到（站点口径 coverage）。只对真正跑出结果的子项累计证据预算；缺榜不直接扣分，只降低确定性。">
-                评测完整度
+              <th title="这个名次背后有多少项公开评测在支撑。站点口径：缺测不记零分，但仍可能造成偏差。">
+                评测证据
+              </th>
+              <th title="命中缓存时的输入价。不参与下面的性价比计算 —— 性价比口径固定为输入 + 3×输出，换口径新旧数字就没法比了。">
+                缓存成本
               </th>
               <th>输入成本</th><th>输出成本</th>
               <th title="不是各榜分数的平均值。站点用正则化 Bradley–Terry 模型估计模型在统一能力尺度上的位置：Score = 100/|A| × Σ P(战胜锚点模型 a)，即「平均战胜固定锚点模型的概率 ×100」。">
-                AIHOT 共识分
+                AIHOT 共识指数
               </th>
               <th title={CONF_TIP}>证据可信度</th>
-              <th>性价比*</th><th>上下文</th>
+              <th>性价比*</th>
             </tr></thead>
             <tbody>
               {rows.map(r => (
                 <React.Fragment key={r.slug || r.rank}>
                   <tr style={{ cursor: 'pointer' }}
-                      onClick={() => setOpen(o => (o === r.slug ? '' : r.slug))}>
+                      onClick={() => setOpen(o => (o === rowId(r) ? '' : rowId(r)))}>
                     <td className="mono" style={{ fontWeight: 700 }}>{String(r.rank).padStart(2, '0')}</td>
                     <td>
                       {r.detail_url
@@ -329,41 +363,66 @@ const LeaderboardTab: React.FC = () => {
                       <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{r.provider}</div>
                     </td>
                     <td style={{ whiteSpace: 'nowrap' }}>{r.released || '—'}</td>
-                    <td>{r.completeness !== null ? `${r.completeness.toFixed(1)}%` : '—'}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      {r.metric_count ? `${r.metric_count} 项` : '—'}
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      {r.price_cached === null || r.price_cached === undefined
+                        ? <span style={{ color: 'var(--text-tertiary)' }}>—</span>
+                        : cny(r.price_cached, r.price_label)}
+                    </td>
                     <td style={{ whiteSpace: 'nowrap' }}>{cny(r.price_in, r.price_label)}</td>
                     <td style={{ whiteSpace: 'nowrap' }}>{cny(r.price_out, r.price_label)}</td>
                     <td><strong>{r.score.toFixed(1)}</strong></td>
-                    <td><span className={`badge ${CONF_BADGE[r.confidence] || 'badge-info'}`}
-                              title={CONF_TIP}>
-                      {CONF_CN[r.confidence] || r.confidence || '—'}</span></td>
+                    {/* 每行的判词优先用站点自己给的那句（evidence_note）—— 它是逐行的、
+                        而且永远是站点当下的口径；CONF_TIP 只是没有判词时的兜底。 */}
+                    <td title={r.evidence_note || CONF_TIP}>
+                      <span className={`badge ${CONF_BADGE[r.confidence] || 'badge-info'}`}>
+                        {CONF_CN[r.confidence] || r.confidence || '—'}</span>
+                      {r.evidence_label && (
+                        <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                          {r.evidence_label}
+                        </div>
+                      )}
+                    </td>
                     <td title={r.value_rank ? `性价比第 ${r.value_rank} 名` : '价格待核验，不参与性价比排名'}>
                       {r.value ? r.value.toFixed(2) : '—'}
                     </td>
-                    <td style={{ whiteSpace: 'nowrap', color: 'var(--text-tertiary)', fontSize: 12 }}
-                        title={ctxExact(r.context_tokens)}>
-                      {ctxLabel(r.context_tokens)}
-                    </td>
                   </tr>
-                  {open === r.slug && (
+                  {open === rowId(r) && (
                     <tr>
                       <td colSpan={10} style={{ background: 'var(--surface-subtle)' }}>
                         {r.summary && <div style={{ marginBottom: 8, fontSize: 13 }}>{r.summary}</div>}
                         <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 8 }}>
-                          共 {r.metric_count ?? '?'} 项评测 · 不确定度 ±{r.uncertainty ?? '?'} ·
-                          {/* 名次区间从主表移到这里：日常看榜用不上，但要判断「两个模型的先后是否站得住」时得有它 */}
-                          {' '}<span title="考虑不确定度后该模型可能落在的排名区间。两个模型区间大幅重叠 = 它们的先后在统计上不结实。">
+                          共 {r.metric_count ?? '?'} 项评测
+                          {r.evidence_label && <> · {r.evidence_label}</>} ·
+                          {/* 名次区间不在主表：日常看榜用不上，但要判断「两个模型的先后是否站得住」时得有它。
+                              站点把它写在那一格的悬停说明里（「名次为 1—2」），我们顺手取了出来。 */}
+                          {' '}<span title="站点按预设的删源 / 权重 / 误差对照跑出来的情景范围。两个模型范围大幅重叠 = 它们的先后不结实。注意：这不是 95% 置信区间。">
                             名次区间 {r.rank_from ? `${r.rank_from}–${r.rank_to}` : '—'}
                           </span> ·
-                          {' '}混合价 {r.price_blended ? `¥${r.price_blended}` : '—'} ·
-                          {' '}上下文 {r.context_tokens ? `${r.context_tokens.toLocaleString('en-US')} tokens` : '—'}
-                          {r.price_source && <>　价格出处：{r.price_source_url
-                            ? <a href={r.price_source_url} target="_blank" rel="noreferrer">{r.price_source}</a>
-                            : r.price_source}
-                            {r.price_verified_at && <>（核验于 {r.price_verified_at}）</>}</>}
+                          {' '}混合价 {r.price_blended ? `¥${r.price_blended}` : '—'}
+                          {r.price_cached !== null && r.price_cached !== undefined
+                            && <> · 缓存输入 ¥{r.price_cached}</>}
                         </div>
+                        {r.evidence_note && (
+                          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                            {r.evidence_note}
+                          </div>
+                        )}
                         {r.price_basis && (
                           <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 8 }}>
                             计价口径：{r.price_basis}
+                          </div>
+                        )}
+                        {/* 分项得分：站点 2026-09 改版后从榜单页挪进了模型详情页，
+                            这里拿不到了。不装作没有这回事，给一个能点过去的入口。 */}
+                        {Object.keys(r.components || {}).length === 0 && r.detail_url && (
+                          <div style={{ fontSize: 12 }}>
+                            各评测家族的分项得分现在只在站点的模型详情页 ——{' '}
+                            <a href={r.detail_url} target="_blank" rel="noreferrer">
+                              打开 {r.name} 的详情页 <Icon name="external" size={11} />
+                            </a>
                           </div>
                         )}
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -437,7 +496,8 @@ const NewsTab: React.FC = () => {
   const { data, error, isLoading, mutate } = useSWR<News>(key, fetcher, { revalidateOnFocus: false });
   const { data: daily } = useSWR<Daily>(showDaily ? '/api/aihot/daily' : null, fetcher);
 
-  if (error) return <ErrCard error={error} what="AI 新闻" onRetry={() => mutate()} />;
+  if (error) return <ErrCard error={error} what="AI 新闻"
+                             onRetry={() => { setBust(Date.now()); mutate(); }} />;
   if (isLoading || !data) return <Loading what="AI 资讯" />;
 
   return (

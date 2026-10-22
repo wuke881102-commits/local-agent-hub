@@ -1,14 +1,20 @@
 import React from 'react';
 import { Icon } from './icons';
 import { useAuth } from '../hooks/useAuth';
+import { authUsable } from '../api';
 
 /** 顶部条幅式授权 CTA — 未授权时常驻显示在 WorkbenchShell。
  *  点击 → 后端拿 verification_uri → 自动新开标签 → 轮询状态 → 完成后自动消失。 */
 export const AuthBanner: React.FC = () => {
   const { auth, loggingIn, polling, loginInfo, startLogin, clearLogin, refresh } = useAuth();
 
-  // 已完全授权（用户身份就绪）+ 非 mock → 不显示
-  if (!auth || (auth.authenticated && !auth.mock_mode && !auth.mock)) return null;
+  // 授权可用 + 非 mock → 不显示。
+  //
+  // **判据是 authUsable 而不是 authenticated。** 后者只在 user identity == ready 时为真，
+  // 而 access token 只活 2 小时：一过期状态就变 needs_refresh，条幅立刻冒出来喊
+  // 「尚未完成飞书授权」并递上「立即授权」按钮 —— 可授权明明是好的，下一次真实调用
+  // 会自动续期。用户被反复催着重新点授权，就是这么来的。
+  if (!auth || (authUsable(auth) && !auth.mock_mode && !auth.mock)) return null;
 
   const mockMode = auth.mock_mode || auth.mock;
   const stage = auth.stage;

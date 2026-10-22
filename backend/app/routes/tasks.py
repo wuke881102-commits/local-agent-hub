@@ -82,7 +82,26 @@ async def preview_task(task_id: str) -> HTMLResponse:
     path = Path(t["result_path"])
     if not path.exists():
         raise HTTPException(404, "preview file missing")
+    if path.suffix.lower() not in (".html", ".htm"):
+        # 预览只认 HTML。原先对任何产物都 read_text(utf-8)，.pptx 是二进制，
+        # 走到这里就是 UnicodeDecodeError → 500，而前端只会看到一块白。
+        raise HTTPException(415, f"{path.suffix} 产物不支持网页预览，请下载后打开")
     return HTMLResponse(path.read_text(encoding="utf-8"))
+
+
+# 产物类型按扩展名决定。原先这里硬编码 text/html + .html：.pptx 走过来会被
+# 浏览器当网页打开，下下来的文件名也是错的。
+_DOWNLOAD_TYPES = {
+    ".html": "text/html",
+    ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+}
+
+
+def _download_meta(task_id: str, result_path: str) -> tuple[str, str]:
+    """返回 (media_type, 下载文件名)。认不出的扩展名给 octet-stream —— 让浏览器
+    下载，而不是猜错类型当网页渲染。"""
+    ext = Path(result_path).suffix.lower()
+    return _DOWNLOAD_TYPES.get(ext, "application/octet-stream"), f"{task_id}{ext}"
 
 
 @router.get("/{task_id}/download")
@@ -90,5 +109,5 @@ async def download_task(task_id: str) -> FileResponse:
     t = await task_runner.get_task(task_id)
     if not t or not t.get("result_path"):
         raise HTTPException(404, "no draft")
-    return FileResponse(t["result_path"], media_type="text/html",
-                        filename=f"{task_id}.html")
+    media, filename = _download_meta(task_id, t["result_path"])
+    return FileResponse(t["result_path"], media_type=media, filename=filename)

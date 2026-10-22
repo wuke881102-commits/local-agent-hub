@@ -1,15 +1,21 @@
-"""AIHOT（aihot.virxact.com）数据接入 —— 新闻走公开 API v1，模型榜解析榜单页。
+"""AIHOT（aihot.news）数据接入 —— 新闻走公开 API v1，模型榜解析榜单页。
+
+域名：2026-09 站点从 aihot.virxact.com 搬到 aihot.news，HTML 页面 301 过去
+（/api/v1/* 两个域名都还直连）。默认值和 production.env 都已指新家；老域名配着也能
+跑，只是多一跳、且那一跳撤掉就断。别再往代码里硬编码域名，用 base_url()。
 
 为什么分两条路（重要，改这个文件前先读）：
   · **AI 新闻**：站点在 /agent 与 llms.txt 明确提供匿名只读的 `/api/v1/*`（items /
     hot-topics / stories / dailies），并在 robots.txt 里对通用 UA `Allow: /api/v1/`。
     有 ETag + `s-maxage`，是官方推荐的机读入口 → 直接用，最稳。
-  · **模型榜**：`/api/v1/leaderboard` 返回 404，站点没有榜单 API（2026-08 核实）。
-    榜单页 /leaderboard 是 Next.js SSR，整张榜以 JSON 内联在 RSC flight 负载里
-    （`"entries":[{rank,name,provider,score,...}]`），比刮 DOM 稳得多 → 解析它。
+  · **模型榜**：站点至今没有榜单 API —— 四条官方机器入口（REST v1 / MCP / RSS /
+    Agent Skill）一条都不含它：`/openapi-v1.json` 9 个路径、MCP `tools/list` 5 个
+    工具，全是资讯 / 热点 / 日报（2026-09-13 逐个核实）。所以只能解析榜单页本身。
     robots.txt 的 `User-agent: *` 组没有 Disallow /leaderboard，可抓。
+    2026-09-13 站点改版：榜单从内联 JSON 变成服务端渲染的表格，且一张榜拆成五张
+    （综合 / 编程 / 推理 / 知识 / 专业办公）。解析细节和为什么按表头认列，见下面 BOARDS 那段。
     这条路天生比 API 脆（站点改版即失效），所以：解析失败给明确报错 +
-    `AIHOT_LEADERBOARD_PATH` 可覆盖，并建议向站方（X-AIHOT-Contact）申请榜单 API。
+    `AIHOT_LEADERBOARD_PATH` 可覆盖综合榜路径，并建议向站方（X-AIHOT-Contact）申请榜单 API。
 
 合规（不要绕过）：
   响应头 `X-AIHOT-Commercial-Use: written-authorization-required`。本模块把它连同
@@ -30,6 +36,7 @@ import re
 import time
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -37,8 +44,6 @@ from ..config import DATA_ROOT, settings
 from ..html.design_system import LUMEN_LIGHT_ROOT_CSS
 
 log = logging.getLogger("services.aihot")
-
-BS = chr(92)   # 反斜杠字面量（见 _grab_array 的字符串扫描），避免源码里出现转义歧义
 
 # 各端点的缓存 TTL（秒）。取自站点 Cache-Control 的 s-maxage 量级，
 # 宁可比它长一点：本地工作台不需要秒级新鲜度，少打人家接口。
@@ -91,7 +96,7 @@ class AihotError(RuntimeError):
 
 def base_url() -> str:
     """站点根地址（无尾斜杠）。拼详情页链接时也用它，别自己硬编码域名。"""
-    return (settings.aihot_base_url or "https://aihot.virxact.com").rstrip("/")
+    return (settings.aihot_base_url or "https://aihot.news").rstrip("/")
 
 
 _base = base_url   # 兼容本模块内的旧调用名
@@ -118,6 +123,26 @@ def _cache_dir() -> Path:
 def _cache_file(kind: str, key: str) -> Path:
     h = hashlib.sha1(key.encode("utf-8")).hexdigest()[:16]
     return _cache_dir() / ("%s-%s.json" % (kind, h))
+
+
+def _cache_key(path: str, params: dict | None = None) -> str:
+    """缓存键 = 完整 URL + 归一化后的查询参数。_get 和 _drop_cache 必须用同一个。"""
+    return _base() + path + "?" + json.dumps(params or {}, sort_keys=True)
+
+
+def _drop_cache(kind: str, path: str, params: dict | None = None) -> bool:
+    """扔掉一份缓存。
+
+    存在的理由：_get 是先写缓存、后由调用方解析，所以**一次拿到坏页面就会被缓存
+    15 分钟**，期间点「重试」只是把同一份坏东西再读一遍——用户看到的是「怎么点都失败」。
+    更糟的是网络抖动时 _get 会回退过期缓存，那条路上坏页面永不过期。
+    所以解析不出来的那一份要能被立刻扔掉。
+    """
+    try:
+        _cache_file(kind, _cache_key(path, params)).unlink()
+        return True
+    except OSError:
+        return False
 
 
 def _read_cache(path: Path) -> dict | None:
@@ -173,8 +198,7 @@ async def _get(path: str, *, kind: str, params: dict | None = None,
     meta 含 cached / age_s / policy 等，供结果页展示「数据几点抓的」。
     """
     url = _base() + path
-    key = url + "?" + json.dumps(params or {}, sort_keys=True)
-    cf = _cache_file(kind, key)
+    cf = _cache_file(kind, _cache_key(path, params))
     cached = _read_cache(cf)
     ttl = _TTL.get(kind, 300)
     now = time.time()
@@ -270,90 +294,248 @@ def story_id_from_url(url: str) -> str:
     return m.group(1) if m else ""
 
 
-# ── 模型榜：解析 /leaderboard 的 RSC flight 负载 ──────────────────────
+# ── 模型榜：解析 /leaderboard 那张表 ──────────────────────────────────
+#
+# 2026-09-13 站点改版：榜单从**内联 JSON**（`"entries":[{rank,name,...}]`）改成了
+# **服务端直接渲染的 HTML 表格**，页面里一个 JSON 都没有了，也没有前端异步拉取的
+# 接口可以蹭。四条官方机器入口（REST v1 / MCP / RSS / Agent Skill）全都不含榜单：
+# `/openapi-v1.json` 9 个路径、MCP `tools/list` 5 个工具，一条都没有。核对过 robots：
+# `User-agent: *` 组没有 Disallow /leaderboard，可抓。
+#
+# 所以只能解析那张表。**按表头文字定位列**，不认 `lb-rank-number` 这类 class 名 ——
+# class 名比列名更容易被下一次改版带走，而表头是给人看的，改了用户自己也会发现。
+#
+# 同时榜从一张变成五张（综合 / 编程 / 推理 / 知识 / 专业办公），各是独立 URL。
 
-def _flight_text(html: str) -> str:
-    """把页面里所有 self.__next_f.push([1,"…"]) 的字符串块拼成 flight 文本。
+BOARDS: dict[str, tuple[str, str]] = {
+    "overall":      ("综合", "/leaderboard"),
+    "coding":       ("编程", "/leaderboard/category/coding"),
+    "reasoning":    ("推理", "/leaderboard/category/reasoning"),
+    "knowledge":    ("知识", "/leaderboard/category/knowledge"),
+    "professional": ("专业办公", "/leaderboard/category/professional"),
+}
+DEFAULT_BOARD = "overall"
 
-    这些块是标准 JS 字符串字面量，用 JSONDecoder.raw_decode 逐个正确解码
-    （正则贪婪/非贪婪都会在内嵌 `"]` 处切错，别改回纯正则截取）。
+_TAG_RE = re.compile(r"<[^>]+>|<!--.*?-->", re.S)
+_TITLE_RE = re.compile(r"<title[^>]*>(.{0,160}?)</title>", re.S | re.I)
+_TABLE_RE = re.compile(r"<table[^>]*>.*?</table>", re.S | re.I)
+_THEAD_RE = re.compile(r"<thead[^>]*>.*?</thead>", re.S | re.I)
+_TH_RE = re.compile(r"<th[^>]*>(.*?)</th>", re.S | re.I)
+_TR_RE = re.compile(r"<tr[^>]*>(.*?)</tr>", re.S | re.I)
+_TD_RE = re.compile(r"<td[^>]*>(.*?)</td>", re.S | re.I)
+# 「21 项评测 · 10 家机构 · 09/13 18:53 更新」
+_META_RE = re.compile(r"(\d+)\s*项评测\s*·\s*(\d+)\s*家机构\s*·\s*([^·<]{4,24}?)\s*更新")
+# 证据可信度那格的 title 里带着名次区间：「名次为 1—2」
+_RANGE_RE = re.compile(r"名次为\s*(\d+)\s*[—\-~]\s*(\d+)")
+
+
+def _text(html: str) -> str:
+    """去标签取纯文本。`<!-- -->` 是 Next.js 的文本分隔注释，必须当成空白去掉，
+    不然「输入 <!-- -->¥67.08」会粘成一坨。"""
+    return " ".join(_TAG_RE.sub(" ", html or "").split())
+
+
+def _num(s: str) -> float | None:
+    m = re.search(r"-?\d+(?:\.\d+)?", (s or "").replace(",", ""))
+    return float(m.group(0)) if m else None
+
+
+def _columns(table: str) -> list[str]:
+    """表头文字 -> 字段名。认不出来的列留空，按位置跳过。
+
+    三列价格的表头都是「…价格 人民币 / 百万 Token」，靠前缀区分缓存 / 输入 / 输出。
     """
-    dec = json.JSONDecoder()
-    parts: list[str] = []
-    for m in re.finditer(r'self\.__next_f\.push\(\[1,\s*', html):
-        try:
-            s, _ = dec.raw_decode(html, m.end())
-        except ValueError:
+    th = _THEAD_RE.search(table)
+    if not th:
+        return []
+    out = []
+    for cell in _TH_RE.findall(th.group(0)):
+        t = _text(cell)
+        if "排名" in t:
+            out.append("rank")
+        elif "模型" in t:
+            out.append("model")
+        elif "上线" in t:
+            out.append("released")
+        elif "证据" in t or "评测" in t and "价格" not in t:
+            out.append("evidence")
+        elif "缓存" in t:
+            out.append("price_cached")
+        elif "输入" in t:
+            out.append("price_in")
+        elif "输出" in t:
+            out.append("price_out")
+        elif "共识" in t or "指数" in t or "得分" in t:
+            out.append("score")
+        else:
+            out.append("")
+    return out
+
+
+def _row_entry(cells: list[str], cols: list[str]) -> dict | None:
+    """一行 <td> -> 一个条目（沿用原来 JSON 的字段名，好让下游一行都不用改）。"""
+    e: dict[str, Any] = {}
+    for i, cell in enumerate(cells):
+        key = cols[i] if i < len(cols) else ""
+        if not key:
             continue
-        if isinstance(s, str):
-            parts.append(s)
-    return "".join(parts)
+        if key == "rank":
+            e["rank"] = int(_num(_text(cell)) or 0)
+        elif key == "model":
+            # 名字和厂商各自有标签；整格取文本会把移动端那串「上线…缓存输入…」也带进来。
+            name = re.search(r"<strong[^>]*>(.*?)</strong>", cell, re.S)
+            prov = re.search(r"<small[^>]*>(.*?)</small>", cell, re.S)
+            # 分类榜的链接带查询串：/leaderboard/claude-fable-5-1?from=coding ——
+            # 少了 (?:\?…)? 这一段，五张榜里有四张的 slug 会全是空。
+            href = re.search(r'href="/leaderboard/([a-z0-9\-]+)(?:\?[^"]*)?"', cell)
+            e["name"] = _text(name.group(1)) if name else ""
+            e["provider"] = _text(prov.group(1)) if prov else ""
+            e["slug"] = href.group(1) if href else ""
+        elif key == "released":
+            d = re.search(r'dateTime="([\d\-]{8,10})"', cell) or re.search(r"(\d{4}-\d{2}-\d{2})", cell)
+            e["releasedAt"] = d.group(1) if d else ""
+        elif key == "evidence":
+            e["metricCount"] = int(_num(_text(cell)) or 0)
+            conf = re.search(r'data-confidence="([A-Za-z]+)"', cell)
+            e["confidence"] = (conf.group(1) if conf else "").upper()
+            small = re.search(r"<small[^>]*>(.*?)</small>", cell, re.S)
+            e["evidenceLabel"] = _text(small.group(1)) if small else ""
+            # 站点给每一行写了一句自己的解释（「在已完成的预设删源、权重和误差对照中，
+            # 名次为 1—2。这是情景范围，不是置信区间。」）。带上它 —— 逐行、且永远是
+            # 站点当下的口径，比我们在前端写死一段判据强：那段判据这次改版就已经过期了。
+            note = re.search(r'<small[^>]*\btitle="([^"]{4,400})"', cell)
+            e["evidenceNote"] = _text(note.group(1)) if note else ""
+            rng = _RANGE_RE.search(cell)
+            if rng:
+                e["possibleRankFrom"] = int(rng.group(1))
+                e["possibleRankTo"] = int(rng.group(2))
+        elif key == "price_cached":
+            e["cachedInputPricePerMillionCny"] = _num(_text(cell))
+        elif key == "price_in":
+            e["inputPricePerMillionCny"] = _num(_text(cell))
+        elif key == "price_out":
+            e["outputPricePerMillionCny"] = _num(_text(cell))
+        elif key == "score":
+            e["score"] = _num(_text(cell))
+    return e if e.get("name") and e.get("rank") else None
 
 
-def _grab_array(txt: str, key: str) -> str | None:
-    """在 txt 里找 "<key>":[ … ] 并做括号配平（跳过字符串内的括号）。"""
-    k = '"%s":[' % key
-    i = txt.find(k)
-    if i < 0:
-        return None
-    start = i + len(k) - 1
-    depth = 0
-    instr = False
-    esc = False
-    for j in range(start, len(txt)):
-        c = txt[j]
-        if instr:
-            if esc:
-                esc = False
-            elif c == BS:
-                esc = True
-            elif c == '"':
-                instr = False
-            continue
-        if c == '"':
-            instr = True
-        elif c == "[":
-            depth += 1
-        elif c == "]":
-            depth -= 1
-            if depth == 0:
-                return txt[start:j + 1]
-    return None
+def _parse_board(html: str) -> tuple[list[dict], dict]:
+    """返回 (条目列表, 榜单级信息)。解析不出来就返回空列表，由调用方给诊断。"""
+    table = _TABLE_RE.search(html or "")
+    if not table:
+        return [], {}
+    t = table.group(0)
+    cols = _columns(t)
+    if "rank" not in cols or "model" not in cols:
+        return [], {}
+    entries = []
+    for tr in _TR_RE.findall(t):
+        cells = _TD_RE.findall(tr)
+        if len(cells) < 4:
+            continue          # 表头行 / 占位行
+        e = _row_entry(cells, cols)
+        if e:
+            entries.append(e)
+    meta: dict[str, Any] = {}
+    m = _META_RE.search(_text(html))
+    if m:
+        meta = {"metrics": int(m.group(1)), "orgs": int(m.group(2)),
+                "updated_label": m.group(3).strip()}
+    return entries, meta
 
 
-_UPDATED_RE = re.compile(r'"更新于 ","([^"]{3,40})"')
-_BOARDS_RE = re.compile(r'"综合 ",\[[^\]]{0,200}?"children":(\d+)')
-
-
-async def fetch_leaderboard(force: bool = False) -> dict:
-    """抓 + 解析模型榜。返回 {entries, updated_label, board_count, source_url, meta}。
-
-    entries 保留站点原字段（rank/name/provider/score/coverage/confidence/价格/
-    证据分项…），归一化交给调用方，这里只负责「拿到真数据」。
-    """
-    url_path = settings.aihot_leaderboard_path or "/leaderboard"
-    html, meta = await _get(url_path, kind="leaderboard", force=force, raw=True)
-    flight = _flight_text(html or "")
-    raw = _grab_array(flight, "entries")
-    if not raw:
-        raise AihotError(
-            "解析 AIHOT 模型榜失败：榜单页里没找到 entries 数据块。站点可能改版了"
-            "（本功能靠解析榜单页，因为站点未提供榜单 API）。可先人工核对 "
-            + _base() + url_path + "，或在 .env 里用 AIHOT_LEADERBOARD_PATH 指向新路径。"
-        )
+def _host(url: str) -> str:
     try:
-        entries = json.loads(raw)
-    except json.JSONDecodeError as e:
-        raise AihotError("AIHOT 模型榜 entries 不是合法 JSON（站点改版？）：%s" % e) from e
-    if not isinstance(entries, list) or not entries:
-        raise AihotError("AIHOT 模型榜解析结果为空（站点改版？）")
+        return urlsplit(url).netloc or url
+    except ValueError:
+        return url
 
-    m = _UPDATED_RE.search(flight)
-    b = _BOARDS_RE.search(flight)
+
+def _lb_diag(html: str, meta: dict, url_path: str) -> str:
+    """解析失败时，把「我们到底拿到了什么」摆出来。
+
+    这条路失败的原因至少有四类，处置完全不同：改版 / 域名搬迁后被重定向 /
+    被网络中间层（公司代理、门户认证页）换掉 / 响应被截断。光说一句「站点可能改版了」
+    会把人引到错的方向 —— 2026-09 那次就是真改版，而 09-13 之前那次只是换域名。
+    """
+    txt = html or ""
+    want = _base() + url_path
+    got = str(meta.get("url") or "")
+    # 小页面按字节报：一张 200 字的拦截页写成「0 KB」看着像我们自己的 bug。
+    ev = ["%d 字节" % len(txt) if len(txt) < 2048 else "%.0f KB" % (len(txt) / 1024)]
+    m = _TITLE_RE.search(txt)
+    if m:
+        ev.append("标题「%s」" % re.sub(r"\s+", " ", m.group(1)).strip()[:60])
+    has_table = bool(_TABLE_RE.search(txt))
+    ev.append("表格 %s" % ("有" if has_table
+                          else ("只有开头" if "<table" in txt else "没有")))
+    if meta.get("cached"):
+        ev.append("来自本地缓存（%s 秒前抓的）" % (meta.get("age_s") or 0))
+
+    out = ["解析 AIHOT 模型榜失败：没能从页面里读出榜单。",
+           "实际拿到 %s（%s）。" % (got or want, "，".join(ev))]
+    if got and _host(got) != _host(want):
+        out.append("请求的是 %s，最终落到 %s。若是站点换域名，把 .env 里的 "
+                   "AIHOT_BASE_URL 改成新域名即可；若这个地址你不认识，"
+                   "多半是网络中间层（公司代理 / DNS）把页面换掉了。"
+                   % (_host(want), _host(got)))
+    elif not has_table and "<table" in txt:
+        # 表格开了头却没收尾：响应被截断。这类别提「改版」，也别怪代理拦截页 ——
+        # 榜单页 380 KB，被中间层截断是真会发生的，而重试一次通常就好。
+        out.append("表格开了头但没有结尾 —— 响应被截断了（网络中间层或超时截断，"
+                   "不是站点改版）。重试一次通常就好。")
+    elif not has_table:
+        out.append("页面里连一张表格都没有，不像 AIHOT 的榜单页 —— "
+                   "先用浏览器打开上面这个地址看看是什么（常见是代理拦截页或登录门户）。")
+    else:
+        out.append("表格在，但表头对不上（本功能按「排名 / 模型 / 共识指数」这些列名认表）—— "
+                   "站点大概又改版了。本功能靠解析榜单页，因为站点至今没有榜单 API："
+                   "REST v1、MCP、RSS、Agent Skill 四条机器入口都不含它。")
+    return "".join(out)
+
+
+async def fetch_leaderboard(board: str = DEFAULT_BOARD, force: bool = False) -> dict:
+    """抓 + 解析一张模型榜。返回 {entries, updated_label, board, ..., meta}。
+
+    entries 沿用改版前那套字段名（rank/name/provider/score/…），这样归一化和上层
+    一行都不用动 —— 改版丢掉的字段（覆盖率、各评测家族分项、上下文窗口）就是缺着，
+    下游本来就按缺省处理。
+    """
+    board = board if board in BOARDS else DEFAULT_BOARD
+    label, url_path = BOARDS[board]
+    if board == DEFAULT_BOARD and settings.aihot_leaderboard_path:
+        # 这个配置项存在的唯一理由就是「站点又改版了，先手工指到新路径」。
+        url_path = settings.aihot_leaderboard_path
+    # 解析不出来时再给一次机会：先扔掉缓存里那份，然后强制回源。
+    # 因为 _get 是「先写缓存、后由这里解析」，一次拿到坏页面就会被缓存 15 分钟，
+    # 期间怎么点重试都是同一份坏东西；网络抖动时回退过期缓存那条路上更是永不过期。
+    kind = "leaderboard"
+    for attempt in (0, 1):
+        html, meta = await _get(url_path, kind=kind,
+                                force=force or attempt == 1, raw=True)
+        entries, binfo = _parse_board(html or "")
+        if entries:
+            break
+        if attempt == 0 and meta.get("cached"):
+            log.warning("aihot 模型榜[%s]：缓存里那份解析不出来（%s 秒前抓的），扔掉重抓",
+                        board, meta.get("age_s"))
+            _drop_cache(kind, url_path)
+            continue
+        _drop_cache(kind, url_path)   # 刚写进去的那份也是坏的，别留
+        raise AihotError(_lb_diag(html or "", meta, url_path))
+
     return {
         "entries": entries,
-        "updated_label": m.group(1) if m else "",
-        "board_count": int(b.group(1)) if b else 0,
+        "board": board,
+        "board_label": label,
+        "boards": [{"key": k, "label": v[0]} for k, v in BOARDS.items()],
+        "updated_label": binfo.get("updated_label") or "",
+        "metric_count": binfo.get("metrics") or 0,
+        "org_count": binfo.get("orgs") or 0,
+        # 改版前这里是「综合了几家公开榜单」。现在页面报的是「N 项评测 · M 家机构」，
+        # 机构数才是同一个意思，所以 board_count 继续指它 —— 上层文案不用改。
+        "board_count": binfo.get("orgs") or 0,
         "source_url": _base() + url_path,
         "meta": meta,
     }
@@ -551,13 +733,20 @@ def _lb_row(e: dict, ratio: float) -> dict:
         "uncertainty": e.get("uncertainty"),
         "rank_from": e.get("possibleRankFrom"),
         "rank_to": e.get("possibleRankTo"),
+        # 2026-09-13 改版后站点不再给覆盖率百分比了，只给「N 项评测 + 一句证据评价」。
+        # 这个键留着（下游按 None 处理），新的两个在下面。
         "completeness": round(float(cov) * 100, 1) if isinstance(cov, (int, float)) else None,
         "confidence": (e.get("confidence") or "").upper(),
         "metric_count": e.get("metricCount"),
+        "evidence_label": e.get("evidenceLabel") or "",
+        "evidence_note": e.get("evidenceNote") or "",
         "summary": e.get("summary") or "",
         "context_tokens": e.get("contextWindowTokens"),
         "price_in": inp,
         "price_out": out,
+        # 改版新增的一列。不参与性价比计算 —— 性价比的口径是输入 + 3×输出，
+        # 换口径会让新旧数字没法比。
+        "price_cached": e.get("cachedInputPricePerMillionCny"),
         "price_in_usd": e.get("inputPricePerMillionUsd"),
         "price_out_usd": e.get("outputPricePerMillionUsd"),
         "price_blended": round(blended, 2) if blended else None,
@@ -574,6 +763,33 @@ def _lb_row(e: dict, ratio: float) -> dict:
     }
 
 
+def _loose_hit(by_key: dict[str, dict], want: str) -> dict | None:
+    """精确对不上时，只放过「型号 + 日期/版本后缀」这一种差异。
+
+    榜上写的是带日期的具体版本（`DeepSeek V4 Flash 0731`），而 .env 里配的是调用时用的
+    模型 id（`deepseek-v4-flash`）—— 同一个模型的两种写法。改版前榜单 JSON 里有
+    `pricingOfficialModelId`（就是 API 那个 id）能精确对上，2026-09-13 改版后表格里
+    没有这个字段了，于是三档全变成「未上榜」——**页面在说谎**，模型明明就在榜上。
+
+    只允许多出来的部分**全是数字**：`deepseekv4flash` + `0731` 可以，
+    `deepseekv4` + `1flash` 不行（否则 deepseek-v4 会错配到 DeepSeek V4.1 Flash）。
+    对上了要标 approx，页面得说清是按哪一行对照的，不能假装是精确命中。
+    """
+    if not want:
+        return None
+    best = None
+    for k, r in by_key.items():
+        long, short = (k, want) if len(k) >= len(want) else (want, k)
+        if long == short or not long.startswith(short):
+            continue
+        rest = long[len(short):]
+        if not rest.isdigit():
+            continue
+        if best is None or (r.get("rank") or 999) < (best.get("rank") or 999):
+            best = r
+    return best
+
+
 def match_local_models(rows: list[dict]) -> list[dict]:
     """本机三档配置在榜里的位置。找不到就标 on_board=False（本身也是有用信息）。"""
     by_key: dict[str, dict] = {}
@@ -586,6 +802,10 @@ def match_local_models(rows: list[dict]) -> list[dict]:
     for label, attr, usage in LOCAL_TIERS:
         conf = getattr(settings, attr, "") or ""
         hit = by_key.get(norm_model_name(conf))
+        approx = False
+        if hit is None:
+            hit = _loose_hit(by_key, norm_model_name(conf))
+            approx = hit is not None
         out.append({
             "tier": label, "setting": attr.upper(), "model": conf, "usage": usage,
             "on_board": bool(hit),
@@ -594,6 +814,8 @@ def match_local_models(rows: list[dict]) -> list[dict]:
             "value": hit["value"] if hit else None,
             "confidence": hit["confidence"] if hit else "",
             "board_name": hit["name"] if hit else "",
+            # 不是精确命中，是按「型号 + 日期后缀」对上的。页面必须说出来对的是哪一行。
+            "approx": approx,
         })
     return out
 

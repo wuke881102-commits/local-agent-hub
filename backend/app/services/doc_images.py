@@ -1,10 +1,9 @@
 """文档内嵌图片的统一 OCR / 识别能力（跨场景共享）。
 
-飞书在线文档（docx / wiki / doc）经 ``docs +fetch`` 导出的 Markdown 里，内嵌图片以
-``<image token="xxx" width=.. height=.. align=../>`` 标签内联——只有图片的 media token，
-没有像素。本模块把这些标签**就地**替换成图片的文字内容：
+飞书在线文档（docx / wiki / doc）经 ``docs +fetch`` 导出的正文里，内嵌图片只留下
+media token，没有像素。本模块把这些标记**就地**替换成图片的文字内容：
 
-  1. 抽出全部 ``<image token=.../>`` 的 token（按文档顺序，去重保序）
+  1. 抽出全部图片标记的 token（按文档顺序，去重保序）
   2. 逐张 ``docs +media-download`` 下载 → base64 data URL
   3. 调视觉模型（``vision_describe``）做 **OCR + 图示说明**：
      图里有文字/表格/数据就逐字转写，是图表/示意图就概括关键数据与结论
@@ -15,7 +14,7 @@
 是图就描述。本模块服务于「会议纪要」「HTML 生成」等**读在线文档正文**的场景，
 让它们与 PDF 一样具备读图能力。
 
-设计为**幂等且廉价**：正文里没有 ``<image>`` 标签（如妙记转写纯文本）时立即原样返回，
+设计为**幂等且廉价**：正文里没有图片标记（如妙记转写纯文本）时立即原样返回，
 调用方可无条件调用。
 """
 from __future__ import annotations
@@ -27,9 +26,47 @@ import shutil
 from pathlib import Path
 
 from ..config import settings
+from ..feishu import explain_error
 
-# 文档正文里内嵌图片的形式：<image token="xxx" width="W" height="H" align="center"/>
-IMG_TAG_RE = re.compile(r'<image\b[^>]*?token="([^"]+)"[^>]*?/?>', re.IGNORECASE)
+# 内嵌图片的写法随 lark-cli 版本变过，四种都要认：
+#   v1（≤1.0.48）                 <image token="xxx" width=.. height=.. align=../>
+#   v2 --doc-format markdown      <img name=".." alt=".." src="xxx"/>     src 就是 file_token
+#   v2 im-markdown（URL 形）       ![alt](https://feishu.cn/file/xxx)      token 在 URL 末段
+#   v2 im-markdown（裸 token 形）  ![alt](xxx)                             括号里直接就是 token
+#
+# **最后一种是实测出来的，不是照文档抄的**：同一篇文档里两种形状混着出现
+# （43 个 URL 形 + 13 个裸 token 形）。只认 URL 形的话，那 13 张会被当成外站图片
+# 一声不吭地跳过 —— 日志上看什么都正常，只是少了 13 张图的内容。
+#
+# 裸 token 形收得很紧：不含 / 和 . 的 20 位以上串才算，所以外站图片
+# （![x](https://example.com/a.png)）和相对路径都不会被误伤。
+IMG_TAG_RE = re.compile(
+    r'<image\b[^>]*?\btoken="([^"]+)"[^>]*?/?>'
+    r'|<img\b[^>]*?\bsrc="([^"]+)"[^>]*?/?>'
+    r'|!\[([^\]]*)\]\('
+    r'\s*(?:(https?://[^)\s]*/file/[A-Za-z0-9_-]+)[^)]*'
+    r'|([A-Za-z0-9_-]{20,})\s*)\)',
+    re.IGNORECASE,
+)
+_FILE_URL_RE = re.compile(r"/file/([A-Za-z0-9_-]+)")
+_ALT_RE = re.compile(r'\balt="([^"]*)"', re.IGNORECASE)
+
+
+def _img_token(m: re.Match) -> str:
+    """从一处图片标记里取 file_token；取不到返回空串（调用方原样保留这段正文）。"""
+    raw = m.group(1) or m.group(2) or m.group(4) or m.group(5) or ""
+    hit = _FILE_URL_RE.search(raw)
+    if hit:
+        return hit.group(1)
+    return "" if "://" in raw else raw
+
+
+def _img_alt(m: re.Match) -> str:
+    """飞书自带的图片描述。v2 两种写法都带，v1 没有。"""
+    if m.group(3) is not None:
+        return m.group(3).strip()
+    hit = _ALT_RE.search(m.group(0))
+    return hit.group(1).strip() if hit else ""
 
 # 统一的 OCR + 图示 prompt：既转写文字（含表格/数字），又能概括图表——与 PDF 识别的
 # OCR 思路一致，覆盖"截图里有文字/表格"和"纯图表"两类。
@@ -59,7 +96,7 @@ async def describe_inline_images(
       - ``prompt`` / ``max_tokens``：视觉 prompt 与输出上限，缺省走 OCR+图示通用 prompt。
 
     返回 ``(新markdown, 按文档顺序排列的识别结果列表)``。
-    正文中没有 ``<image>`` 标签时原样返回 ``(markdown, [])``（零成本）。
+    正文中没有图片标记时原样返回 ``(markdown, [])``（零成本）。
     """
     if not markdown:
         return markdown or "", []
@@ -67,8 +104,8 @@ async def describe_inline_images(
     tokens: list[str] = []
     seen: set[str] = set()
     for m in IMG_TAG_RE.finditer(markdown):
-        tok = m.group(1)
-        if tok not in seen:
+        tok = _img_token(m)
+        if tok and tok not in seen:
             seen.add(tok)
             tokens.append(tok)
     if not tokens:
@@ -90,6 +127,8 @@ async def describe_inline_images(
     use_prompt = prompt or OCR_DESCRIBE_PROMPT
     descriptions: dict[str, str] = {}
 
+    failures: list[Exception] = []
+
     async def _one(idx: int, token: str) -> None:
         async with sem:
             try:
@@ -104,13 +143,34 @@ async def describe_inline_images(
                 if desc and "失败" not in desc and "mock" not in desc.lower():
                     descriptions[token] = desc
             except Exception as e:  # noqa: BLE001
-                await ctx.log("warn", f"图片 {token[:8]}… 识别失败：{type(e).__name__}")
+                failures.append(e)
 
     await asyncio.gather(*[_one(i, t) for i, t in enumerate(targets)])
 
+    # 失败不再逐张刷屏，而是**按原因归并**：一篇文档几十张图时，原先会打出几十行
+    # 一模一样的「识别失败：LarkCLIError」——既盖满日志，又一个字的真实原因都没有
+    # （异常类名不是原因，原因在 stderr 里，explain_error 才认得）。
+    if failures:
+        grouped: dict[str, int] = {}
+        for err in failures:
+            why = explain_error(err)
+            grouped[why] = grouped.get(why, 0) + 1
+        for why, n in sorted(grouped.items(), key=lambda kv: -kv[1]):
+            await ctx.log("warn", f"{n}/{len(targets)} 张图片没能识别：{why}")
+        if any(_img_alt(m) for m in IMG_TAG_RE.finditer(markdown)):
+            await ctx.log("info", "这些图片改用文档里自带的图片描述，正文不会缺这一段。")
+
     def _repl(m: re.Match) -> str:
-        d = descriptions.get(m.group(1))
-        return f"\n\n> 🖼 图示：{d}\n\n" if d else "（图片）"
+        tok = _img_token(m)
+        if not tok:
+            return m.group(0)  # 认不出 token（如外站图片），原样留着，别把内容吃掉
+        d = descriptions.get(tok)
+        if d:
+            return f"\n\n> 🖼 图示：{d}\n\n"
+        # 没识别成（下载/视觉失败，或超出 max_images）时，退回飞书自带的图片描述。
+        # v2 的正文里这段 alt 本来就有，扔掉换成「（图片）」是白丢信息。
+        alt = _img_alt(m)
+        return f"\n\n> 🖼 图示（文档自带描述）：{alt}\n\n" if alt else "（图片）"
 
     new_md = IMG_TAG_RE.sub(_repl, markdown)
     shutil.rmtree(img_dir, ignore_errors=True)

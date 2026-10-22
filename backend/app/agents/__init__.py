@@ -10,5 +10,6 @@ from . import collab_dispatch  # noqa: F401
 from . import local_image  # noqa: F401
 from . import aihot_models  # noqa: F401
 from . import aihot_news  # noqa: F401
+from . import slides_page  # noqa: F401
 
 __all__ = ["Agent", "AgentContext", "AgentResult", "AGENT_REGISTRY", "register_agent", "get_agent"]

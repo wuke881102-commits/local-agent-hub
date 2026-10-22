@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException
 
 from ..config import settings
 from ..db import get_db
-from ..feishu import LarkCLI, MockLarkCLI, get_lark
+from ..feishu import LarkCLI, MockLarkCLI, explain_error, get_lark
 from ..schemas import WritebackConfirmRequest, WritebackRejectRequest
 from ..services import audit
 
@@ -71,7 +71,7 @@ async def confirm(req: WritebackConfirmRequest) -> dict:
                               details={"queue_id": req.queue_id, "result": result})
             return {"ok": True, "result": result}
         except Exception as e:  # noqa: BLE001
-            err = _explain_error(e)
+            err = explain_error(e)
             await db.execute(
                 "UPDATE writeback_queue SET status='failed', confirmed_at=?, result=? WHERE id=?",
                 (now, json.dumps({"error": err}, ensure_ascii=False), req.queue_id),
@@ -102,46 +102,6 @@ async def reject(req: WritebackRejectRequest) -> dict:
     return {"ok": True}
 
 
-# 常见 scope → 用户能看懂的中文名。命中才翻译，未命中原样显示 scope id。
-_SCOPE_ZH = {
-    "im:message": "发送消息",
-    "im:message.send_as_user": "发送消息",
-    "task:task:write": "创建任务",
-    "docx:document:create": "创建文档",
-}
-
-
-def _explain_error(e: Exception) -> str:
-    """把 lark-cli 的结构化报错翻成可读、可操作的中文。
-
-    lark-cli 失败时 stderr 常带 ``{"ok":false,"error":{"type","message","hint"}}``。
-    尤其 ``missing_scope`` 要直接告诉用户缺哪个 scope、怎么补授权——否则用户只看到
-    "lark-cli exited 3" 完全无从下手。
-    """
-    stderr = getattr(e, "stderr", "") or ""
-    m = re.search(r"\{[\s\S]*\}", stderr)
-    if m:
-        try:
-            err = (json.loads(m.group(0)).get("error") or {})
-            msg = (err.get("message") or "").strip()
-            if err.get("type") == "missing_scope":
-                sm = re.search(r"scope\(s\):\s*([\w:.\-,\s]+)", msg)
-                scope = (sm.group(1).strip().rstrip(".") if sm else "")
-                # 打包版用户没有命令行，绝不能让他们去敲 lark-cli auth login。
-                # 引导到 App 左下角的「重新授权」按钮（startLogin force=True，会以最新最小
-                # 权限集重新授权，补齐缺的 scope）。scope 译成中文名，更易懂。
-                if scope:
-                    friendly = "、".join(_SCOPE_ZH.get(s, s) for s in re.split(r"[,\s]+", scope) if s)
-                    return (f"缺少飞书权限「{friendly}」。请点击左下角的「重新授权」按钮，"
-                            f"在飞书授权页同意后再试。（技术细节：{scope}）")
-                return f"缺少飞书权限：{msg}。请点击左下角「重新授权」后再试。"
-            if msg:
-                return msg
-        except (json.JSONDecodeError, AttributeError):
-            pass
-    return str(e)[:200]
-
-
 async def _execute(action_type: str, payload: dict, lark) -> dict:
     if action_type == "batch_dispatch":
         # 一条提议携带 N 个子动作（建任务 / 发消息），逐个执行，单项失败不影响其它。
@@ -156,7 +116,7 @@ async def _execute(action_type: str, payload: dict, lark) -> dict:
                 results.append({"label": it.get("label"), "action_type": at, "ok": True, "result": r})
                 ok += 1
             except Exception as e:  # noqa: BLE001
-                results.append({"label": it.get("label"), "action_type": at, "ok": False, "error": _explain_error(e)})
+                results.append({"label": it.get("label"), "action_type": at, "ok": False, "error": explain_error(e)})
         # 全部失败才算整体失败（让确认弹窗走错误路径）；部分成功仍标记完成并展示明细。
         if items and ok == 0:
             first = next((r.get("error") for r in results if not r["ok"]), "未知错误")

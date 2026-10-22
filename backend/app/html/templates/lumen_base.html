@@ -43,7 +43,7 @@
       --shadow-md:0 4px 12px rgba(0,0,0,0.1),0 0 0 1px rgba(0,0,0,0.04);
       --shadow-lg:0 8px 24px rgba(0,0,0,0.12),0 0 0 1px rgba(0,0,0,0.05);
       /* 过渡 */
-      --t-fast:150ms cubic-bezier(0,0,0.2,1); --t-base:200ms cubic-bezier(0,0,0.2,1);
+      --t-fast:150ms cubic-bezier(0,0,0.2,1); --t-base:200ms cubic-bezier(0,0,0.2,1); --t-moderate:300ms cubic-bezier(0,0,0.2,1);
     }
 
     * { box-sizing: border-box; }
@@ -74,7 +74,7 @@
       width: 320px; height: 320px; border-radius: 50%;
       background: rgba(130, 188, 0, 0.18);
     }
-    .hero-inner { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; }
+    .hero-inner { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; }
     .hero h1 {
       font-size: var(--text-3xl); font-weight: 700; line-height: 1.25;
       letter-spacing: -0.01em; margin: 0 0 var(--space-4); color: #fff;
@@ -88,19 +88,19 @@
       display: inline-flex; align-items: center; gap: 4px;
       padding: 3px 10px; border-radius: var(--radius-md);
       font-family: var(--font-mono); font-size: var(--text-xs); font-weight: 500;
-      letter-spacing: 0.02em; text-transform: uppercase; line-height: 1.6;
+      letter-spacing: 0.05em; text-transform: uppercase; line-height: 1.6;
       background: rgba(255, 255, 255, 0.15); color: #fff;
       border: 1px solid rgba(255, 255, 255, 0.25); backdrop-filter: blur(6px);
     }
 
     /* ── 主内容区 ── */
-    .content { max-width: 1080px; margin: 0 auto; padding: var(--space-10) var(--space-8) var(--space-12); }
+    .content { max-width: 1200px; margin: 0 auto; padding: var(--space-10) var(--space-8) var(--space-12); }
 
     /* 徽章（内容区，语义色） */
     .badge {
       display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
       border-radius: var(--radius-md); font-family: var(--font-mono);
-      font-size: var(--text-xs); font-weight: 500; letter-spacing: 0.02em;
+      font-size: var(--text-xs); font-weight: 500; letter-spacing: 0.05em;
       text-transform: uppercase; line-height: 1.6;
       background: var(--surface-subtle); color: var(--text-secondary);
       border: 1px solid var(--border-default);
@@ -109,6 +109,7 @@
     .badge-success { background: var(--success-bg); color: var(--success);   border-color: var(--success); }
     .badge-warning { background: var(--warning-bg); color: #8C6500;          border-color: var(--warning); }
     .badge-info    { background: var(--info-bg);    color: var(--info);       border-color: var(--info); }
+    .badge-error   { background: var(--error-bg);   color: var(--error);      border-color: var(--error); }
 
     /* 卡片 */
     .card {
@@ -177,22 +178,27 @@
     .gen-note .label { font-family: var(--font-mono); text-transform: uppercase; font-size: var(--text-xs); letter-spacing: 0.05em; margin-bottom: 4px; }
 
     /* 表格 */
-    table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); margin: var(--space-4) 0; }
+    table {
+      width: 100%; font-size: var(--text-sm); margin: var(--space-4) 0;
+      border-collapse: separate; border-spacing: 0; overflow: hidden;
+      border: 1px solid var(--border-subtle); border-radius: var(--radius-xl);
+    }
     th {
-      text-align: left; background: var(--surface-subtle); padding: 10px 12px;
+      text-align: left; background: var(--surface-subtle); padding: var(--space-3) var(--space-4);
       font-family: var(--font-mono); font-size: var(--text-xs); font-weight: 500;
       text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-tertiary);
       border-bottom: 1px solid var(--border-default);
     }
-    td { padding: 10px 12px; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); }
+    td { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); }
+    tr:last-child td { border-bottom: none; }
     tr:hover td { background: var(--surface-hover); }
 
     /* 行动按钮 */
     .actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); }
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
-      border-radius: var(--radius-lg); padding: 8px 16px; font-size: var(--text-base);
-      font-weight: 500; border: 1px solid transparent; text-decoration: none; transition: all var(--t-base);
+      border-radius: var(--radius-lg); padding: var(--space-2) var(--space-5); font-size: var(--text-sm);
+      font-weight: 600; border: 1px solid transparent; text-decoration: none; transition: all var(--t-base);
     }
     .btn-primary { background: var(--brand-500); color: var(--text-inverse); }
     .btn-primary:hover { background: var(--brand-600); box-shadow: var(--shadow-md); transform: translateY(-1px); }

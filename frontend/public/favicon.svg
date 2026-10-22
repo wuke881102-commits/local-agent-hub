@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- 标签页图标 = 侧栏那个品牌方块。渐变和圆角取自 tokens.css 的 grad-brand
+       （#00AA4F → #006845，135°）与 brandMark 的 borderRadius 11/38 ≈ 29%。
+       注意：XML 注释里不能出现连续两个减号，写 CSS 变量名时别带前缀，
+       带了整个 SVG 会解析失败、浏览器显示碎图标（这里踩过一次）。
+
+       四个方块比侧栏那版**略大、缝略宽**：侧栏是 38px 显示，而标签页只有 16px，
+       按原比例缩下去缝不到 1px，四块会糊成一坨。这里 13px 方块 + 6px 缝（64 基准），
+       缩到 16px 时约 3.25px / 1.5px，还分得开。 -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00AA4F"/>
+      <stop offset="100%" stop-color="#006845"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#g)"/>
+  <g fill="#fff">
+    <rect x="16" y="16" width="13" height="13" rx="2"/>
+    <rect x="35" y="16" width="13" height="13" rx="2"/>
+    <rect x="16" y="35" width="13" height="13" rx="2"/>
+    <rect x="35" y="35" width="13" height="13" rx="2"/>
+  </g>
+</svg>

@@ -313,7 +313,7 @@ class AihotNewsAgent:
 
         payload = {
             "source": "aihot",
-            "source_url": (settings.aihot_base_url or "https://aihot.virxact.com").rstrip("/"),
+            "source_url": aihot.base_url(),
             "window": window, "window_zh": _WINDOW_ZH[window],
             "mode": mode, "mode_zh": _MODE_ZH[mode],
             "categories": cats, "q": q,

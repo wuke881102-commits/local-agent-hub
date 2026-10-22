@@ -61,7 +61,16 @@ class Settings(BaseSettings):
     # 地方（outlook_ai 每次打开本地邮箱都跑，40s 硬超时）。
     # 顺带一个反直觉的实测：qwen3.7-flash 比 plus(7.80s) 和 max(7.32s) 都慢，
     # “快省档”名不副实。
-    text_model_fast: str = "deepseek-v4-flash"     # 重速度/省钱（批量回填、治理复核、邮件分类）
+    text_model_fast: str = "qwen3.8-flash"         # 重速度/省钱（批量回填、治理复核、邮件分类）
+    # 换掉 deepseek-v4-flash 是因为它要停服。同一把 key 实际开通的文本模型只有 11 个，
+    # 逐个按「批量分类 + 语音阶段提炼」实测过：qwen3.8-flash **必须关掉思考**才快 ——
+    # 默认开着思考时分类中位 8.7s、提炼中位 15.4s（有一次 40.9s），比被它替换的还慢；
+    # 关掉之后分类 2.5s、提炼 2.9s，是现役的一半时间，而且用应用真实的提示词跑
+    # 12/12 内容完整、分类 5/5。见下面 no_thinking_models。
+    #
+    # **按模型列而不是按档位列**：要不要思考是模型自己的脾气，同一个模型放到哪一档
+    # 都该是同样的行为；档位是我们的分类法，模型不认。
+    no_thinking_models: str = "qwen3.8-flash"
     # 最强档换成 deepseek-v4-pro。这一档**原本是空的**（aihot.py 里记着：无调用点，
     # 因为上一个 max/preview 档实测会超时）。deepseek-v4-pro 实测 p50 5.98s，比现在的
     # 均衡档还快 —— 超时那个反对理由不成立了，这一档可以重新启用。
@@ -86,6 +95,13 @@ class Settings(BaseSettings):
     # qwen3.7-flash 要 10.4s，而 PDF 逐页识别、文档配图正是单图文档场景。
     # 兜底要的是「还能用」，不是「更快」。
     vision_fallback_model: str = "qwen3.7-flash"
+    # 展板还原的「骨架」那一段专用：要的是**版面坐标**，不是读字。
+    # Qwen-VL 是 grounding 模型，实测能给出准确的分栏外接框（两个型号独立给出的
+    # 坐标高度一致，肉眼复核也对得上）；而 gpt-4.1-mini 只能给结构、给不了坐标。
+    # 坐标一准，切块就不再需要 TOP_SKIP 和等宽假设，标题碎片/邻栏串味一起消失。
+    # 留空则退回主视觉模型 + 几何等分。
+    slides_skeleton_model: str = "qwen-vl-max"
+    slides_skeleton_provider: str = "dashscope"   # dashscope（走文本端点）| azure
     vision_model_provider: str = "azure"
     vision_model: str = "gpt-4.1-mini"
     vision_model_base_url: str = ""
@@ -128,10 +144,13 @@ class Settings(BaseSettings):
     # 强制 bot 但应用没那个权限时会失败并如实报错，不会静默退回。
     selfpush_identity: str = "auto"
 
-    # ─── AIHot 内容和模型（aihot.virxact.com）───
+    # ─── AIHot 内容和模型（aihot.news）───
+    # 2026-09 站点换域名：aihot.virxact.com 的 HTML 页面 301 到 aihot.news
+    # （/api/v1/* 两个域名都还直连）。老域名写在这里也能用——多一跳而已——但那一跳
+    # 哪天撤掉就全断，所以默认直接指新家。
     # 新闻走站点公开 API v1（匿名只读）；模型榜没有 API，靠解析榜单页的 SSR 数据。
     # base_url / leaderboard_path 留了口子：站点改版或自建镜像时不用改代码。
-    aihot_base_url: str = "https://aihot.virxact.com"
+    aihot_base_url: str = "https://aihot.news"
     aihot_leaderboard_path: str = "/leaderboard"
     aihot_user_agent: str = ""      # 留空 → LocalAgentHub/<版本>（诚实标身份，不伪装浏览器）
     aihot_timeout: int = 30
@@ -220,6 +239,11 @@ class Settings(BaseSettings):
     # 单次录音的硬上限（分钟）。**必需，不是保险**：录音是后台线程在跑，浏览器
     # 标签页关了它还在录。没有这个上限，一次忘记停止就是无声无息录一整天。
     voice_max_minutes: int = 90
+    # 边录边提炼：录制中每 N 分钟把新定稿的那段提炼一次（录音不中断），停录时
+    # 只需把几段合起来。0 = 关掉，回到「停录时整份逐字稿一次性提炼」。
+    # 选 10 分钟：一次模型调用看 10 分钟的话足够有上下文，又不至于长到把主档卡住
+    # （90 分钟整份喂进去实测卡过 300 秒）。
+    voice_rolling_minutes: int = 10
     # ─── 语音速记：传文件进来转写 ───
     # 上传的字节**全程只在内存里**（接口收原始请求体，不用 FastAPI 的 UploadFile ——
     # 后者超过 1 MB 就落到系统临时目录）。所以这两个上限同时也是内存上限。

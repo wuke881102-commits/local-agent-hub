@@ -91,7 +91,81 @@ const DeltaBadge: React.FC<{ delta: number; label?: string }> = ({ delta, label 
   );
 };
 
+// ── 可拉伸面板 ──
+// 面板钉在右下角，所以能动的是**上边、左边和左上角**：往左拖变宽，往上拖变高。
+// 尺寸只是这台机器上的个人偏好，存 localStorage；读写失败（隐私模式等）就用默认尺寸。
+type PanelSize = { w: number; h: number | null };   // h 为 null = 按内容自适应（不超过 46%）
+const CHANGES_DEFAULT: PanelSize = { w: 234, h: null };
+const CHANGES_SIZE_KEY = 'org-graph.changes-size';
+const PANEL_MIN_W = 200;
+const PANEL_MIN_H = 120;
+
+function loadPanelSize(key: string, fallback: PanelSize): PanelSize {
+  try {
+    const v = JSON.parse(localStorage.getItem(key) || 'null');
+    if (v && typeof v.w === 'number' && (v.h === null || typeof v.h === 'number')) return v;
+  } catch { /* 用默认 */ }
+  return fallback;
+}
+
+function useResizablePanel(key: string, fallback: PanelSize) {
+  const [size, setSize] = useState<PanelSize>(() => loadPanelSize(key, fallback));
+  useEffect(() => {
+    try { localStorage.setItem(key, JSON.stringify(size)); } catch { /* 忽略 */ }
+  }, [key, size]);
+
+  function start(e: React.PointerEvent, edges: { x: boolean; y: boolean }) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();                       // 别让底下的图跟着拖动
+    const panel = (e.currentTarget as HTMLElement).parentElement!;
+    const rect = panel.getBoundingClientRect();
+    const host = (panel.offsetParent as HTMLElement | null)?.getBoundingClientRect();
+    const maxW = host ? host.width - 32 : 900;
+    const maxH = host ? host.height - 60 : 800;
+    const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+    const x0 = e.clientX, y0 = e.clientY, w0 = rect.width, h0 = rect.height;
+    const move = (ev: PointerEvent) => setSize((s) => ({
+      w: edges.x ? Math.round(clamp(w0 + (x0 - ev.clientX), PANEL_MIN_W, maxW)) : s.w,
+      h: edges.y ? Math.round(clamp(h0 + (y0 - ev.clientY), PANEL_MIN_H, maxH)) : s.h,
+    }));
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    document.body.style.cursor = edges.x && edges.y ? 'nwse-resize' : edges.x ? 'ew-resize' : 'ns-resize';
+    document.body.style.userSelect = 'none';
+  }
+
+  return { size, start, reset: () => setSize(fallback) };
+}
+
+/** 上边 / 左边 / 左上角三个拖拽手柄；双击左上角恢复默认尺寸。 */
+const ResizeHandles: React.FC<{ panel: ReturnType<typeof useResizablePanel> }> = ({ panel }) => (
+  <>
+    <div style={S.edgeTop} onPointerDown={(e) => panel.start(e, { x: false, y: true })} />
+    <div style={S.edgeLeft} onPointerDown={(e) => panel.start(e, { x: true, y: false })} />
+    <div style={S.corner} title="拖动调整大小，双击恢复默认"
+      onPointerDown={(e) => panel.start(e, { x: true, y: true })}
+      onDoubleClick={panel.reset}>
+      <span style={S.cornerGrip} />
+    </div>
+  </>
+);
+
+// 图例每行的高度范围：行高 = 列表可用高度 ÷ 部门数，落在这个区间里。
+// 18px 还放得下 12px 字；30px 以上行距就散了。
+const LEGEND_ROW_MIN = 18;
+const LEGEND_ROW_MAX = 30;
+
 const OrgGraphPage: React.FC = () => {
+  const changesPanel = useResizablePanel(CHANGES_SIZE_KEY, CHANGES_DEFAULT);
+  const legendListRef = useRef<HTMLDivElement>(null);
+  const [legendRowH, setLegendRowH] = useState(26);
   const nav = useNavigate();
   const toast = useToast();
   const { data, error, isLoading, mutate } = useSWR<Graph>('/api/org/graph', fetcher, {
@@ -136,6 +210,21 @@ const OrgGraphPage: React.FC = () => {
     m.set('全员', '#1F2328');
     return m;
   }, [data?.branches]);
+
+  // 图例行高跟着可用高度走：图例上下拉满，部门平均铺开，窗口变矮就压紧，不出滚动条。
+  const branchCount = data?.branches.length ?? 0;
+  useEffect(() => {
+    const el = legendListRef.current;
+    if (!el || branchCount === 0) return;
+    const fit = () => {
+      const h = Math.floor(el.clientHeight / branchCount);
+      setLegendRowH(Math.max(LEGEND_ROW_MIN, Math.min(LEGEND_ROW_MAX, h)));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [branchCount]);
 
   // 拓扑：父部门 / 直接下级数 / 子部门列表
   const topo = useMemo(() => {
@@ -656,23 +745,25 @@ const OrgGraphPage: React.FC = () => {
 
       {/* 图例 */}
       {data && (
-        <div style={S.legend} className="scroll">
+        <div style={S.legend}>
           <div className="eyebrow" style={{ marginBottom: 6 }}>一级部门</div>
+          <div ref={legendListRef} style={S.legendList} className="scroll">
           {data.branches.map((b) => {
             const active = focusBranch === b;
             return (
               <div key={b} onClick={() => setFocusBranch(active ? null : b)}
-                style={{ ...S.legendRow, background: active ? 'var(--surface-hover)' : 'transparent' }}>
+                style={{ ...S.legendRow, height: legendRowH, background: active ? 'var(--surface-hover)' : 'transparent' }}>
                 <span style={{ width: 10, height: 10, borderRadius: 3, background: branchColor.get(b), flexShrink: 0 }} />
                 <span style={{ fontSize: 12, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b}</span>
               </div>
             );
           })}
-          <div style={{ height: 1, background: 'var(--border-subtle)', margin: '8px 0' }} />
-          <label style={S.toggleRow}>
+          </div>
+          <div style={{ height: 1, background: 'var(--border-subtle)', margin: '8px 0', flexShrink: 0 }} />
+          <label style={{ ...S.toggleRow, flexShrink: 0 }}>
             <input type="checkbox" checked={showAllLabels} onChange={(e) => setShowAllLabels(e.target.checked)} /> 显示全部部门名
           </label>
-          <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+          <div style={{ display: 'flex', gap: 6, marginTop: 6, flexShrink: 0 }}>
             <button className="btn btn-ghost btn-sm" style={{ flex: 1, padding: '4px 6px' }}
               onClick={() => { const s = new Set<string>(); topo.childCount.forEach((c, id) => { if (c > 0) s.add(id); }); setExpanded(s); }}>展开全部</button>
             <button className="btn btn-ghost btn-sm" style={{ flex: 1, padding: '4px 6px' }}
@@ -683,9 +774,16 @@ const OrgGraphPage: React.FC = () => {
 
       {/* 人数变化（较上次拉取）— 选中部门时让位给右侧详情面板 */}
       {data && !selected && (
-        <div style={S.changes} className="scroll fade-in">
+        <div className="fade-in" style={{
+          ...S.changes,
+          width: changesPanel.size.w,
+          height: changesPanel.size.h ?? undefined,
+          maxHeight: changesPanel.size.h ? 'calc(100% - 60px)' : '46%',
+        }}>
+        <ResizeHandles panel={changesPanel} />
+        <div style={S.changesBody} className="scroll">
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
-            <span className="eyebrow">人数变化</span>
+            <span className="eyebrow" style={{ whiteSpace: 'nowrap' }}>人数变化</span>
             <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
               {changes?.prev_at ? `较 ${fmtTime(changes.prev_at)}` : ''}
             </span>
@@ -723,6 +821,7 @@ const OrgGraphPage: React.FC = () => {
               );
             })
           )}
+        </div>
         </div>
       )}
 
@@ -829,14 +928,23 @@ const S: Record<string, React.CSSProperties> = {
   topbar: { position: 'absolute', top: 14, left: 16, right: 16, display: 'flex', alignItems: 'center', gap: 8, pointerEvents: 'none' },
   searchWrap: { display: 'flex', alignItems: 'center', gap: 6, pointerEvents: 'auto', background: 'var(--surface-elevated)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-lg)', padding: '6px 10px', boxShadow: 'var(--shadow-sm)' },
   searchInput: { border: 'none', outline: 'none', background: 'transparent', fontSize: 13, width: 130, fontFamily: 'inherit', color: 'var(--text-primary)' },
-  legend: { position: 'absolute', left: 16, bottom: 44, width: 190, maxHeight: '52%', overflowY: 'auto', background: 'var(--surface-elevated)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-xl)', padding: '12px 12px 10px', boxShadow: 'var(--shadow-md)' },
-  legendRow: { display: 'flex', alignItems: 'center', gap: 8, padding: '4px 6px', borderRadius: 6, cursor: 'pointer' },
+  // 图例上下拉满（顶栏下沿到底部脚注上方，与右侧详情面板同一条上沿），部门列表一屏铺开不滚动；
+  // 开关和按钮钉在底部。行高由 legendRowH 按可用高度算（18–30px）；只有矮到每行不足 18px 时才会退回滚动。
+  legend: { position: 'absolute', left: 16, top: 70, bottom: 44, width: 190, display: 'flex', flexDirection: 'column', background: 'var(--surface-elevated)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-xl)', padding: '12px 12px 10px', boxShadow: 'var(--shadow-md)' },
+  legendList: { flex: '1 1 auto', minHeight: 0, overflowY: 'auto' },
+  legendRow: { display: 'flex', alignItems: 'center', gap: 8, padding: '0 6px', borderRadius: 6, cursor: 'pointer', flexShrink: 0 },
   toggleRow: { display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: 'var(--text-secondary)', padding: '3px 6px', cursor: 'pointer' },
   detail: { position: 'absolute', top: 70, right: 16, width: 272, maxHeight: 'calc(100% - 130px)', overflowY: 'auto', background: 'var(--surface-elevated)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-2xl)', padding: 'var(--space-5)', boxShadow: 'var(--shadow-lg)' },
   kv: { display: 'flex', gap: 10, padding: '5px 0', alignItems: 'baseline' },
   k: { fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)', width: 46, flexShrink: 0 },
   memberRow: { display: 'flex', alignItems: 'center', gap: 8, padding: '5px 6px', borderRadius: 6, cursor: 'pointer' },
-  changes: { position: 'absolute', right: 16, bottom: 44, width: 234, maxHeight: '46%', overflowY: 'auto', background: 'var(--surface-elevated)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-xl)', padding: '12px 12px 10px', boxShadow: 'var(--shadow-md)', pointerEvents: 'auto' },
+  // 外框只管定位和尺寸，滚动交给里层 —— 手柄放在滚动层里会跟着内容一起滚走。
+  changes: { position: 'absolute', right: 16, bottom: 44, maxWidth: 'calc(100% - 32px)', display: 'flex', flexDirection: 'column', background: 'var(--surface-elevated)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-md)', pointerEvents: 'auto' },
+  changesBody: { flex: '1 1 auto', minHeight: 0, overflowY: 'auto', padding: '12px 12px 10px' },
+  edgeTop: { position: 'absolute', top: -3, left: 12, right: 0, height: 6, cursor: 'ns-resize', zIndex: 1 },
+  edgeLeft: { position: 'absolute', left: -3, top: 12, bottom: 0, width: 6, cursor: 'ew-resize', zIndex: 1 },
+  corner: { position: 'absolute', left: -3, top: -3, width: 16, height: 16, cursor: 'nwse-resize', zIndex: 2 },
+  cornerGrip: { position: 'absolute', left: 6, top: 6, width: 7, height: 7, borderTop: '2px solid var(--border-strong)', borderLeft: '2px solid var(--border-strong)', borderTopLeftRadius: 3 },
   changeRow: { display: 'flex', alignItems: 'center', gap: 8, padding: '5px 6px', borderRadius: 6, cursor: 'pointer' },
   tag: { fontSize: 9.5, fontWeight: 700, color: 'var(--text-tertiary)', background: 'var(--surface-subtle)', borderRadius: 4, padding: '0 4px', marginLeft: 5, verticalAlign: 'middle' },
   memberAvatar: { width: 22, height: 22, borderRadius: '50%', background: 'var(--surface-subtle)', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },

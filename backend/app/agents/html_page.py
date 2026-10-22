@@ -24,12 +24,17 @@ from ..html import get_renderer
 from ..llm import get_llm
 from ..llm.prompts import build_html_page_prompt, build_html_freeform_prompt
 from ..services import doc_images
+from ..services.fact_check import filter_real_metrics as _filter_real_metrics  # 讲稿模式也用这条规则
+from ..services.doc_source import (  # 取正文已抽成共享 service，PPT 输出那条路也用它
+    MAX_DOC_CHARS as _MAX_DOC_CHARS,
+    load_source as _load_source,
+)
 from .base import Agent, AgentContext, AgentResult, register_agent
 
 
 class HtmlPageAgent:
     id = "html-page"
-    name = "HTML 页面生成 Agent"
+    name = "HTML 与 PPT 生成 Agent"
     description = "把飞书文档套入 Lumen-light 模板，生成可预览的企业内部 HTML 页面。"
     writeback_allowed = False
     # 内容重组走**最强档**（text_model_best）。这个决定翻过一次，两次都有实测依据：
@@ -114,7 +119,8 @@ class HtmlPageAgent:
 
         await ctx.log("info", f"已合并 {len(sources)} 篇来源，总长度 {len(markdown)} 字符")
 
-        # 3. 图片识别：文档内嵌图片以 <image token=".."/> 内联，用视觉模型
+        # 3. 图片识别：文档内嵌图片只留 media token（写法随 lark-cli 版本变，见
+        #    services.doc_images），用视觉模型
         #    （gpt-4.1-mini）逐张做 OCR + 图示，把内容回填进 Markdown，供后续重组与渲染。
         #    与「会议纪要」「PDF 识别」共用 services.doc_images 的统一读图能力。
         figures: list[str] = []
@@ -181,7 +187,7 @@ class HtmlPageAgent:
             "owner": owner,
             "source_space": space,
             "updated": updated,
-            "agent_name": self.name,
+            "agent_name": "HTML 页面生成 Agent",  # 页脚署名：产物是 HTML，不跟侧栏名走
             "template_name": page_type,
             "generated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M"),
             "refs": [
@@ -265,134 +271,6 @@ class HtmlPageAgent:
             payload={"title": title, "page_type": page_type, "layout_mode": "freeform",
                      "figures": figures, "suspect_numbers": suspects},
         )
-
-
-async def _load_source(ctx, token: str, inputs: dict) -> dict:
-    """解析单篇来源的元数据并按类型抽取正文。
-
-    返回 ``{token, asset_type, title, owner, space, updated, url, markdown}``。
-    抽取失败抛异常（由调用方决定跳过还是终止）。
-    """
-    from ..services import index_service
-
-    asset_meta: dict = {}
-    for a in await index_service.list_assets(limit=2000):
-        if a.get("asset_id") == token:
-            asset_meta = a
-            break
-    asset_type = (inputs.get("asset_type") or asset_meta.get("type") or "docx").lower()
-
-    title = asset_meta.get("title") or inputs.get("title") or "未命名文档"
-    owner = asset_meta.get("owner") or "—"
-    space = asset_meta.get("space") or "—"
-    updated = asset_meta.get("updated") or "—"
-    url = asset_meta.get("url") or ""
-
-    if asset_type in ("docx", "doc", "wiki"):
-        try:
-            meta_raw = await ctx.lark.docs_get(token)
-            title = meta_raw.get("title") or meta_raw.get("name") or title
-            owner = meta_raw.get("owner") or meta_raw.get("owner_name") or owner
-            space = meta_raw.get("space") or meta_raw.get("source_space") or space
-            updated = meta_raw.get("updated") or meta_raw.get("updated_time") or updated
-            url = meta_raw.get("url") or url
-        except Exception as e:  # noqa: BLE001
-            await ctx.log("warn", f"docs_get 失败（不阻塞）：{e}")
-
-    # 云盘上传的 Word / HTML 文件（type=file/shortcut）：下载后本地解析成 Markdown。
-    from ..services import office_reader
-    office_route = office_reader.route_of(title) if asset_type in ("file", "shortcut") else None
-
-    await ctx.log("info", f"抽取「{title}」（{office_route or asset_type}）…")
-    if office_route in ("word", "html"):
-        markdown = await _extract_office_doc(ctx, token, title, office_route)
-        # 去掉标题里的扩展名，页面标题更干净
-        title = re.sub(r"\.(docx|html?|htm)$", "", title, flags=re.IGNORECASE) or title
-    elif asset_type in ("docx", "doc", "wiki"):
-        markdown = await ctx.lark.docs_export_markdown(token)
-    elif asset_type in ("bitable", "sheet"):
-        # 知识库（Wiki）托管的多维表格 / 电子表格：索引存的是 wiki 节点 token，直接调
-        # base/sheets API 会报 "param baseToken is invalid"，须先解析底层 obj_token（并校正类型）。
-        from ..services import table_reader
-        real_token, rkind = await table_reader.resolve_token(ctx.lark, token, asset_type, url)
-        if rkind == "sheet":
-            markdown = await ctx.lark.sheet_fetch_summary(real_token)
-        else:
-            markdown = await ctx.lark.bitable_fetch_summary(real_token)
-    elif asset_type == "slides":
-        markdown = await ctx.lark.slides_fetch_text(token)
-    else:
-        raise ValueError(
-            f"暂不支持的资产类型：{asset_type}"
-            "（在线对象仅支持 docx/doc/wiki/bitable/sheet/slides；云盘文件支持 .docx/.html）"
-        )
-    if not (markdown or "").strip():
-        raise ValueError("未能从该文件抽取到任何正文。")
-
-    # 统一兜底：任何来源类型的正文都封顶 _MAX_DOC_CHARS，避免超大表格/长文爆上下文。
-    # （office 路径已在 _extract_office_doc 内截过，这里对其它类型再统一兜一道。）
-    if len(markdown) > _MAX_DOC_CHARS:
-        await ctx.log("warn", f"来源「{title}」正文较长（{len(markdown)} 字），仅取前 {_MAX_DOC_CHARS} 字用于生成。")
-        markdown = markdown[:_MAX_DOC_CHARS].rstrip() + "\n\n…（内容较长，已截断）"
-
-    return {
-        "token": token, "asset_type": asset_type, "title": title,
-        "owner": owner, "space": space, "updated": updated, "url": url,
-        "markdown": markdown,
-    }
-
-
-# 喂给 LLM 重组的正文上限（字符）。与 prompts.build_html_page_prompt 的「喂给模型闸」（12 万字）
-# 对齐，让单篇长文 / 多维表格全表能完整读出；多篇合辑由 prompt 闸再统一兜底。
-_MAX_DOC_CHARS = 120000
-
-
-async def _extract_office_doc(ctx, token: str, filename: str, route: str) -> str:
-    """下载云盘上传的 Word/HTML 文件并本地解析成 Markdown（超长截断）。"""
-    from ..services import office_reader
-
-    if not office_reader.available(route):
-        lib = {"word": "python-docx", "html": "beautifulsoup4"}.get(route, route)
-        raise ValueError(f"服务端未安装 {lib}，无法解析该文件。")
-    work = settings.draft_path / f"_doc_{ctx.task_id}"
-    try:
-        ext = office_reader.ext_of(filename) or (".docx" if route == "word" else ".html")
-        path = await office_reader.download(ctx.lark, token, work, ext)
-        parser = office_reader.parse_docx if route == "word" else office_reader.parse_html
-        res = await asyncio.to_thread(parser, path)
-    finally:
-        shutil.rmtree(work, ignore_errors=True)
-    md = (res.get("markdown") or "").strip()
-    if len(md) > _MAX_DOC_CHARS:
-        await ctx.log("warn", f"文件正文较长（{len(md)} 字），仅取前 {_MAX_DOC_CHARS} 字用于重组。")
-        md = md[:_MAX_DOC_CHARS].rstrip() + "\n\n…（内容较长，已截断）"
-    return md
-
-
-def _filter_real_metrics(metrics: list, source_md: str, cap: int = 24) -> list:
-    """只保留"数字确实出现在原文里"的指标，丢弃模型凭空编造的。
-
-    判定：从 metric.value 抽取数字 token（如 70 / 18.4 / 3000），只有当其中
-    某个**两位及以上**的数字串确实出现在原文中才保留。无数字的"伪指标"直接丢弃。
-    这是对 prompt 指令的确定性兜底——模型有时仍会补凑假数据。
-    """
-    if not isinstance(metrics, list) or not metrics:
-        return []
-    kept = []
-    for m in metrics:
-        if not isinstance(m, dict):
-            continue
-        val = str(m.get("value", "")).strip()
-        nums = re.findall(r"\d+(?:\.\d+)?", val)
-        # 只用 ≥2 位的数字串判定，避免单个 "1/2/3" 在长文里到处误命中
-        sig = [n for n in nums if len(n.replace(".", "")) >= 2]
-        if not sig:
-            continue
-        if any(n in source_md for n in sig):
-            kept.append(m)
-        if len(kept) >= cap:
-            break
-    return kept
 
 
 def _strip_html_fence(text: str) -> str:

@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api/scenes", tags=["scenes"])
 # 后备静态场景列表（与 config/agents.yaml 等价兜底）
 FALLBACK_SCENES = [
     {"id": "knowledge-gov", "title": "知识库治理", "subtitle": "全量盘点分组 · 失修/重复/无主检测 · 归档/合并/转交建议", "agents": ["文档地图", "知识治理"], "accent": "#2563EB", "icon": "shield"},
-    {"id": "content",       "title": "内容生成",   "subtitle": "飞书文档套企业模板 · 内部Wiki/项目/公告 · 一键生成可预览 HTML", "agents": ["HTML 页面生成", "文档地图"], "accent": "#16A34A", "icon": "page", "featured": True},
+    {"id": "content",       "title": "内容生成",   "subtitle": "飞书文档套企业模板 · 内部Wiki/项目/公告 · 一键生成可预览 HTML 或可编辑 PPT", "agents": ["HTML 与 PPT 生成", "文档地图"], "accent": "#16A34A", "icon": "page", "featured": True},
     {"id": "meeting",       "title": "会议沉淀",   "subtitle": "妙记/会议文档 · 摘要 · 决策 · 行动项 · 风险", "agents": ["会议纪要"], "accent": "#EA580C", "icon": "mic"},
     {"id": "table",         "title": "表格分析",   "subtitle": "多维表/电子表 · 列画像 · 数据体检 · AI 自动出图/看板", "agents": ["多维表格分析"], "accent": "#F0A800", "icon": "table"},
     {"id": "pdf",           "title": "PDF 识别",   "subtitle": "云盘 PDF · 全文(含扫描 OCR) · 字段/表格 · 逐页要点", "agents": ["PDF 识别"], "accent": "#6A4DD4", "icon": "scan"},

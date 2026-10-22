@@ -29,6 +29,8 @@ def _err(e: Exception) -> HTTPException:
 
 @router.get("/leaderboard")
 async def leaderboard(
+    board: str = Query(aihot.DEFAULT_BOARD,
+                       description="哪张榜：overall / coding / reasoning / knowledge / professional"),
     limit: int = Query(30, ge=1, le=100),
     provider: str = Query("", description="只看这个厂商（名字与榜单一致，如 Anthropic）"),
     ratio: float = Query(aihot.DEFAULT_IN_OUT_RATIO, ge=0, le=20,
@@ -36,9 +38,13 @@ async def leaderboard(
     compare_local: bool = Query(True, description="是否对照本机 .env 配的三档模型"),
     refresh: bool = Query(False, description="忽略本地缓存强制重抓"),
 ) -> dict:
-    """模型榜全表。列与榜单页一致，另附本机计算的性价比。"""
+    """一张模型榜的全表。列与榜单页一致，另附本机计算的性价比。
+
+    站点 2026-09 把榜拆成了五张（综合 / 编程 / 推理 / 知识 / 专业办公），各是独立
+    页面，所以这里按 board 分别抓、分别缓存 —— 打开页面只拉当前这一张。
+    """
     try:
-        lb = await aihot.fetch_leaderboard(force=refresh)
+        lb = await aihot.fetch_leaderboard(board=board, force=refresh)
     except Exception as e:  # noqa: BLE001
         raise _err(e) from e
 
@@ -52,6 +58,11 @@ async def leaderboard(
         "source_url": lb.get("source_url") or "",
         "updated_label": lb.get("updated_label") or "",
         "board_count": lb.get("board_count") or 0,
+        "board": lb.get("board") or "",
+        "board_label": lb.get("board_label") or "",
+        "boards": lb.get("boards") or [],
+        "metric_count": lb.get("metric_count") or 0,
+        "org_count": lb.get("org_count") or 0,
         "fetched_at": meta.get("fetched_at_iso") or "",
         "cached": bool(meta.get("cached")),
         "cache_age_s": meta.get("age_s") or 0,

@@ -22,7 +22,12 @@ set "ROOT=%CD%"
 set "PY=backend\.venv\Scripts\python.exe"
 set "NODEVER=node-v20.18.1-win-x64"
 REM lark-cli 版本**钉在这里**。改这一行就是升级捆绑的 CLI。
-set "LARKCLIVER=1.0.89"
+REM 1.0.89 -> 1.0.96：1.0.89 的 docs +media-download 会在真正发请求前做一次
+REM scope 预检，并要求 docs:permission.member:auth —— 一个和下载无关的权限，
+REM 于是文档内嵌图片**一张都下不下来**（日志里是几十行 LarkCLIError）。
+REM 1.0.96 把这个预检降级成 warning，同一个 token 用同一份授权就能下下来。
+REM 也就是说这是 CLI 的回归，不需要为它多要一项权限。
+set "LARKCLIVER=1.0.96"
 set "ISCC=C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
 
 echo.

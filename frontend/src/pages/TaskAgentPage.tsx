@@ -80,7 +80,7 @@ const AGENT_META: Record<string, AgentMeta> = {
     id: 'aihot-models',
     scene: 'AIHot 内容和模型',
     title: 'AIHot 模型榜',
-    subtitle: '拉取 AIHOT 大模型共识榜（含共识分 / 评测完整度 / 证据可信度 / 官方价），本地算「每元买到多少分」的性价比，并对照本机三档模型给出换 / 留建议。',
+    subtitle: '拉取 AIHOT 大模型共识榜（含共识指数 / 评测项数 / 证据可信度 / 官方价），本地算「每元买到多少分」的性价比，并对照本机三档模型给出换 / 留建议。',
     buttonLabel: '抓取模型榜',
   },
   'aihot-news': {
@@ -746,7 +746,7 @@ const TaskAgentPage: React.FC = () => {
             </label>
             <div style={{ marginTop: 14, fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.7, background: 'var(--surface-subtle)', padding: 10, borderRadius: 8 }}>
               数据来自 <strong>AIHOT 大模型排行榜</strong>。站点<strong>未提供榜单 API</strong>，本功能解析榜单页内嵌的结构化数据——
-              站点改版时可能失效，届时会明确报错，而不是给你半张假榜。共识分 / 完整度 / 可信度 / 官方价是 AIHOT 口径，
+              站点改版时可能失效，届时会明确报错，而不是给你半张假榜。共识指数 / 评测项数 / 可信度 / 官方价是 AIHOT 口径，
               <strong>性价比</strong>是本机计算。站点声明<strong>商用须先取得书面授权</strong>，产出页脚会自动带上这条提示。
             </div>
           </div>
@@ -2534,7 +2534,7 @@ const AihotModelsResult: React.FC<{ p: any; taskId?: string | null }> = ({ p, ta
             <table className="table">
               <thead><tr>
                 <th>档位</th><th>.env 配置项</th><th>模型</th><th>榜内名次</th>
-                <th>共识分</th><th>性价比</th><th>用途</th>
+                <th>共识指数</th><th>性价比</th><th>用途</th>
               </tr></thead>
               <tbody>
                 {local.map(m => (
@@ -2650,20 +2650,20 @@ const AihotModelsResult: React.FC<{ p: any; taskId?: string | null }> = ({ p, ta
           <h3 style={{ margin: 0 }}>模型榜<span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: 13 }}> · 前 {rows.length} 名</span></h3>
           <div style={{ flex: 1 }} />
           <button className="btn btn-tonal btn-sm" onClick={() => setByValue(v => !v)}
-                  title="在「共识分排序」（站点原序）和「性价比排序」（本机计算）之间切换">
-            <Icon name="refresh" size={13} /> {byValue ? '按共识分排序' : '按性价比排序'}
+                  title="在「共识指数排序」（站点原序）和「性价比排序」（本机计算）之间切换">
+            <Icon name="refresh" size={13} /> {byValue ? '按共识指数排序' : '按性价比排序'}
           </button>
         </div>
         <div style={{ fontSize: 12, color: 'var(--text-tertiary)', margin: '8px 0 12px', lineHeight: 1.6 }}>
-          前 8 列是 AIHOT 榜单口径。<strong>性价比</strong>为本机计算 = 共识分 ÷ 混合价，
+          前 8 列是 AIHOT 榜单口径。<strong>性价比</strong>为本机计算 = 共识指数 ÷ 混合价，
           混合价 =（输入价 + {p.in_out_ratio}×输出价）÷ {1 + Number(p.in_out_ratio)}（假设输入:输出 ≈ 1:{p.in_out_ratio}）；
           价格待核验的模型不参与该口径。
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table className="table">
             <thead><tr>
-              <th>排名</th><th>模型 / 厂商</th><th>上线日期</th><th>评测完整度</th>
-              <th>输入成本</th><th>输出成本</th><th>AIHOT 共识分</th><th>证据可信度</th>
+              <th>排名</th><th>模型 / 厂商</th><th>上线日期</th><th>评测证据</th>
+              <th>输入成本</th><th>输出成本</th><th>AIHOT 共识指数</th><th>证据可信度</th>
               <th>性价比*</th><th>名次区间</th>
             </tr></thead>
             <tbody>
@@ -2678,7 +2678,7 @@ const AihotModelsResult: React.FC<{ p: any; taskId?: string | null }> = ({ p, ta
                     <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{r.provider}</div>
                   </td>
                   <td style={{ whiteSpace: 'nowrap' }}>{r.released || '—'}</td>
-                  <td>{r.completeness !== null && r.completeness !== undefined ? `${r.completeness.toFixed(1)}%` : '—'}</td>
+                  <td>{r.metric_count ? `${r.metric_count} 项` : '—'}</td>
                   <td style={{ whiteSpace: 'nowrap' }}>{fmtCny(r.price_in, r.price_label)}</td>
                   <td style={{ whiteSpace: 'nowrap' }}>{fmtCny(r.price_out, r.price_label)}</td>
                   <td><strong>{r.score?.toFixed(1)}</strong></td>

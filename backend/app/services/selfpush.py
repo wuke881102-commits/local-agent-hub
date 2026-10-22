@@ -50,7 +50,7 @@ import logging
 from pathlib import Path
 
 from ..config import DATA_ROOT, settings
-from ..feishu import LarkCLIError, get_lark
+from ..feishu import LarkCLIError, explain_error, get_lark, needs_relogin
 
 log = logging.getLogger("selfpush")
 
@@ -159,7 +159,9 @@ async def target(*, refresh: bool = False) -> dict:
     try:
         st = await lark.auth_status()
     except LarkCLIError as e:
-        raise PushError("读取飞书登录状态失败：%s" % e) from e
+        # 同样别用 %s 直接格式化异常（那是「lark-cli exited N」）。
+        raise PushError("读取飞书登录状态失败：%s" % explain_error(e),
+                        needs_login=needs_relogin(e)) from e
 
     identity = _want_identity(bool(st.get("bot_ready")))
 
@@ -230,10 +232,17 @@ async def send(markdown: str, *, key: str = "") -> dict:
             identity=me.get("identity") or "user",
         )
     except LarkCLIError as e:
-        msg = str(e)
-        # missing_scope / 登录失效都会走到这里。needs_login 要单独认出来，因为它
-        # 重试无用 —— 页面上得让用户看到「去重新登录」而不是「稍后自动重试」。
-        needs_login = any(m in msg for m in ("needs_login", "invalid_token", "token expired", "20005"))
+        # **不能用 str(e)。** 它永远是「lark-cli exited N」—— 真正的原因只在 stderr 里。
+        # 之前页面上显示的就是「推送失败：lark-cli exited 1」，用户完全无从下手；
+        # 而同一个仓里写回那条路早就有 explain_error 把结构化 stderr 翻成中文，
+        # 只是没人接到这条路上来。
+        #
+        # 顺带修掉一个从来没生效过的判断：原先在 str(e) 里找 invalid_token / 20005,
+        # 而那串里不可能有这些词，所以 needs_login 恒为 False —— 真的授权过期也被
+        # 当成暂时性故障，页面上不会提示去重新登录。判据必须看 stderr。
+        msg = explain_error(e)
+        needs_login = needs_relogin(e)
+        log.warning("selfpush failed (exit=%s): %s", getattr(e, "exit_code", "?"), msg)
         _note(False, error=msg, needs_login=needs_login)
         raise PushError(msg, needs_login=needs_login) from e
     _note(True)

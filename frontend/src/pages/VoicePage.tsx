@@ -18,18 +18,27 @@ type FileJob = {
   active: boolean; filename: string; stage: string;
   seconds: number; done_s: number; error: string;
 };
+// 录制中每 N 分钟出的一段「阶段提炼」。录音不中断，停录时只把这几段合起来。
+type Roll = {
+  idx: number; from_s: number; to_s: number; chars: number;
+  segments: number; summary: string; model: string; at: string;
+};
 type Status = {
   active: boolean; mode: string; started_at: string; elapsed_s: number;
   max_minutes: number; error: string; finishing: boolean; routes: Route[];
   file_job?: FileJob;
   file_max_mb?: number; file_max_minutes?: number;
   distill_available?: boolean;
+  rolling_minutes?: number; rolling?: Roll[];
+  // 停录是秒回的，提炼在后台跑 —— 这里是「还在后台整理」的那几条记录的 id。
+  distilling?: string[];
 };
 type Note = {
   id: string; created_at: string; mode: string; seconds: number;
   segments: number; summary: string; error: string; transcript_chars?: number;
   transcript?: string; source_file?: string; source_codec?: string;
   distill_error?: string; distilled_at?: string; distill_model?: string;
+  rolling_count?: number; distilling?: boolean;
 };
 
 type Mode = 'mic' | 'loopback' | 'both';
@@ -77,6 +86,7 @@ const VoicePage: React.FC = () => {
   const copyTimer = useRef<number | null>(null);
   const [open, setOpen] = useState<string>('');
   const [full, setFull] = useState<Record<string, Note>>({});
+  const [showRolls, setShowRolls] = useState(false);
 
   const loadDevices = useCallback(async () => {
     try { setDev(await api.get<Devices>('/api/voice/devices')); } catch { /* ignore */ }
@@ -98,11 +108,28 @@ const VoicePage: React.FC = () => {
   // 看到它结束）时一秒一拉。**整理这一路原先漏了**：那三分钟里页面五秒才动一次，
   // 本来就在干等的人还得多等最多五秒才看到结果。
   const finishing = !!st?.finishing;
+  // 后台还在提炼的那几条。停录现在是秒回的，摘要一两分钟后才回填 ——
+  // 这段时间那条记录既不是「已提炼」也不是「未提炼」，得有第三种说法。
+  const distillingIds = useMemo(() => new Set(st?.distilling || []), [st?.distilling]);
+  const nDistilling = distillingIds.size;
   useEffect(() => {
-    const fast = active || uploading || finishing || !!job?.active;
+    const fast = active || uploading || finishing || nDistilling > 0 || !!job?.active;
     const t = window.setInterval(loadStatus, fast ? 1000 : 5000);
     return () => window.clearInterval(t);
-  }, [active, uploading, finishing, job?.active, loadStatus]);
+  }, [active, uploading, finishing, nDistilling, job?.active, loadStatus]);
+
+  // 后台那趟提炼跑完的一刻要把列表拉一次，否则那条会一直停在「整理中」，
+  // 直到你碰点别的才刷新。用「在提炼的条数变少了」当完成信号。
+  const prevDistilling = useRef(0);
+  useEffect(() => {
+    if (prevDistilling.current > nDistilling) loadNotes();
+    prevDistilling.current = nDistilling;
+  }, [nDistilling, loadNotes]);
+
+  const rolls = st?.rolling || [];
+  // 一条记录此刻是不是正在后台提炼。列表自带的那个字段是拉列表那一刻的快照，
+  // status 里那份是实时的 —— 两个都认，谁先亮算谁的。
+  const isDistilling = (n: Note) => !!n.distilling || distillingIds.has(n.id);
 
   const avail = (m: Mode) => {
     const cfg = MODES.find((x) => x.key === m)!;
@@ -120,7 +147,8 @@ const VoicePage: React.FC = () => {
         loopback_device: lbDev,
       }));
       toast.success(`开始录音 · ${modeLabel(mode)}`, {
-        detail: `最长 ${st?.max_minutes || 90} 分钟自动停止`,
+        detail: `最长 ${st?.max_minutes || 90} 分钟自动停止`
+          + ((st?.rolling_minutes || 0) > 0 ? ` · 每 ${st?.rolling_minutes} 分钟自动整理一段` : ''),
       });
     } catch (e) { toast.error('开录失败', { detail: errMsg(e) }); await loadDevices(); }
     finally { setBusy(false); }
@@ -129,9 +157,12 @@ const VoicePage: React.FC = () => {
   const stop = async () => {
     setBusy(true);
     try {
-      const r = await api.post<{ ok: boolean; saved: boolean; message?: string; note?: Note }>(
-        '/api/voice/stop', {});
-      if (r.saved) toast.success('已存为一条记录', { detail: r.message || '' });
+      const r = await api.post<{ ok: boolean; saved: boolean; message?: string;
+                                 note?: Note; distilling?: boolean }>('/api/voice/stop', {});
+      if (r.saved) {
+        toast.success(r.distilling ? '逐字稿已存下 · 提炼在后台跑' : '已存为一条记录',
+                      { detail: r.message || '' });
+      }
       // 没转出文字时必须说清为什么 —— 录了半天什么都没有，最需要的就是一句解释。
       else toast.info('没有存下记录', { detail: r.message || '' });
       await Promise.all([loadStatus(), loadNotes()]);
@@ -326,17 +357,20 @@ const VoicePage: React.FC = () => {
                   ? <>已录 <strong className="tnum">{fmtDur(st?.elapsed_s || 0)}</strong>
                       {' · '}最长 {st?.max_minutes} 分钟自动停止</>
                   : finishing
-                    ? <>逐字稿已经存下了，正在等文字模型提炼 · 主档最多 90 秒，
-                        不出结果就退到快档再 90 秒 · 提炼失败也会保留逐字稿，可以点「重新提炼」</>
+                    ? <>正在收尾：停采集、等各路把最后攒着的那段提交完 ·
+                        提炼不在这一步，它会在后台跑，跑完自动出现在下面的记录里</>
                     : '选一种录法，然后点开始录音。后端重启会停掉录音，不会自己恢复。'}
               </div>
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* 收尾那十几秒把「开始录音」按住：它和停止抢同一把锁，这时候点下去
+                只会转着等。提炼已经不在这段里了，所以按住的时间也就十几秒。 */}
             {!active
-              ? <button className="btn btn-primary btn-sm" disabled={busy || !mode} onClick={start}
-                  title={!mode ? '先选一种录法' : ''}>开始录音</button>
+              ? <button className="btn btn-primary btn-sm" disabled={busy || !mode || finishing}
+                  onClick={start}
+                  title={finishing ? '正在收尾，马上就好' : (!mode ? '先选一种录法' : '')}>开始录音</button>
               : <button className="btn btn-sm" disabled={busy} onClick={stop}>停止并整理</button>}
           </div>
         </div>
@@ -444,6 +478,46 @@ const VoicePage: React.FC = () => {
               </span>
             ))}
             <span>静音期间不发送，所以这个秒数会小于已录时长。</span>
+          </div>
+        )}
+
+        {/* 边录边提炼。录制中就能看到已经整理出来的几段 —— 这正是它的意义：
+            不用等到停录才知道这场会被整理成什么样。 */}
+        {active && (st?.rolling_minutes || 0) > 0 && (
+          <div style={{ marginTop: 10, borderTop: '1px solid var(--border-subtle)', paddingTop: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11.5,
+                          color: 'var(--text-tertiary)' }}>
+              <Icon name="sparkle" size={12} />
+              <span>
+                边录边提炼 · 每 {st?.rolling_minutes} 分钟自动整理一段，<strong>录音不中断</strong>
+                {rolls.length > 0
+                  ? <> · 已整理 <strong className="tnum">{rolls.length}</strong> 段</>
+                  : <> · 第一段在第 {st?.rolling_minutes} 分钟</>}
+              </span>
+              {rolls.length > 0 && (
+                <button className="btn btn-sm" style={{ marginLeft: 'auto' }}
+                  onClick={() => setShowRolls((v) => !v)}>
+                  {showRolls ? '收起' : '看看已经整理出什么'}
+                </button>
+              )}
+            </div>
+            {showRolls && rolls.length > 0 && (
+              <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {rolls.map((r) => (
+                  <div key={r.idx} style={{ background: 'var(--surface-subtle)', borderRadius: 8,
+                                            padding: '8px 10px' }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 3 }}>
+                      第 {r.idx} 段 · 第 {Math.round(r.from_s / 60)}–{Math.round(r.to_s / 60)} 分钟
+                      {' · '}{r.chars} 字{r.model ? ` · ${r.model}` : ''}
+                    </div>
+                    <div style={{ fontSize: 12.5, lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>{r.summary}</div>
+                  </div>
+                ))}
+                <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
+                  这几段是给最后合并用的中间结果，停录时会合成一条完整记录 —— 不用照着它读。
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -574,10 +648,15 @@ const VoicePage: React.FC = () => {
               {n.summary
                 ? <span style={{ fontSize: 11.5, color: 'var(--success)' }}>
                     <Icon name="check" size={11} /> 已提炼
+                    {(n.rolling_count || 0) > 0 && <> · {n.rolling_count} 段合成</>}
                   </span>
-                : <span style={{ fontSize: 11.5, color: n.distill_error ? 'var(--warning)' : 'var(--text-tertiary)' }}>
-                    <Icon name="warning" size={11} /> 未提炼
-                  </span>}
+                : isDistilling(n)
+                  ? <span style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>
+                      <Icon name="refresh" size={11} /> 整理中…
+                    </span>
+                  : <span style={{ fontSize: 11.5, color: n.distill_error ? 'var(--warning)' : 'var(--text-tertiary)' }}>
+                      <Icon name="warning" size={11} /> 未提炼
+                    </span>}
               <span style={{ flex: 1 }} />
               <button className="btn btn-sm" onClick={() => del(n.id)} title="删除这条记录"><Icon name="trash" size={12} /></button>
             </div>
@@ -608,9 +687,18 @@ const VoicePage: React.FC = () => {
                     </div>
                   </>
                 )}
+                {/* 还在后台跑：这不是失败，别摆出报错的样子，也别给「重新提炼」
+                    ——那会同时跑两趟。停录是秒回的，这一两分钟里就是这个状态。 */}
+                {!n.summary && isDistilling(n) && (
+                  <div style={{ fontSize: 12, lineHeight: 1.8, borderRadius: 8, padding: '10px 12px',
+                                background: 'var(--surface-subtle)', color: 'var(--text-secondary)' }}>
+                    <Icon name="refresh" size={12} /> 正在后台提炼，跑完会自动出现在这里。
+                    逐字稿已经存下了（下面就是），这一步失败也不会丢。
+                  </div>
+                )}
                 {/* 没提炼出来时把原因写出来，并且给一个重试的入口。
                     逐字稿在盘上，重试不需要重录。 */}
-                {!n.summary && (
+                {!n.summary && !isDistilling(n) && (
                   <div style={{ fontSize: 12, lineHeight: 1.8, borderRadius: 8, padding: '10px 12px',
                                 background: '#B4530910', color: '#B45309',
                                 display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -624,10 +712,13 @@ const VoicePage: React.FC = () => {
                     </button>
                   </div>
                 )}
-                {n.summary && (n.distill_model || n.distilled_at) && (
+                {n.summary && (n.distill_model || n.distilled_at || (n.rolling_count || 0) > 0) && (
                   <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4 }}>
                     {n.distill_model ? `由 ${n.distill_model} 提炼` : ''}
-                    {n.distill_model && n.distilled_at ? ' · ' : ''}
+                    {n.distill_model && (n.rolling_count || 0) > 0 ? ' · ' : ''}
+                    {(n.rolling_count || 0) > 0
+                      ? `录制中已整理 ${n.rolling_count} 段，停录时合成这一条` : ''}
+                    {(n.distill_model || (n.rolling_count || 0) > 0) && n.distilled_at ? ' · ' : ''}
                     {n.distilled_at ? `重新提炼于 ${fmtTime(n.distilled_at)}` : ''}
                   </div>
                 )}
@@ -648,7 +739,10 @@ const VoicePage: React.FC = () => {
         <Icon name="mic" size={12} /> <strong>只有你点「开始录音」才会录。</strong>
         没有定时录音、没有自动录音。「个人摘记」可以把这里的记录当来源，但它只读<strong>已经录好的文字</strong>，永远不会去开麦克风。
         <br />
-        <Icon name="warning" size={12} /> 录音会把语音<strong>实时发到云端模型</strong>做转写，停录后再把逐字稿发一次做提炼。
+        <Icon name="warning" size={12} /> 录音会把语音<strong>实时发到云端模型</strong>做转写；逐字稿还会发到文字模型做提炼
+        {(st?.rolling_minutes || 0) > 0
+          ? <> —— 录制中每 {st?.rolling_minutes} 分钟发一次新说的那段，停录时再发一次做合并</>
+          : <> —— 停录后发一次</>}。
         选「系统声音」或「两路同时」时，发出去的包含<strong>会议里其他人的声音</strong> —— 这是你每次开录时自己选的。
       </div>
     </div>

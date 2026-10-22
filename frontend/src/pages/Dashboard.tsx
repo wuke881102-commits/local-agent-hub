@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import useSWR from 'swr';
 import { Icon } from '../components/icons';
-import { api, fetcher, errMsg, enrichDetail, RefreshResult, Scene, TaskSummary, Diagnostics } from '../api';
+import { api, authUsable, fetcher, errMsg, enrichDetail, RefreshResult, Scene, TaskSummary, Diagnostics } from '../api';
 import { sceneTarget } from '../sceneTargets';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../components/Toast';
@@ -19,6 +19,9 @@ const Dashboard: React.FC = () => {
   const scenes = scenesData?.items || [];
   const tasks = tasksData?.items || [];
   const isNeedsLogin = auth?.stage === 'needs_login' || !!auth?.needs_login;
+  // needs_refresh 不算未授权（见 api.ts 的 authUsable）——
+  // 否则这块磁贴每两小时翻成「未授权」，跟顶部条幅一起催人去重新点授权。
+  const authOk = authUsable(auth);
 
   const indexTotal = diag?.index?.total ?? 0;
   const lastRefreshed = diag?.index?.last_refreshed || '—';
@@ -101,17 +104,17 @@ const Dashboard: React.FC = () => {
       <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--space-4)', marginBottom: 'var(--space-8)' }}>
         <StatCard
           label="飞书授权"
-          value={auth?.authenticated ? '已授权' : isNeedsLogin ? '差一步' : '未授权'}
+          value={authOk ? '已授权' : isNeedsLogin ? '差一步' : '未授权'}
           hint={
-            auth?.authenticated
-              ? (auth.user_name || '已登录')
+            authOk
+              ? (auth?.user_name || '已登录')
               : auth?.mock_mode || auth?.mock
                 ? 'mock 模式'
                 : isNeedsLogin
                   ? 'App 已绑定，待用户登录'
                   : '点击 Dashboard 顶部按钮授权'
           }
-          tone={auth?.authenticated ? 'success' : isNeedsLogin ? 'warning' : 'warning'}
+          tone={authOk ? 'success' : isNeedsLogin ? 'warning' : 'warning'}
         />
         <StatCard label="飞书索引" value={String(indexTotal)} hint={`上次刷新 ${lastRefreshed}`}
                   tone={indexTotal > 0 ? 'success' : 'info'} />
@@ -169,7 +172,7 @@ const Dashboard: React.FC = () => {
           <tbody>
             {tasks.length === 0 && (
               <tr><td colSpan={8} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-tertiary)' }}>
-                还没有任务。试试上方"内容生成 / HTML 页面生成"。
+                还没有任务。试试上方"内容生成 / HTML 与 PPT 生成"。
               </td></tr>
             )}
             {tasks.map(t => (

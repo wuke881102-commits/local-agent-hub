@@ -85,7 +85,7 @@ class MeetingMinutesAgent:
 
         # 文档正文里的内嵌图片（截图 / 白板 / 图表）做 OCR + 图示，回填进正文——
         # 与「HTML 生成」「PDF 识别」共用 doc_images 统一读图能力。妙记转写是纯文本，
-        # 不含 <image> 标签，describe_inline_images 会零成本原样返回。
+        # 不含图片标记，describe_inline_images 会零成本原样返回。
         figures: list[str] = []
         if inputs.get("describe_images", True):
             try:
@@ -194,10 +194,17 @@ async def _read_meeting_text(ctx, token: str, asset_type: str) -> tuple[str, str
 
 
 async def _try_doc_export(ctx, token: str) -> str:
+    """按文档导出正文；失败返回 ""，但**把真实原因写进任务日志**。
+
+    这里是「试一下」的位置，失败是正常分支，所以仍然吞掉异常——但不能连原因
+    一起吞。上一版就是这样：lark-cli 改了响应结构之后，页面上只剩一句
+    「不支持的会议来源类型」，跟真正的原因毫无关系。
+    """
     try:
         md = await ctx.lark.docs_export_markdown(token)
         return (md or "").strip()
-    except Exception:  # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
+        await ctx.log("warn", f"按文档导出正文失败：{e}")
         return ""
 
 

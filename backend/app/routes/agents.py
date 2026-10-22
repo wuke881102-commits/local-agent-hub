@@ -13,6 +13,7 @@ AGENT_META = {
     "index-enrich":        {"icon": "sparkle","color": "#DB2777", "entries": ["知识库治理"], "hidden": True},
     "knowledge-governance":{"icon": "shield", "color": "#0D9488", "entries": ["知识库治理"]},
     "html-page":           {"icon": "page",   "color": "#16A34A", "entries": ["内容生成"], "featured": True},
+    "slides-page":         {"icon": "page",   "color": "#7C3AED", "entries": ["内容生成"]},
     "base-analysis":       {"icon": "table",  "color": "#F0A800", "entries": ["表格分析"]},
     "pdf-recognition":     {"icon": "scan",   "color": "#6A4DD4", "entries": ["PDF 识别"]},
     "meeting-minutes":     {"icon": "mic",    "color": "#EA580C", "entries": ["会议沉淀"]},

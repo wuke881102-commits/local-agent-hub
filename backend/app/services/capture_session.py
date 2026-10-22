@@ -30,7 +30,7 @@ _DEBOUNCE_S = 0.4  # 两次截图最小间隔，挡住 Enter 长按/连击
 #    但进程名固定。精确匹配 basename（小写），无误伤风险。
 _SKIP_PROCESS_NAMES = frozenset((
     "outlook.exe", "olk.exe", "hxoutlook.exe", # Outlook 经典 / 新版 / 旧 UWP 邮件
-    "feishu.exe", "lark.exe", "g-space.exe",   # 飞书 / Lark / G-Space（公司白标版飞书）
+    "feishu.exe", "lark.exe", "g-space.exe",   # 飞书 / Lark / G-Space（白标版飞书）
     "ms-teams.exe", "msteams.exe", "teams.exe", # Microsoft Teams（新/旧）
     "wechat.exe", "weixin.exe", "wxwork.exe",  # 微信 / 新版微信 / 企业微信
     "dingtalk.exe",                            # 钉钉
@@ -55,8 +55,8 @@ _SKIP_TITLE_MARKERS = (
 #    界面里而不在标题栏；会议窗口则带明确的会议 / 通话字样。若你的某个会话正好被命名
 #    成含下列字样，那次会被截到——可用 CAPTURE_MEETING_MARKERS 反向调整（见下）。
 _MEETING_TITLE_MARKERS = (
-    # 飞书 / Lark / G-Space（白标飞书）：实测白标版会议窗标题为「普笺G-Space会议」，
-    # 聊天主窗口则是「普笺G-Space」——差别就在结尾的「会议」二字。
+    # 飞书 / Lark / G-Space（白标飞书）：实测白标版会议窗标题为「G-Space会议」，
+    # 聊天主窗口则是「G-Space」——差别就在结尾的「会议」二字。
     "视频会议", "飞书会议", "g-space会议", "g-space 会议",
     "lark meetings", "video meeting", "feishu video",
     # Microsoft Teams：实测会议窗标题为「Microsoft Teams 会议」（中文界面）；
@@ -74,8 +74,8 @@ _MEETING_TITLE_MARKERS = (
     "正在共享", "屏幕共享", "sharing your screen", "is sharing",
 )
 # 通用规律（实测）：各家「会议窗口」的标题都以「会议」结尾，而聊天主窗口只有应用名——
-#   普笺G-Space会议 / Microsoft Teams 会议 / 腾讯会议 / 钉钉会议   ← 会议窗
-#   普笺G-Space     / Microsoft Teams      / 微信     / 飞书      ← 聊天窗
+#   G-Space会议 / Microsoft Teams 会议 / 腾讯会议 / 钉钉会议   ← 会议窗
+#   G-Space     / Microsoft Teams      / 微信     / 飞书      ← 聊天窗
 # 故单列一条后缀规则，新会议软件无需再逐个加白名单。
 # 代价：若把某个会话/群命名成以「会议」结尾（如「项目周会议」）并弹成独立窗口，那个窗口
 # 会被截到。不接受这个代价就把本元组置空，只保留上面的精确关键词。

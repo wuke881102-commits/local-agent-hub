@@ -15,6 +15,28 @@ const PAGE_TYPES = [
   { id: 'custom',        label: '自定义',     desc: '用自然语言描述你想要的页面' },
 ];
 
+type OutFormat = 'html' | 'ppt';
+
+// 两种格式的限制，原样显示给用户。写软了就是在骗人 ——「箭头不还原」
+// 「文字会有形近字错误」都是拿真展板照片实测出来的，不是保守估计。
+const FORMAT_LIMITS: Record<OutFormat, string[]> = {
+  html: [
+    '产出一张单页长文，适合知识页 / 制度说明 / 公告；不是逐页演讲用的',
+    '文档里的图片会被识别成文字描述嵌入，不保留原图版式',
+    '表格与层级结构保留得好',
+    '可一次合并 1–3 篇来源',
+  ],
+  ppt: [
+    '产出 .pptx，可直接编辑；不写回飞书（需要三项当前没有的权限）',
+    '一张图一页还原，另附一页原图供核对',
+    '只还原网格结构 —— 箭头、图标、渐变、自由摆放不还原',
+    '文字会有形近字错误，原图页就是用来核对的',
+    '慢：每张图 5–7 次模型调用，十几张图是十分钟量级',
+    '文字为主的文档会被重组成 8–12 页讲稿，内容有取舍；没用上的章节列在最后一页',
+    '讲稿里的数字和表格都要在原文里对得上，对不上的会被丢掉（日志里写明）',
+  ],
+};
+
 const TaskHtmlPage: React.FC = () => {
   const params = useParams();
   const [search] = useSearchParams();
@@ -39,6 +61,11 @@ const TaskHtmlPage: React.FC = () => {
   const [localPaths, setLocalPaths] = useState<string[]>(seedLocal ? [seedLocalPath] : []);
 
   const [pageType, setPageType] = useState('internal_wiki');
+  // 侧栏的「PPT 幻灯片生成」指到本页并带 ?format=ppt；从运行记录点进来的 PPT 任务
+  // 走 /task/slides-page/:id。两种入口都要直接落在 PPT 那一档。
+  const [outFormat, setOutFormat] = useState<OutFormat>(
+    search.get('format') === 'ppt' || window.location.pathname.startsWith('/task/slides-page')
+      ? 'ppt' : 'html');
   const [layoutMode, setLayoutMode] = useState<'template' | 'freeform'>('template'); // 版式：套模板 / AI 直出
   const [customInstruction, setCustomInstruction] = useState('');  // 「自定义」模板下的自然语言要求
   const [running, setRunning] = useState(false);
@@ -68,6 +95,10 @@ const TaskHtmlPage: React.FC = () => {
   const { data: task, mutate: mutateTask } = useSWR<TaskDetail>(
     taskId ? `/api/tasks/${taskId}` : null, fetcher, { refreshInterval: 4000 },
   );
+
+  useEffect(() => {
+    if (task?.agent_id === 'slides-page') setOutFormat('ppt');
+  }, [task?.agent_id]);
 
   const logRef = useRef<HTMLDivElement>(null);
   useEffect(() => { logRef.current?.scrollTo(0, logRef.current.scrollHeight); }, [logs]);
@@ -127,21 +158,24 @@ const TaskHtmlPage: React.FC = () => {
     setLogs([]);
     try {
       const resp = await api.post<{ task_id: string }>('/api/tasks/run', {
-        agent_id: 'html-page',
+        agent_id: outFormat === 'ppt' ? 'slides-page' : 'html-page',
         scene: '内容生成',
-        inputs: {
-          doc_tokens: docTokens,
-          doc_token: docTokens[0], // 向后兼容
-          page_type: pageType,
-          layout_mode: layoutMode,
-          custom_instruction: pageType === 'custom' ? customInstruction.trim() : '',
-        },
+        // PPT 一次只接一篇来源：还原是按图逐张走的，合并多篇没有意义。
+        inputs: outFormat === 'ppt'
+          ? { doc_token: docTokens[0], ppt_mode: 'auto' }
+          : {
+              doc_tokens: docTokens,
+              doc_token: docTokens[0], // 向后兼容
+              page_type: pageType,
+              layout_mode: layoutMode,
+              custom_instruction: pageType === 'custom' ? customInstruction.trim() : '',
+            },
       });
       setTaskId(resp.task_id);
-      nav(`/task/html-page/${resp.task_id}`, { replace: true });
+      nav(`/task/${outFormat === 'ppt' ? 'slides-page' : 'html-page'}/${resp.task_id}`, { replace: true });
     } catch (err) {
       setRunning(false);
-      toast.error('启动 HTML 生成失败', { detail: errMsg(err) });
+      toast.error(outFormat === 'ppt' ? '启动 PPT 生成失败' : '启动 HTML 生成失败', { detail: errMsg(err) });
     }
   }
 
@@ -150,7 +184,9 @@ const TaskHtmlPage: React.FC = () => {
     window.open(`/api/tasks/${taskId}/download`, '_blank');
   }
 
-  const previewUrl = taskId && task?.result_path ? `/api/tasks/${taskId}/preview` : null;
+  const isPpt = task?.agent_id === 'slides-page';
+  // PPT 不能进 iframe 预览：后端 /preview 是按 HTML 读文本的，拿 .pptx 去读就是 500。
+  const previewUrl = taskId && task?.result_path && !isPpt ? `/api/tasks/${taskId}/preview` : null;
 
   // 任务用的是哪个模板（来自启动时的 inputs，任务存在即可读）；自定义则带上自然语言要求。
   const usedPageType: string | undefined = task?.inputs?.page_type;
@@ -162,9 +198,11 @@ const TaskHtmlPage: React.FC = () => {
     <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', height: '100%', overflow: 'hidden' }}>
       {/* 左：输入与日志 */}
       <div style={{ borderRight: '1px solid var(--border-subtle)', padding: 'var(--space-6)', overflowY: 'auto', background: 'var(--surface-elevated)' }}>
-        <h2 style={{ marginTop: 0, fontSize: 18, fontWeight: 600 }}>HTML 页面生成</h2>
+        <h2 style={{ marginTop: 0, fontSize: 18, fontWeight: 600 }}>{outFormat === 'ppt' ? 'PPT 幻灯片生成' : 'HTML 页面生成'}</h2>
         <p style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>
-          {srcMode === 'feishu'
+          {outFormat === 'ppt'
+            ? '选一篇飞书文档，产出可编辑的 .pptx。图片为主的（比如会议展板照片）每张图还原成一页，后面紧跟原图；文字为主的重组成 8–12 页讲稿。'
+            : srcMode === 'feishu'
             ? '选择 1–3 篇飞书资产（文档 / 多维表 / 电子表 / 幻灯片）与模板，Agent 会按类型抽取各篇内容、合并后套入 Lumen-light 页面。生成后可在本地预览、下载 HTML。'
             : '从本地目录选若干文件（截图 / PDF / Word / Excel / PPT），AI 读图 / 读文档后直出一页 HTML。'}
         </p>
@@ -230,6 +268,30 @@ const TaskHtmlPage: React.FC = () => {
         )}
 
         <div style={{ marginTop: 'var(--space-4)' }}>
+          <label className="label">输出格式</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {([
+              { id: 'html' as const, label: 'HTML 页面', desc: '单页长文' },
+              { id: 'ppt' as const, label: 'PPT 幻灯片', desc: '.pptx·可编辑' },
+            ]).map(f => (
+              <button key={f.id} type="button" onClick={() => setOutFormat(f.id)}
+                style={{
+                  flex: 1, textAlign: 'left', padding: '8px 10px', cursor: 'pointer',
+                  border: '1px solid', borderColor: outFormat === f.id ? 'var(--brand-500)' : 'var(--border-subtle)',
+                  borderRadius: 'var(--radius-lg)', background: outFormat === f.id ? 'var(--brand-50)' : 'var(--surface-elevated)',
+                }}>
+                <div style={{ fontWeight: 600, fontSize: 13, color: outFormat === f.id ? 'var(--brand-700)' : 'var(--text-primary)' }}>{f.label}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{f.desc}</div>
+              </button>
+            ))}
+          </div>
+          <ul style={{ margin: '8px 0 0', paddingLeft: 18, fontSize: 11, lineHeight: 1.6, color: 'var(--text-secondary)' }}>
+            {FORMAT_LIMITS[outFormat].map(t => <li key={t}>{t}</li>)}
+          </ul>
+        </div>
+
+        {outFormat === 'html' && (<>
+        <div style={{ marginTop: 'var(--space-4)' }}>
           <label className="label">版式</label>
           <div style={{ display: 'flex', gap: 6 }}>
             {([
@@ -278,11 +340,12 @@ const TaskHtmlPage: React.FC = () => {
                       value={customInstruction} onChange={e => setCustomInstruction(e.target.value)} />
           )}
         </div>
+        </>)}
 
         <div style={{ marginTop: 'var(--space-5)', display: 'flex', gap: 8 }}>
           {srcMode === 'feishu' ? (
-            <button className="btn btn-primary" disabled={docTokens.length === 0 || running || (pageType === 'custom' && !customInstruction.trim())} onClick={start}>
-              <Icon name="sparkle" size={14} /> {running ? '生成中…' : '生成 HTML 页面'}
+            <button className="btn btn-primary" disabled={docTokens.length === 0 || running || (outFormat === 'html' && pageType === 'custom' && !customInstruction.trim())} onClick={start}>
+              <Icon name="sparkle" size={14} /> {running ? '生成中…' : (outFormat === 'ppt' ? '生成 PPT' : '生成 HTML 页面')}
             </button>
           ) : (
             <button className="btn btn-primary" disabled={localPaths.length === 0 || running || (pageType === 'custom' && !customInstruction.trim())} onClick={startLocal}>
@@ -366,7 +429,39 @@ const TaskHtmlPage: React.FC = () => {
         )}
 
         <div style={{ flex: 1, background: 'var(--surface-inset)', overflow: 'hidden' }}>
-          {previewUrl ? (
+          {task?.status === 'failed' && task?.error ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 24 }}>
+              <div className="alert alert-error" style={{ maxWidth: 520, width: '100%' }}>
+                <Icon name="warning" size={18} />
+                <div>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>{isPpt ? 'PPT 生成失败' : '页面生成失败'}</div>
+                  <div style={{ fontSize: 13, lineHeight: 1.6, wordBreak: 'break-word' }}>{task.error}</div>
+                </div>
+              </div>
+            </div>
+          ) : isPpt && task?.result_path ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 24 }}>
+              <div className="card" style={{ maxWidth: 420, width: '100%', padding: 24, textAlign: 'center' }}>
+                <Icon name="page" size={40} />
+                <div style={{ fontWeight: 600, fontSize: 16, margin: '12px 0 4px' }}>{task.payload?.title || 'PPT 已生成'}</div>
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
+                  {task.payload?.mode === 'outline'
+                    ? <>共 {task.payload?.slides ?? '—'} 页讲稿 · 配图 {task.payload?.images ?? 0} 张
+                        {task.payload?.uncovered ? <><br />有 {task.payload.uncovered} 节没用上，列在最后一页</> : null}</>
+                    : <>共 {task.payload?.slides ?? '—'} 页 · 还原 {task.payload?.restored ?? '—'} 页 + 原图 {task.payload?.images ?? '—'} 页</>}
+                </div>
+                <button className="btn btn-primary" onClick={downloadHtml}>
+                  <Icon name="external" size={14} /> 下载 .pptx
+                </button>
+                <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 12, lineHeight: 1.6 }}>
+                  PPT 没法在网页里预览，下载后用 PowerPoint / WPS 打开。<br />
+                  {task.payload?.mode === 'outline'
+                    ? '讲稿是模型重组的，原文细节在每页的演讲者备注里。'
+                    : '每页还原后面紧跟一页原图，文字有形近字错误时对照原图改。'}
+                </div>
+              </div>
+            </div>
+          ) : previewUrl ? (
             <iframe src={previewUrl} title="preview"
                     style={{ width: '100%', height: '100%', border: 'none', background: '#fff' }} />
           ) : (

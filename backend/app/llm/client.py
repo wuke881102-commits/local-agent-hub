@@ -16,6 +16,7 @@ import base64
 import binascii
 import json
 import logging
+import re
 import time
 from typing import Any, AsyncIterator
 
@@ -45,6 +46,25 @@ def _is_placeholder(s: str) -> bool:
     s_lower = s.lower()
     placeholders = ("your-", "your_", "sk-your", "...", "<", "replace", "todo", "xxx", "example")
     return any(p in s_lower for p in placeholders)
+
+
+def _norm_model(s: str) -> str:
+    """模型名归一，用来匹配 NO_THINKING_MODELS：大小写、点、横杠都不该算区别
+    （`qwen3.8-flash` / `Qwen3.8-Flash` / `qwen3_8_flash` 是同一个）。"""
+    return re.sub(r"[^a-z0-9]+", "", (s or "").lower())
+
+
+def _is_param_error(e: Exception) -> bool:
+    """端点是不是在抱怨「我不认识这个参数」。
+
+    只认参数类报错 —— 超时、限流、鉴权都不该触发「摘掉参数重试」，那会把一次
+    网络抖动误判成「这个模型不支持关思考」，然后整个进程里都不再关思考。
+    """
+    s = str(e).lower()
+    if "enable_thinking" in s:
+        return True
+    return ("invalid_parameter" in s or "unrecognized" in s or "unsupported parameter" in s
+            or "extra_body" in s)
 
 
 def _build_client(provider: str, *, api_key: str, base_url: str, azure_endpoint: str, api_version: str, timeout: float):
@@ -92,6 +112,11 @@ class LLMClient:
         self.vision_last_model = settings.vision_model
         self.image_provider = settings.image_model_provider
         self.image_model = settings.image_model
+        # 要显式关掉「先想一大段再开口」的模型。见 config.no_thinking_models 的注释。
+        self._no_think_set = {_norm_model(x) for x in
+                              re.split(r"[,\s;]+", settings.no_thinking_models or "") if x.strip()}
+        # 端点当场拒绝过这个参数的模型，本进程内不再对它带 —— 免得每次调用都先失败一次。
+        self._no_think_off: set[str] = set()
 
         self._text_client = _build_client(
             self.text_provider,
@@ -156,7 +181,7 @@ class LLMClient:
             "mock":   self._text_mock,
         }
 
-        async def _one(client, model, key):
+        async def _one(client, model, key, no_think=False):
             if client is None:
                 result[key]["ok"] = True
                 result[key]["latency_ms"] = 0
@@ -166,11 +191,15 @@ class LLMClient:
                 # 探活超时：qwen3.7-plus 这类大模型即使回 "ping" 也常要 5–7s，
                 # 太短（如 8s）会在它偶发抖动时误判「异常」。给到 20s 留足余量，
                 # 仍远小于正常任务超时（60/90s），模型真不可达时也不会拖死诊断页。
-                resp = await client.with_options(timeout=20).chat.completions.create(
-                    model=model,
-                    messages=[{"role": "user", "content": "ping"}],
-                    max_tokens=4,
-                )
+                #
+                # 关思考的模型这里也要关：max_tokens=4 全被思考吃掉的话，探活拿回来的
+                # 是空字符串 —— 诊断页那一行会显示「通了但没回内容」，看着像出了事。
+                kw = {"model": model,
+                      "messages": [{"role": "user", "content": "ping"}],
+                      "max_tokens": 4}
+                if no_think:
+                    kw["extra_body"] = {"enable_thinking": False}
+                resp = await client.with_options(timeout=20).chat.completions.create(**kw)
                 result[key]["ok"] = True
                 result[key]["latency_ms"] = int((time.perf_counter() - t) * 1000)
                 result[key]["sample"] = (resp.choices[0].message.content or "")[:40]
@@ -179,7 +208,8 @@ class LLMClient:
                 result[key]["error"] = str(e)[:240]
 
         await asyncio.gather(
-            _one(self._text_client,   self.text_model,   "text"),
+            _one(self._text_client,   self.text_model,   "text",
+                 no_think=self._no_thinking(self.text_model)),
             _one(self._vision_client, self.vision_model, "vision"),
         )
         return result
@@ -214,6 +244,24 @@ class LLMClient:
         client = self._text_client.with_options(timeout=timeout) if timeout else self._text_client
         chosen_model = model or self.text_model
 
+        async def _create(kwargs: dict):
+            """发一次请求。端点若不认 enable_thinking，就地摘掉它再发一次。
+
+            **这次重发不占 retries 预算**：retries=0 的调用方（语音提炼就是）本来只有
+            一次机会，被这条路吃掉的话会以 `last_err=None` 抛出去 —— 报错里什么都没有。
+            慢总比不能用强，而且日志留一行，不是静默降级。
+            """
+            try:
+                return await client.chat.completions.create(**kwargs)
+            except Exception as e:
+                if kwargs.get("extra_body") and _is_param_error(e):
+                    log.warning("text_complete[%s]：端点不接受 enable_thinking，"
+                                "这次起不再带它（会变慢，但能用）：%s", chosen_model, str(e)[:160])
+                    self._no_think_off.add(chosen_model)
+                    kwargs.pop("extra_body", None)
+                    return await client.chat.completions.create(**kwargs)
+                raise
+
         last_err: Exception | None = None
         for attempt in range(retries + 1):
             try:
@@ -225,7 +273,9 @@ class LLMClient:
                 }
                 if json_mode:
                     kwargs["response_format"] = {"type": "json_object"}
-                resp = await client.chat.completions.create(**kwargs)
+                if self._no_thinking(chosen_model):
+                    kwargs["extra_body"] = {"enable_thinking": False}
+                resp = await _create(kwargs)
                 return resp.choices[0].message.content or ""
             except Exception as e:  # noqa: BLE001
                 last_err = e
@@ -233,6 +283,22 @@ class LLMClient:
                 if attempt < retries:
                     await asyncio.sleep(1.5 * (attempt + 1))
         raise LLMError(f"text_complete failed after retries: {last_err}", model=chosen_model)
+
+    def _no_thinking(self, model: str) -> bool:
+        """这个模型要不要显式关掉思考。
+
+        为什么需要：qwen3.8-flash 这类模型默认会先想一大段再开口，思考 token 既算
+        延迟也算输出计费。实测同一份批量分类，开着思考中位 8.7 秒（尾部 40.9 秒），
+        关掉之后 2.5 秒 —— 而快省档存在的全部理由就是快。
+
+        只对 openai_compatible（DashScope）这条路带这个参数：Azure 那条不认它，
+        带过去会把读图/生图一起打挂。
+        """
+        if not model or self.text_provider != "openai_compatible":
+            return False
+        if model in self._no_think_off:      # 端点拒绝过一次，就别再试了
+            return False
+        return _norm_model(model) in self._no_think_set
 
     async def text_stream(
         self,
@@ -291,6 +357,8 @@ class LLMClient:
         prompt: str = "请用一句中文描述这张图片的核心信息。",
         *,
         max_tokens: int = 200,
+        model: str | None = None,
+        provider: str = "dashscope",
     ) -> str:
         """识别 / 描述一张图片。``max_tokens`` 默认 200（图示说明够用）；
         整页 OCR 这类需要长输出的场景，调用方应调大（如 1500）。
@@ -300,6 +368,19 @@ class LLMClient:
         {llm.vision_model} 识别…」，不更新的话那句话就变成假话。
         """
         msgs = self._img_messages(prompt, [image_url])
+
+        # 指定了模型就按指定的端点走（展板还原的骨架那一段要 Qwen-VL 的坐标能力，
+        # 而它在文本端点上）。失败不再降级到主档 —— 调用方点名要这个模型，
+        # 悄悄换一个会让「为什么坐标没了」查不出来。
+        if model:
+            client = self._text_client if provider == "dashscope" else self._vision_client
+            if client is None:
+                raise RuntimeError(f"没有可用的 {provider} 端点，无法调用 {model}")
+            resp = await client.chat.completions.create(
+                model=model, messages=msgs, max_tokens=max_tokens)
+            self.vision_last_model = model
+            return resp.choices[0].message.content or ""
+
         if self._vision_client is not None:
             try:
                 resp = await self._vision_client.chat.completions.create(
@@ -426,6 +507,46 @@ class LLMClient:
                 except (binascii.Error, ValueError):
                     continue
         return out
+
+
+def strip_md_fence(text: str) -> str:
+    """去掉模型把**整份 Markdown 回答**包进代码围栏的那一层。
+
+    要 Markdown 的时候模型时不时会回：
+
+        ```markdown
+        ### 一句话总结
+        ...
+        ```
+
+    这层围栏不剥掉，后果不是「难看一点」：语音记录的折叠预览取的是第一行非
+    # 开头的内容，于是列表里那一条显示成 ```markdown（真出现过）；个人摘记
+    那一路更糟 —— 带着围栏的正文会**直接发到飞书**。
+
+    ## 只剥「包住全文」的那一层，不动正文里的代码块
+
+    摘要里出现代码块是合法的（引一条命令、一段配置）。所以三个条件同时满足才剥：
+
+    - 开头一行是纯围栏，且语言标记为空或 markdown / md —— 标着 python / json
+      的说明模型真想给一个代码块，那是内容，不是包装；
+    - 结尾一行也是纯围栏；
+    - 剥掉之后剩下的围栏数量是偶数（成对）。不然说明这一对本来就是正文里
+      某个代码块的一半，剥了会把内容弄坏。
+    """
+    s = (text or "").strip()
+    if not s.startswith("```"):
+        return s
+    lines = s.splitlines()
+    if len(lines) < 2:
+        return s
+    if not re.match(r"^`{3,}\s*(?:markdown|md)?\s*$", lines[0], flags=re.IGNORECASE):
+        return s
+    if not re.match(r"^`{3,}\s*$", lines[-1].strip()):
+        return s
+    inner = lines[1:-1]
+    if sum(1 for ln in inner if ln.lstrip().startswith("```")) % 2 != 0:
+        return s
+    return "\n".join(inner).strip()
 
 
 def _mock_text(prompt: str, json_mode: bool = False) -> str:

@@ -5,9 +5,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from ..config import settings
-from ..feishu import LarkCLI, MockLarkCLI, get_lark
+from ..feishu import LarkCLI, MockLarkCLI, explain_error, get_lark
 from ..services import audit
-from .writeback import _explain_error
 
 router = APIRouter(prefix="/api/dispatch", tags=["dispatch"])
 
@@ -42,7 +41,7 @@ async def send(body: SendBody) -> dict:
         result = await lark.im_send(chat_id=body.chat_id, text=body.text,
                                     markdown=body.markdown, dry_run=False)
     except Exception as e:  # noqa: BLE001
-        raise HTTPException(500, f"发送失败：{_explain_error(e)}")
+        raise HTTPException(500, f"发送失败：{explain_error(e)}")
     await audit.write(actor=None, agent_id="collab-dispatch", action="direct_send",
                       target=body.chat_id, outcome="executed",
                       details={"chars": len(body.text)})

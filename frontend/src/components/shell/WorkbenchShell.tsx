@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import useSWR from 'swr';
 import { Icon } from '../icons';
-import { fetcher, AuthStatus, AgentInfo } from '../../api';
+import { fetcher, authUsable, AuthStatus, AgentInfo } from '../../api';
 import { AuthBanner } from '../AuthBanner';
 import { CommandPalette } from '../CommandPalette';
 import { NotificationBell, useToast } from '../Toast';
@@ -19,6 +19,9 @@ const AGENT_TASK_PATHS: Record<string, string> = {
   'pdf-recognition': '/task/pdf-recognition',
   'meeting-minutes': '/task/meeting-minutes',
   'collab-dispatch': '/task/collab-dispatch',
+  // PPT 不是独立的页，它是「内容生成」的一个输出格式 —— 指到同一个页面并预选 PPT。
+  // 不加这一条的话，它会在侧栏灰着显示「暂未开放」，而功能其实是好的。
+  'slides-page': '/task/html-page?format=ppt',
   // 同一个数据页的两个标签：模型榜走默认标签，新闻简报直接落到 AI 新闻标签。
   'aihot-models': '/aihot?tab=board',
   'aihot-news': '/aihot?tab=news',
@@ -52,11 +55,14 @@ export const WorkbenchShell: React.FC<Props> = ({ crumb, children, headerActions
   const { data: agentsData } = useSWR<{ items: AgentInfo[] }>('/api/agents', fetcher);
   const agents = agentsData?.items || [];
   // 「本地内容」(local-image) 只在内容生成页内部使用、侧栏点不开，所以从 AGENTS 里滤掉。
+  // 「PPT 幻灯片生成」(slides-page) 同理：它是「HTML 与 PPT 生成」页里的一个输出格式，
+  // 单列一条就重复了。任务页路由照旧保留，运行记录里点得开。
   //
   // 这里曾经补一条伪 Agent「自动化提炼」顶上它的位置。现在不补了：自动化提炼已经并入
   // 上方导航的「个人提炼」，它是常驻视图不是 Agent（没有「填参数跑一次」这回事），
   // 挂在 AGENTS 里始终是错位的。少一条真 Agent 没有的项，比多一条名不副实的强。
-  const sidebarAgents: AgentInfo[] = agents.filter(a => a.id !== 'local-image');
+  const SIDEBAR_SKIP = new Set(['local-image', 'slides-page']);
+  const sidebarAgents: AgentInfo[] = agents.filter(a => !SIDEBAR_SKIP.has(a.id));
   // 重新授权（补授新增 scope，如发群消息 im:message）。已授权状态下也可触发。
   const { startLogin, loginInfo, loggingIn, polling, refresh: refreshAuth } = useAuth();
   const toast = useToast();
@@ -88,7 +94,9 @@ export const WorkbenchShell: React.FC<Props> = ({ crumb, children, headerActions
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const authed = auth?.authenticated;
+  // needs_refresh 不是失效（见 api.ts 的 authUsable）。用 authenticated 的话，
+  // 侧栏每两小时就从「已授权」翻成「未授权 · 飞书」，而什么都没发生。
+  const authed = authUsable(auth);
   const needsLogin = auth?.stage === 'needs_login' || !!auth?.needs_login;
   const userName = auth?.user_name || (authed ? '已登录' : needsLogin ? '差一步登录' : '未授权');
   const statusText = authed ? '已授权 · 飞书' : needsLogin ? 'App 已绑定 · 待登录' : '未授权 · 飞书';

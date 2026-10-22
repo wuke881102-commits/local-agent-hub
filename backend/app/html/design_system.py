@@ -30,11 +30,14 @@ LUMEN_LIGHT_ROOT_CSS = """:root{
   --chart-6:#9070F0;--chart-7:#30C0C0;--chart-8:#C83A3A;--chart-9:#70D080;--chart-10:#F0F0A0;
   /* 圆角 / 间距(4px 基) / 阴影 / 字体 */
   --radius-xs:2px;--radius-sm:4px;--radius-md:6px;--radius-lg:8px;--radius-xl:12px;--radius-2xl:16px;--radius-full:9999px;
-  --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;
+  --space-0-5:2px;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;
   --space-8:32px;--space-10:40px;--space-12:48px;--space-16:64px;--space-20:80px;--space-24:96px;
   --shadow-sm:0 1px 3px rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.03);
   --shadow-md:0 4px 12px rgba(0,0,0,.1),0 0 0 1px rgba(0,0,0,.04);
   --shadow-lg:0 8px 24px rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.05);
+  --text-5xl:60px;--text-4xl:44px;--text-3xl:34px;--text-2xl:26px;--text-xl:20px;
+  --text-lg:16px;--text-base:14px;--text-sm:13px;--text-xs:11px;
+  --t-fast:150ms cubic-bezier(0,0,.2,1);--t-base:200ms cubic-bezier(0,0,.2,1);--t-moderate:300ms cubic-bezier(0,0,.2,1);
   --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
   --font-mono:'SF Mono','Menlo','Monaco','Consolas','JetBrains Mono',monospace;
 }"""
@@ -46,12 +49,13 @@ LUMEN_LIGHT_COMPONENTS = """### 设计原则
 - 正文最大宽度 1200px，水平内边距 32px，页面底色 var(--surface-page)。
 
 ### 关键组件配方
+- 按钮 Button：padding 8px 20px，13px，600，圆角 lg(8px)；**不用胶囊按钮**(radius-full)；hover 变深 + shadow-md + translateY(-1px)。
 - 头部 Hero：background:linear-gradient(135deg,var(--brand-500),var(--brand-600),var(--brand-700))；白字；可加半透明圆形装饰；标题用 44–60px 粗体。
 - 卡片 Card：白底，border-radius:var(--radius-2xl)，padding:var(--space-6)，box-shadow:var(--shadow-sm)，hover 抬升。
 - 指标卡 Metric：大号数字(var(--brand-600)) + 小标签；常用 2–4 列网格。
-- 徽章 Badge：小号、mono、大写、圆角 md；语义色用对应 --success/-bg 等；状态/等级首选。
+- 徽章 Badge：padding 2px 8px、mono 11px、500、大写、0.05em 字距、圆角 md；语义色用对应 --success/-bg 等；状态/等级首选。
 - 提示 Alert：flex + 图标 + 标题 + 描述，左边框或浅底用语义色，border-radius:var(--radius-lg)。
-- 表格 Table：外层圆角 xl；表头 var(--surface-subtle)+mono+大写+字距；行 hover 高亮；**原文有并列/对照/参数数据时优先用表格**。
+- 表格 Table：外层圆角 xl（border-collapse:separate + overflow:hidden）；th/td 内边距 12px 16px；表头 var(--surface-subtle)+mono+11px+大写+0.05em 字距；td 底边 1px var(--border-subtle)、字色 var(--text-secondary)；行 hover 高亮；**原文有并列/对照/参数数据时优先用表格**。
 - 标签页 Tabs / 仪表盘 Dashboard / 错误页：见需要再用。
 - 分区：每个主题一个 section，给小标题(带品牌色竖条或图标)，再选最贴合的组件承载，避免通篇纯段落。"""
 

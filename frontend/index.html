@@ -4,6 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=1440, initial-scale=1" />
   <title>本地 Agent 工作台</title>
+  <!-- 标签页图标 = 侧栏那个品牌方块。SVG 优先（清晰、跟随缩放），PNG 给不认
+       SVG favicon 的老浏览器兜底。两张是同一套画法，不会换个浏览器就换个图标。
+       文件放 public/，Vite 原样拷进 dist；后端的 SPA fallback 会按路径直接返回。 -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="alternate icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
   <!-- Fonts are self-hosted via @fontsource (bundled in the build); no external CDN. -->
 </head>
 <body>

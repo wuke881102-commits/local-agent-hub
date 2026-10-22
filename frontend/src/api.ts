@@ -40,7 +40,13 @@ export function errMsg(e: unknown): string {
 
 export type AuthStatus = {
   authenticated: boolean;        // true 仅当 user identity ready
-  stage?: 'needs_init' | 'needs_login' | 'authenticated';
+  stage?: 'needs_init' | 'needs_login' | 'needs_refresh' | 'authenticated';
+  /** 用户身份的原始状态：ready / needs_refresh / missing / expired。 */
+  user_status?: string;
+  /** needs_refresh —— access token 过期了，但 refresh token 还在，下次调用自动续期。 */
+  user_recoverable?: boolean;
+  /** ready 或 needs_refresh。**判断「要不要催用户去授权」必须看这个。** */
+  user_usable?: boolean;
   user_id?: string;
   user_name?: string;
   scopes?: string[];
@@ -129,14 +135,44 @@ export type TaskDetail = {
 };
 
 export type Diagnostics = {
-  cli: { available: boolean; version: string | null; mode: string; bin: string };
+  cli: {
+    available: boolean; version: string | null; mode: string; bin: string;
+    /** 捆绑的 lark-cli 落后多少。null = 问不出来（不等于「已最新」）。
+     *  behind 为 null 表示版本号形状变了、算不出准确差值，此时只显示两个版本号。 */
+    update?: { current: string; latest: string; behind: number | null; url: string; source: string } | null;
+  };
   auth: AuthStatus;
   /** image 只报配置状态（生图不做 live 探测，images.generate 真扣费）；语音不在 ping 覆盖里，只在 env 里。 */
   llm: { text: any; vision: any; image?: any; mock: boolean };
+  /** 授权保活：days_left = 7 天滚动窗口还剩几天（负数 = 已过期）。 */
+  auth_keepalive?: { enabled: boolean; every_hours: number; last_at: string;
+                     last_ok: boolean | null; last_error: string; runs: number;
+                     refresh_expires_at: string; days_left: number | null };
   index: any;
   audit_recent: any[];
   env: any;
 };
+
+/**
+ * 现在这个授权状态，还需不需要用户动手？
+ *
+ * **不能用 `authenticated`。** 它严格等于「user identity == ready」，而 access token
+ * 只活 2 小时 —— 大部分时间应用根本不调用户身份接口（本地邮箱、自动化提炼、个人摘记
+ * 走机器人身份都不调），于是状态经常是 `needs_refresh`：refresh token 还在，
+ * 下一次真实调用会自动续期并把 7 天窗口推到 now+7d。**那不是失效，什么都不用做。**
+ *
+ * 拿 authenticated 当判据的代价是：顶部那条黄色警告条幅每两小时冒一次
+ * 「尚未完成飞书授权 · 立即授权」，用户被反复催着去重新授权，而授权一直是好的。
+ *
+ * 后端早就把三个字段分开了（cli.auth_status 的注释写着「想发用户身份调用的地方要看
+ * user_usable，不要看 authenticated」），保活和个人摘记也都改过来了 —— 只有界面没改。
+ *
+ * 老后端没有这个字段时退回 authenticated，不至于反过来把「真的没授权」判成好的。
+ */
+export function authUsable(auth?: AuthStatus | null): boolean {
+  if (!auth) return false;
+  return auth.user_usable ?? auth.authenticated;
+}
 
 // SSE helper
 /** POST /api/assets/refresh 的返回。刷新索引会顺带排一次「摘要标签回填」。 */

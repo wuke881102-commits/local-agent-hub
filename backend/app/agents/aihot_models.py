@@ -48,12 +48,12 @@ _fmt_price = aihot.fmt_price
 
 def _compact_table(rows: list[dict]) -> str:
     """喂给 LLM 的紧凑表（Markdown）。只给判断需要的列，省 token。"""
-    head = ("| 名次 | 模型 | 厂商 | 共识分 | 名次区间 | 完整度 | 可信度 | 输入价 | 输出价 | 性价比 | 上线 |\n"
+    head = ("| 名次 | 模型 | 厂商 | 共识指数 | 名次区间 | 评测项数 | 可信度 | 输入价 | 输出价 | 性价比 | 上线 |\n"
             "|---|---|---|---|---|---|---|---|---|---|---|")
     lines = [head]
     for r in rows:
         span = ("%s–%s" % (r["rank_from"], r["rank_to"])) if r["rank_from"] else "—"
-        comp = ("%.1f%%" % r["completeness"]) if r["completeness"] is not None else "—"
+        comp = ("%s 项" % r["metric_count"]) if r["metric_count"] else "—"
         val = ("%.2f" % r["value"]) if r["value"] else "—"
         lines.append("| %s | %s | %s | %.1f | %s | %s | %s | %s | %s | %s | %s |" % (
             r["rank"], r["name"], r["provider"], r["score"], span, comp,
@@ -261,22 +261,6 @@ def _safe_parse_json(text: str) -> dict | None:
 
 # ── HTML 草稿 ──────────────────────────────────────────────────────
 
-def _ctx_label(tokens) -> str:
-    """上下文窗口短标签。
-
-    站点给的是真实 token 数，同一句「1M 上下文」有 1000000 / 1048576(2^20) /
-    1050000 / 1310720 好几种写法。四舍五入到 2 位再去掉多余的 0，否则会印出
-    `1.04858M` 这种没人想看的数（%g 按有效位数截断，不是按小数位）。
-    """
-    if not isinstance(tokens, (int, float)) or tokens <= 0:
-        return "—"
-    if tokens >= 1_000_000:
-        return ("%.2f" % (tokens / 1_000_000)).rstrip("0").rstrip(".") + "M"
-    if tokens >= 1000:
-        return "%dK" % round(tokens / 1000)
-    return str(int(tokens))
-
-
 def _delta(r: dict) -> str:
     """名次变化。用 previous_rank 自己算，不依赖站点 rankChange 的正负约定。
 
@@ -312,7 +296,7 @@ def _write_html(task_id: str, p: dict):
         if r["name"] in mine:
             name_cell += ' <span class="pill p-mine">本机在用</span>'
         conf = r["confidence"]
-        comp = ("%.1f%%" % r["completeness"]) if r["completeness"] is not None else "—"
+        comp = ("%s 项" % r["metric_count"]) if r["metric_count"] else "—"
         val = ("%.2f" % r["value"]) if r["value"] else "—"
         trs.append(
             "<tr>"
@@ -328,35 +312,33 @@ def _write_html(task_id: str, p: dict):
             f'<td class="num">{val}</td>'
             f"<td>{_delta(r)}</td>"
             "</tr>")
-    # 列序与榜单页一致（排名→模型→上线→完整度→输入→输出→共识分→可信度）；
+    # 列序与榜单页一致（排名→模型→上线→评测证据→输入→输出→共识指数→可信度）；
     # 厂商作为小字放在模型名下面（同榜单页），末两列「性价比 / 变化」是本机加的。
     table = (
         '<div class="tw"><table><thead><tr>'
         "<th>排名</th><th>模型 / 厂商</th><th>上线日期</th>"
-        '<th class="num">评测完整度</th><th class="num">输入成本</th>'
+        '<th class="num">评测证据</th><th class="num">输入成本</th>'
         '<th class="num">输出成本</th>'
-        '<th class="num">AIHOT 共识分</th><th>证据可信度</th>'
+        '<th class="num">AIHOT 共识指数</th><th>证据可信度</th>'
         '<th class="num">性价比*</th><th>变化</th>'
         "</tr></thead><tbody>%s</tbody></table></div>" % "".join(trs))
 
-    # 价格明细单独一张表：输出价 + 上下文 + 价格出处（原榜把出处放 tooltip 里）
+    # 价格明细单独一张表。上下文窗口和价格出处在 2026-09-13 改版后从榜单页消失了
+    # （详情页还有，但那是 30 个另外的页面），所以这两列去掉——留着就是两列「—」；
+    # 缓存输入价是改版新增的，补上。
     prs = []
     for r in rows:
-        src = esc(r["price_source"] or "—")
-        if r["price_source_url"]:
-            src = '<a href="%s" target="_blank" rel="noreferrer">%s</a>' % (
-                esc(r["price_source_url"]), src)
         prs.append(
             "<tr><td>%s</td><td class=\"num\">%s</td><td class=\"num\">%s</td>"
-            "<td class=\"num\">%s</td><td class=\"num\">%s</td><td>%s</td><td>%s</td></tr>" % (
+            "<td class=\"num\">%s</td><td class=\"num\">%s</td></tr>" % (
                 esc(r["name"]), esc(_fmt_price(r, "price_in")), esc(_fmt_price(r, "price_out")),
                 ("¥%.2f" % r["price_blended"]) if r["price_blended"] else "—",
-                _ctx_label(r["context_tokens"]), src, esc(r["price_verified_at"] or "—"),
+                ("¥%.2f" % r["price_cached"]) if r.get("price_cached") else "—",
             ))
     price_table = (
         '<div class="tw"><table><thead><tr><th>模型</th><th class="num">输入价</th>'
-        '<th class="num">输出价</th><th class="num">混合价*</th><th class="num">上下文</th>'
-        "<th>价格出处</th><th>核验日期</th></tr></thead><tbody>%s</tbody></table></div>"
+        '<th class="num">输出价</th><th class="num">混合价*</th><th class="num">缓存输入价</th>'
+        "</tr></thead><tbody>%s</tbody></table></div>"
         % "".join(prs))
 
     body = ['<div class="note">下表 1–8 列照搬 AIHOT 榜单页口径；'
@@ -428,7 +410,7 @@ def _write_html(task_id: str, p: dict):
         body.append('<div class="card"><h2>选型建议</h2><p class="src">本次未生成（%s）。'
                     "榜单数据不受影响。</p></div>" % esc(a["error"]))
 
-    body.append('<div class="card"><h2>价格与上下文明细<span class="n">价格出处来自 AIHOT 核验</span></h2>%s</div>'
+    body.append('<div class="card"><h2>价格明细<span class="n">人民币 / 百万 Token，AIHOT 口径</span></h2>%s</div>'
                 % price_table)
 
     subtitle = ("AIHOT 共识榜 · 榜单更新于 %s · 综合 %s 家公开榜单 · 本机抓取 %s"
