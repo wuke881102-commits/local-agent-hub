@@ -161,8 +161,8 @@ class Settings(BaseSettings):
     #   正常情况下靠"排序 + 遇到早于窗口就停"提前退出，根本用不到它）。
     # sent_scan_*: 「这个会话我回过没有」要去已发送里翻多少封 / 多少天。
     # body_max: 正文截断长度。实测单封正文能到 28,000 字符，不截断既贵又是不必要的外发。
-    # 7 天 = 一个完整工作周。页面**不给选择器**（见 OutlookPage 里的理由），
-    # 所以这个值就是产品行为，不是"默认值"。改它要想清楚。
+    # 7 天 = 一个完整工作周。只是没给 since 时的兜底：本地邮箱页面有「当天 / 近 3 天 /
+    # 近 7 天」选择器（默认当天），而且总是带显式的 since 日期，用不到这个值。
     outlook_window_days: int = 7
     outlook_scan_limit: int = 400
     outlook_sent_scan_days: int = 180

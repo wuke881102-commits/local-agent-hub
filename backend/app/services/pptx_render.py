@@ -758,7 +758,8 @@ def _talk_table(slide, rect: Rect, columns: list[str], rows: list[list[str]]) ->
                        bold=header, mono=header)
 
 
-def render_talk(talk: Talk, images: dict[str, Path], appendix: list[str], out_path: Path) -> Path:
+def render_talk(talk: Talk, images: dict[str, Path], appendix: list[str], out_path: Path,
+                appendix_notes: str = "") -> Path:
     """讲稿 → .pptx：封面 + 各页 + （有未收录章节时）末尾一页「未收录章节」。
 
     配色按 Lumen-light：封面是品牌绿渐变 Banner，正文页浅底 + 白卡片，和 HTML 产物一套。
@@ -801,6 +802,8 @@ def render_talk(talk: Talk, images: dict[str, Path], appendix: list[str], out_pa
         _text(slide, Rect(MARGIN, body_y - 0.1, body_w, 0.45),
               "以下章节在讲稿里没有用上，需要的话手动补回。", size=14, color=TEXT_TERTIARY)
         _bullet_box(slide, Rect(MARGIN, body_y + 0.45, body_w, body_h - 0.45), appendix)
+        if appendix_notes:
+            slide.notes_slide.notes_text_frame.text = appendix_notes
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     prs.save(str(out_path))

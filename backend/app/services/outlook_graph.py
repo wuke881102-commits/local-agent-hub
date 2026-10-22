@@ -24,8 +24,8 @@ from datetime import datetime
 # 收件人栏的分隔符。Outlook 用分号，但转发来的、外部系统发的常混用逗号。
 # **只按分号和换行切，不按逗号。** 这里曾经把逗号也当分隔符，是个真 bug：
 # Outlook 的 To/CC 用「;」分隔收件人，而显示名本身是「姓, 名」格式
-# （"Xu, Sean; Lye, Libby"）。按逗号切的结果是每个人被拆成两个假人 ——
-# 关系网里出现一堆 Sean / Lye / Libby 这样的碎片，而且 addressing_of 数收件人
+# （"Lee, Alex; Chan, Jamie"）。按逗号切的结果是每个人被拆成两个假人 ——
+# 关系网里出现一堆 Alex / Chan / Jamie 这样的碎片，而且 addressing_of 数收件人
 # 个数时把 1 个人数成 2 个，「只发我」这一档几乎永远判不出来。
 _SPLIT = re.compile(r"[;；\r\n]+")
 # 逗号**在某些形态下**才是分隔符：地址列表（含 @）或纯名字列表（2 个以上逗号）。

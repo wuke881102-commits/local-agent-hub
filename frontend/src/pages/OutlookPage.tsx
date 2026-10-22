@@ -518,7 +518,6 @@ const OutlookPage: React.FC = () => {
 
   // 回看范围。三个档，**都含今天**，单位是自然日：
   //   1 = 只看今天    3 = 今天和前 2 天    7 = 今天和前 6 天
-  // 默认 7 —— 一个完整工作周，也是唯一一个不需要解释的默认值。
   // 默认**当天**，不是 7 天。真实收件箱一天就有几十个会话，7 天几百个 —— 打开就
   // 是一屏扫不完的东西，而且在线模式下取数很可能直接超时。当天最快也最可用，
   // 要看更久点上面的按钮即可（选择会写进 URL，刷新后保留）。
@@ -754,7 +753,9 @@ const OutlookPage: React.FC = () => {
           { d: 7, label: '近 7 天', tip: '今天和前 6 天，共 7 个自然日' }].map((r) => (
           <button key={r.d} title={r.tip}
                   className={`btn btn-sm ${RANGE_DAYS === r.d ? 'btn-primary' : 'btn-tonal'}`}
-                  onClick={() => set('days', r.d === 7 ? '' : String(r.d))}>
+                  // 默认档（当天）不写进 URL，其余档写实际天数。这里曾写成 r.d === 7 —— 默认还是
+                  // 7 天时留下的，默认改成当天后没跟上，结果点「近 7 天」删掉参数、落回当天。
+                  onClick={() => set('days', r.d === 1 ? '' : String(r.d))}>
             {r.label}
           </button>
         ))}
@@ -875,7 +876,7 @@ const OutlookPage: React.FC = () => {
                     .find((v) => v.id === k)?.label || k;
                   if (k && t && t.kept === 0 && (t.group + t.kind) > 0) {
                     const why: string[] = [];
-                    if (t.group) why.push(`${t.group} 个是群组邮件（我的地址既不在收件人也不在拄送里）`);
+                    if (t.group) why.push(`${t.group} 个是群组邮件（我的地址既不在收件人也不在抄送里）`);
                     if (t.kind) why.push(`${t.kind} 个属于噪音类型（${data.matrix.excluded.skip_kinds.join(' / ')}）`);
                     return (
                       <tr><td colSpan={data.matrix.fields.length + 1}
@@ -975,7 +976,7 @@ const OutlookPage: React.FC = () => {
                 </div>
                 <Timeline g={g} />
               </div>
-              {/* 宽度从 330 提到 460：内部名字像「Gao, Chen(Group)」「Dong, Rain(IT)」
+              {/* 宽度从 330 提到 460：内部名字像「Lee, Alex(Group)」「Chan, Jamie(IT)」
                   这种带部门后缀的，330 宽必然折行，折完一行变三行、表格就散了。 */}
               <div className="card" style={{ flex: '0 1 460px', minWidth: 400 }}>
                 <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 8 }}>参与者关系</div>

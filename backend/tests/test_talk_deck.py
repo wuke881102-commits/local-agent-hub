@@ -292,3 +292,55 @@ def test_split_sections_strips_markdown_from_headings():
     md = f"## **现场体验**\n{body}\n## 第二节\n{body}\n## 第三节\n{body}"
     heads = [s.heading for s in split_sections(md)]
     assert "现场体验" in heads and not any("**" in h for h in heads)
+
+
+# ── 演讲者备注：附上原文摘录 ──────────────────────────────────────
+
+from app.services.talk_deck import NOTE_EXCERPT_CHARS, Section, add_source_excerpts, notes_text  # noqa: E402
+from app.services.pptx_render import Talk, TalkSlide  # noqa: E402
+
+
+def _secs() -> list[Section]:
+    return [Section("S1", "服务质量", "首次解决率 92%，较上季度提升 4 个百分点。\n主要来自知识库补全。"),
+            Section("S2", "渠道", "| 渠道 | 工单量 |\n|---|---|\n| **电话** | 3,420 |\n| 在线<br>客服 | 8,960 |"),
+            Section("S3", "附录", "术语表略。")]
+
+
+def test_notes_text_turns_markdown_into_plain_lines():
+    t = notes_text("### 小节\n- **重点**：完成迁移\n| a | b |\n|---|---|\n| 1 | 2<br>3 |\n[图 I3：流程示意]")
+    assert "小节" in t and "#" not in t and "**" not in t and "<br>" not in t
+    assert "· 重点：完成迁移" in t
+    assert "a ｜ b" in t and "1 ｜ 2 3" in t and "---" not in t
+    assert "[图：流程示意]" in t and "I3" not in t
+
+
+def test_add_source_excerpts_appends_cited_sections_after_model_notes():
+    talk = Talk(title="t", slides=[TalkSlide(title="质量", bullets=["x"], notes="先讲结论。", sources=["S1", "S2"])])
+    add_source_excerpts(talk, _secs())
+    n = talk.slides[0].notes
+    assert n.startswith("先讲结论。")
+    assert n.index("【原文 · 服务质量】") < n.index("【原文 · 渠道】")
+    assert "首次解决率 92%" in n and "在线 客服 ｜ 8,960" in n and "**" not in n
+
+
+def test_add_source_excerpts_ignores_unknown_ids_and_duplicates():
+    talk = Talk(slides=[TalkSlide(title="a", sources=["S9", "S1", "S1"]), TalkSlide(title="b", sources=[])])
+    add_source_excerpts(talk, _secs())
+    assert talk.slides[0].notes.count("【原文 · 服务质量】") == 1
+    assert talk.slides[1].notes == ""
+
+
+def test_add_source_excerpts_caps_length():
+    long = Section("S1", "长节", "很长的内容。" * 1000)
+    talk = Talk(slides=[TalkSlide(title="a", sources=["S1"])])
+    add_source_excerpts(talk, [long])
+    n = talk.slides[0].notes
+    assert len(n) <= NOTE_EXCERPT_CHARS + 40
+    assert n.endswith("（以下略，完整内容见原文）")
+
+
+def test_notes_text_drops_single_dash_table_separator():
+    """实测：飞书导出的表格分隔行是「| - | - |」（单个横线），原来的规则要求两个以上，
+    结果备注里多出一行「- ｜ - ｜ - ｜ -」。"""
+    t = notes_text("| 层级 | 形态 |\n| - | - |\n| 第一层 | 基础 |")
+    assert t == "层级 ｜ 形态\n第一层 ｜ 基础"

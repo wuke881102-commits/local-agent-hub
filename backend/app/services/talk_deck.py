@@ -265,6 +265,69 @@ def parse_talk(raw: str, source_md: str, image_ids: set[str]) -> Talk:
     return talk
 
 
+# ── 演讲者备注：附上原文摘录 ──────────────────────────────────────
+
+NOTE_EXCERPT_CHARS = 1800     # 每页备注里原文摘录的上限；再长就截断，指回原文
+
+# 表格分隔行。飞书导出的可能只有一个横线（「| - | - |」），所以是 -+ 而不是 -{2,}。
+_TABLE_SEP = re.compile(r"^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?$")
+_IMG_MARK = re.compile(r"\[图 I\d+(：[^\]]*)?\]")
+
+
+def notes_text(md: str) -> str:
+    """原文 markdown → 备注里的纯文字。
+
+    备注是给讲的人看的纯文本框，**、<br>、| 竖线表格在里面都是字面字符。
+    表格行改成「a ｜ b」，标题去掉 #，列表符号统一成「·」，图片编号去掉（I3 这种编号
+    只在生成时有意义，讲的人看不懂）。
+    """
+    out: list[str] = []
+    for raw in (md or "").split("\n"):
+        line = raw.strip()
+        if not line or _TABLE_SEP.match(line):
+            continue
+        line = _IMG_MARK.sub(lambda m: f"[图{m.group(1) or ''}]", line)
+        if line.startswith("|"):
+            cells = [_inline(c).replace("\n", " ") for c in line.strip("|").split("|")]
+            out.append(" ｜ ".join(c for c in cells))
+            continue
+        line = re.sub(r"^#{1,6}\s*", "", line)
+        line = re.sub(r"^[-*+]\s+", "· ", line)
+        line = _inline(line)
+        if line:
+            out.append(line)
+    return "\n".join(out)
+
+
+def add_source_excerpts(talk: Talk, sections: list[Section]) -> None:
+    """每页备注后面附上它引用的章节原文。
+
+    模型写的备注是「怎么讲」，篇幅有限；原文摘录保证细节一个不丢，而且不经模型、
+    不会编。依据是每页自报的 sources，同一节在一页里只附一次。
+    """
+    by_id = {s.id: s for s in sections}
+    for slide in talk.slides:
+        seen: list[str] = []
+        for sid in slide.sources:
+            if sid in by_id and sid not in seen:
+                seen.append(sid)
+        if not seen:
+            continue
+        blocks = [f"【原文 · {by_id[sid].heading}】\n{notes_text(by_id[sid].text)}" for sid in seen]
+        excerpt = "\n\n".join(blocks)
+        if len(excerpt) > NOTE_EXCERPT_CHARS:
+            excerpt = excerpt[:NOTE_EXCERPT_CHARS].rstrip() + "…（以下略，完整内容见原文）"
+        slide.notes = (slide.notes + "\n\n" if slide.notes else "") + excerpt
+
+
+def excerpt_sections(sections: list[Section]) -> str:
+    """「未收录章节」那页的备注：这些章节的原文，同样截到上限。"""
+    text = "\n\n".join(f"【原文 · {s.heading}】\n{notes_text(s.text)}" for s in sections)
+    if len(text) > NOTE_EXCERPT_CHARS:
+        text = text[:NOTE_EXCERPT_CHARS].rstrip() + "…（以下略，完整内容见原文）"
+    return text
+
+
 # ── 覆盖检查 ──────────────────────────────────────────────────────
 
 def uncovered(sections: list[Section], slides: list[TalkSlide]) -> list[Section]:
@@ -283,7 +346,9 @@ TALK_SYSTEM = """你是企业内部演示文稿的编辑，把一篇飞书文档
 2. 数字只能用原文里真实出现过的；原文没有数字，就不要做数据页。
 3. 表格只照抄原文里确实存在的表，列和行都来自原文；不要自己「整理」出一张新表。
 4. 每一页都必须在 sources 里列出它的内容来自哪几个章节编号（原文里的【S…】）。
-5. 原文的细节、例子、步骤写进 notes（演讲者备注），不要因为页面放不下就丢掉。"""
+5. 每页都要写 notes（演讲者备注），120–250 字的讲解词：这一页先讲什么、怎么展开，
+   补上页面放不下的细节、例子、步骤和数字的出处；不要只是把 bullets 再念一遍。
+   原文摘录会由程序另外附在备注后面，你不用整段抄原文。"""
 
 TALK_USER = """把下面这篇文档重组成讲稿。
 
@@ -305,15 +370,16 @@ TALK_USER = """把下面这篇文档重组成讲稿。
   "title": "讲稿标题",
   "subtitle": "一句话副标题",
   "slides": [
-    {{"kind": "bullets", "title": "页标题", "bullets": ["要点"], "image": null, "notes": "原文细节", "sources": ["S1"]}},
-    {{"kind": "metrics", "title": "页标题", "metrics": [{{"value": "80%", "label": "说明"}}], "notes": "", "sources": ["S2"]}},
-    {{"kind": "table", "title": "页标题", "columns": ["列1"], "rows": [["值"]], "notes": "", "sources": ["S3"]}},
-    {{"kind": "closing", "title": "下一步", "bullets": ["行动项"], "notes": "", "sources": ["S4"]}}
+    {{"kind": "bullets", "title": "页标题", "bullets": ["要点"], "image": null, "notes": "120–250 字的讲解词", "sources": ["S1"]}},
+    {{"kind": "metrics", "title": "页标题", "metrics": [{{"value": "80%", "label": "说明"}}], "notes": "讲解词：数字的口径与出处", "sources": ["S2"]}},
+    {{"kind": "table", "title": "页标题", "columns": ["列1"], "rows": [["值"]], "notes": "讲解词：这张表要看哪几行", "sources": ["S3"]}},
+    {{"kind": "closing", "title": "下一步", "bullets": ["行动项"], "notes": "讲解词", "sources": ["S4"]}}
   ]
 }}"""
 
-TALK_MAX_TOKENS = 8000
-TALK_TIMEOUT = 300
+# 每页 120–250 字的讲解词让输出长了约一半：8000 有截断风险，超时也跟着放宽。
+TALK_MAX_TOKENS = 12000
+TALK_TIMEOUT = 420
 
 
 async def build_talk(ctx, md: str, title: str) -> tuple[Talk, list[Section], dict[str, tuple[str, str]]]:
@@ -334,7 +400,9 @@ async def build_talk(ctx, md: str, title: str) -> tuple[Talk, list[Section], dic
         raw = await ctx.llm.text_complete(prompt, system=TALK_SYSTEM, json_mode=True,
                                           max_tokens=TALK_MAX_TOKENS, timeout=TALK_TIMEOUT, retries=1)
         try:
-            return parse_talk(raw, md, set(images)), sections, images
+            talk = parse_talk(raw, md, set(images))
+            add_source_excerpts(talk, sections)
+            return talk, sections, images
         except ValueError as e:
             last = e
             await ctx.log("warn", f"第 {attempt + 1} 次生成的讲稿无法使用：{e}")

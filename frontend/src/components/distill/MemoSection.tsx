@@ -10,7 +10,8 @@ import { api, errMsg } from '../../api';
 import { Icon } from '../icons';
 import { useToast } from '../Toast';
 
-type Push = { at: string; ok: boolean | null; error: string; needs_login: boolean; sent: number };
+// identity：上一次解析出的发送身份。bot = 应用机器人（凭证不过期），user = 你本人；空 = 还没发过。
+type Push = { at: string; ok: boolean | null; error: string; needs_login: boolean; sent: number; identity?: '' | 'bot' | 'user' };
 
 type Status = {
   active: boolean;
@@ -242,8 +243,19 @@ const MemoSection: React.FC = () => {
         <Icon name="shield" size={12} /> <strong>收件人只能是你自己。</strong>
         身份取自本机飞书登录态，接口不提供指定收件人的入口，也不会发到任何群。
         <br />
-        <Icon name="info" size={12} /> 以你自己的身份发送（内置应用没有机器人发消息权限），所以飞书里显示为你自己发的。
-        用户身份授权是 <strong>7 天滚动</strong>的：正常用着一直有效，连续七天不碰本应用需要重新登录。
+        {/* 6.3 起默认机器人身份（SELFPUSH_IDENTITY=auto）。这里曾一直写着「以你自己的身份发送（内置应用
+            没有机器人发消息权限）」—— 那是 6.1 的误判，后端改了、这句没跟上。按实际身份说话。 */}
+        {st?.push?.identity === 'user' ? (
+          <>
+            <Icon name="info" size={12} /> 当前以<strong>你自己的身份</strong>发送，飞书里显示为你自己发的。
+            用户身份授权是 <strong>7 天滚动</strong>的：正常用着一直有效，连续七天不碰本应用需要重新登录。
+          </>
+        ) : (
+          <>
+            <Icon name="info" size={12} /> 默认由<strong>本应用的机器人</strong>发给你：机器人凭证不会过期，适合无人值守的定时推送，
+            所以飞书里显示为机器人发来的私聊。机器人不可用时，改用你自己的身份发送。
+          </>
+        )}
         <br />
         <Icon name="warning" size={12} /> 勾选「本地邮箱」意味着每次汇总会真去读一次 Outlook，
         并按现有设置把邮件主题和正文前 400 字发到云端模型做语义分析 —— 那一刻没有人在旁边确认。

@@ -18,7 +18,7 @@ from ..feishu import explain_error
 from ..services import doc_images, doc_source
 from ..services.pptx_render import DeckItem, render_deck, render_talk
 from ..services.slide_rebuild import rebuild_slide
-from ..services.talk_deck import build_talk, uncovered
+from ..services.talk_deck import build_talk, excerpt_sections, uncovered
 
 # 图文密度阈值（字 / 张）。实测：图片型 58、59；文字型 509、4741 —— 两类之间
 # 差一个数量级，阈值取在中间，不是拍的。
@@ -124,7 +124,7 @@ class SlidesPageAgent:
     async def _run_talk(self, ctx: AgentContext, src: dict) -> AgentResult:
         """文字型文档 → 讲稿。"""
         md = src["markdown"]
-        await ctx.log("info", "文字为主的文档，交给模型重组成讲稿（整篇读一次，约 1–3 分钟）…")
+        await ctx.log("info", "文字为主的文档，交给模型重组成讲稿（整篇读一次，约 2–4 分钟）…")
         try:
             talk, sections, images = await build_talk(ctx, md, src["title"])
         except Exception as e:  # noqa: BLE001
@@ -156,7 +156,8 @@ class SlidesPageAgent:
                 await ctx.log("warn", f"有 {len(miss)} 节没有用进讲稿，已列在最后一页："
                                       + "、".join(s.heading for s in miss))
             out = settings.draft_path / f"{ctx.task_id}.pptx"
-            render_talk(talk, local, [s.heading for s in miss], out)
+            render_talk(talk, local, [s.heading for s in miss], out,
+                        appendix_notes=excerpt_sections(miss))
         finally:
             # 配图已经画进 pptx，临时目录不留 —— 同按图还原那边的理由
             shutil.rmtree(img_dir, ignore_errors=True)

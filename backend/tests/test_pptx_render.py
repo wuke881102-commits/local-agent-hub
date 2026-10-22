@@ -500,3 +500,11 @@ def test_restore_deck_uses_brand_colors(tmp_path: Path):
     out = render_deck([DeckItem(plan=plan)], tmp_path / "d.pptx")
     xml = Presentation(str(out)).slides[0]._element.xml
     assert "00AA4F" in xml and "FFFFFF" in xml and "F9FAFC" in xml
+
+
+def test_render_talk_appendix_page_gets_notes(tmp_path: Path):
+    """「未收录章节」那页的备注里放这些章节的原文 —— 讲的人需要时直接念。"""
+    out = render_talk(_deck(tmp_path), {}, ["五、附录"], tmp_path / "t.pptx",
+                      appendix_notes="【原文 · 五、附录】\n术语表")
+    last = Presentation(str(out)).slides[-1]
+    assert "术语表" in last.notes_slide.notes_text_frame.text

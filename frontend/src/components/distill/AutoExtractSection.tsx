@@ -322,7 +322,7 @@ const AutoExtractSection: React.FC = () => {
         {showShots && (
           shots.length === 0
             ? <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', marginTop: 10 }}>
-                {shotScope === 'session' ? '本次会话还没有截图。点「开始」后在工作窗口按 Enter 试试（本应用窗口会自动跳过）。' : '私有目录里还没有截图。'}
+                {shotScope === 'session' ? '本次会话还没有截图。点「开始」后在工作窗口按 Enter 试试（聊天和邮件窗口不截）。' : '私有目录里还没有截图。'}
               </div>
             : <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginTop: 12, paddingBottom: 4 }} className="scroll">
                 {shots.map((s) => (
