@@ -82,7 +82,7 @@
 
 <p align="center"><img src="docs/assets/screen-org.svg" alt="组织架构图谱（虚构示例）" width="100%"></p>
 
-<p align="center"><sub>组织架构图谱 —— 基于通讯录的部门 / 人员关系可视化。<b>图为虚构部门与人数</b></sub></p>
+<p align="center"><sub>组织架构图谱 —— 基于通讯录的部门 / 人员关系可视化；左侧一级部门图例上下铺满，右下「人数变化」对比上次拉取、可拖动调整大小。<b>图为虚构部门与人数</b></sub></p>
 
 ---
 
@@ -140,7 +140,7 @@ flowchart LR
 
 <p align="center"><img src="docs/assets/screen-html.svg" alt="HTML 与 PPT 生成（示例数据）" width="100%"></p>
 
-<p align="center"><sub>「内容生成」：左侧选资产与模板，右侧实时预览 Agent 生成的页面。<b>示例数据</b></sub></p>
+<p align="center"><sub>「内容生成」：左侧选资产、输出格式（HTML 页面 / 可编辑 PPT）与模板，右侧实时预览 Agent 生成的页面。<b>示例数据</b></sub></p>
 
 ---
 
@@ -210,7 +210,7 @@ flowchart LR
 
 <p align="center"><img src="docs/assets/screen-memo.svg" alt="个人摘记（示例数据）" width="100%"></p>
 
-<p align="center"><sub>个人摘记 —— 频率、两个采集来源，以及勾选「本地邮箱」时那条外发警示（产品里原样写着这句，不是 README 补的）。<b>图中数字与时间为虚构示例</b></sub></p>
+<p align="center"><sub>个人摘记 —— 频率、三个采集来源（自动化提炼 / 本地邮箱 / 语音速记），以及勾选「本地邮箱」时那条外发警示（产品里原样写着这句，不是 README 补的）。<b>图中数字与时间为虚构示例</b></sub></p>
 
 ---
 

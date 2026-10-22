@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" role="img" aria-label="HTML 页面生成 (示例数据)">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" role="img" aria-label="HTML 与 PPT 生成 (示例数据)">
   <defs>
     <linearGradient id="hdr" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#0E5A34"/><stop offset="1" stop-color="#00AA4F"/>
@@ -13,7 +13,7 @@
   <rect x="6" y="6" width="1428" height="44" rx="16" fill="#F3F6F4"/><rect x="6" y="34" width="1428" height="16" fill="#F3F6F4"/>
   <g><circle cx="34" cy="28" r="6" fill="#FF5F57"/><circle cx="56" cy="28" r="6" fill="#FEBC2E"/><circle cx="78" cy="28" r="6" fill="#28C840"/></g>
   <rect x="520" y="17" width="400" height="24" rx="12" fill="#E7ECE9"/>
-  <text class="t mut" x="720" y="33" font-size="12" text-anchor="middle">127.0.0.1:8787 · HTML 页面生成</text>
+  <text class="t mut" x="720" y="33" font-size="12" text-anchor="middle">127.0.0.1:8787 · HTML 与 PPT 生成</text>
   <rect x="7" y="50" width="1426" height="843" fill="#F4F7F5"/>
 
   <!-- sidebar -->
@@ -22,7 +22,7 @@
       <rect x="22" y="22" width="40" height="40" rx="11" class="grn"/>
       <text class="t" x="42" y="48" font-size="20" font-weight="800" fill="#fff" text-anchor="middle">本</text>
       <text class="t dk" x="74" y="40" font-size="15" font-weight="800">本地 Agent 工作台</text>
-      <text class="t mut" x="74" y="57" font-size="10" letter-spacing="1">LOCAL AGENT HUB · v7.5</text>
+      <text class="t mut" x="74" y="57" font-size="10" letter-spacing="1">LOCAL AGENT HUB · v8.5</text>
       <text class="t mut" x="24" y="96" font-size="11" letter-spacing="2">导航</text>
       <g class="t sub" font-size="13.5">
         <text x="30" y="128">⌂  工作台</text>
@@ -34,20 +34,20 @@
         <text x="30" y="332">⋔  组织架构</text>
         <text x="30" y="366">△  本地邮箱</text>
         <text x="30" y="400">▽  个人提炼</text>
+        <text x="30" y="434">◉  语音速记</text>
       </g>
-      <text class="t mut" x="24" y="442" font-size="11" letter-spacing="2">AGENTS</text>
+      <text class="t mut" x="24" y="476" font-size="11" letter-spacing="2">AGENTS</text>
       <g class="t" font-size="13">
-        <rect x="14" y="453" width="220" height="30" rx="8" fill="#E8F7EE"/>
-        <g><circle cx="30" cy="468" r="5" fill="#22C55E"/><text class="grn" x="46" y="472" font-weight="700">HTML 页面生成</text><text class="mut" x="196" y="472" font-size="11">就绪</text></g>
-        <g><circle cx="30" cy="498" r="5" fill="#3B82F6"/><text class="dk" x="46" y="502">文档地图</text><text class="mut" x="196" y="502" font-size="11">就绪</text></g>
-        <g><circle cx="30" cy="528" r="5" fill="#EC4899"/><text class="dk" x="46" y="532">摘要标签回填</text><text class="mut" x="196" y="532" font-size="11">就绪</text></g>
-        <g><circle cx="30" cy="558" r="5" fill="#22C55E"/><text class="dk" x="46" y="562">知识治理</text><text class="mut" x="196" y="562" font-size="11">就绪</text></g>
-        <g><circle cx="30" cy="588" r="5" fill="#EAB308"/><text class="dk" x="46" y="592">多维表格分析</text><text class="mut" x="196" y="592" font-size="11">就绪</text></g>
-        <g><circle cx="30" cy="618" r="5" fill="#8B5CF6"/><text class="dk" x="46" y="622">PDF 识别</text><text class="mut" x="196" y="622" font-size="11">就绪</text></g>
-        <g><circle cx="30" cy="648" r="5" fill="#F97316"/><text class="dk" x="46" y="652">会议纪要</text><text class="mut" x="196" y="652" font-size="11">就绪</text></g>
-        <g><circle cx="30" cy="678" r="5" fill="#EF4444"/><text class="dk" x="46" y="682">协作分发</text><text class="mut" x="196" y="682" font-size="11">就绪</text></g>
-        <g><circle cx="30" cy="708" r="5" fill="#0EA5E9"/><text class="dk" x="46" y="712">AIHot 模型榜</text><text class="mut" x="196" y="712" font-size="11">就绪</text></g>
-        <g><circle cx="30" cy="738" r="5" fill="#14B8A6"/><text class="dk" x="46" y="742">AIHot 新闻简报</text><text class="mut" x="196" y="742" font-size="11">就绪</text></g>
+        <rect x="14" y="487" width="220" height="30" rx="8" fill="#E8F7EE"/>
+        <g><circle cx="30" cy="502" r="5" fill="#16A34A"/><text class="grn" x="46" y="506" font-weight="700">HTML 与 PPT 生成</text><text class="mut" x="196" y="506" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="532" r="5" fill="#2563EB"/><text class="dk" x="46" y="536">文档地图</text><text class="mut" x="196" y="536" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="562" r="5" fill="#0D9488"/><text class="dk" x="46" y="566">知识治理</text><text class="mut" x="196" y="566" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="592" r="5" fill="#F0A800"/><text class="dk" x="46" y="596">多维表格分析</text><text class="mut" x="196" y="596" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="622" r="5" fill="#6A4DD4"/><text class="dk" x="46" y="626">PDF 识别</text><text class="mut" x="196" y="626" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="652" r="5" fill="#EA580C"/><text class="dk" x="46" y="656">会议纪要</text><text class="mut" x="196" y="656" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="682" r="5" fill="#C83A3A"/><text class="dk" x="46" y="686">协作分发</text><text class="mut" x="196" y="686" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="712" r="5" fill="#4F46E5"/><text class="dk" x="46" y="716">AIHot 模型榜</text><text class="mut" x="196" y="716" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="742" r="5" fill="#0891B2"/><text class="dk" x="46" y="746">AIHot 新闻简报</text><text class="mut" x="196" y="746" font-size="11">就绪</text></g>
       </g>
       <rect x="14" y="784" width="220" height="44" rx="10" fill="#F2FAF5" stroke="#DCEDE3"/>
       <circle cx="40" cy="806" r="14" class="grn"/>
@@ -58,7 +58,7 @@
 
   <g transform="translate(255,50)">
     <rect width="1178" height="52" fill="#FBFCFC" stroke="#EAEFEC" stroke-width="1.5"/>
-    <text class="t sub" x="36" y="32" font-size="13.5">☰   工作台  ›  内容生成  ›  HTML 页面生成</text>
+    <text class="t sub" x="36" y="32" font-size="13.5">☰   工作台  ›  内容生成  ›  HTML 与 PPT 生成</text>
 
     <!-- config panel -->
     <g transform="translate(28,72)" class="t">
@@ -80,28 +80,34 @@
       <!-- chosen doc chip -->
       <rect x="0" y="246" width="330" height="30" rx="8" fill="#E8F7EE"/>
       <text class="grn" x="14" y="266" font-size="12">📄 示例：企业知识库建设指南</text>
-      <!-- 版式 -->
-      <text class="sub" x="0" y="306" font-size="12">版式</text>
+      <!-- 输出格式（8.3 起）-->
+      <text class="sub" x="0" y="306" font-size="12">输出格式</text>
       <rect x="0" y="316" width="161" height="52" rx="10" fill="#E8F7EE" stroke="#00AA4F" stroke-width="1.5"/>
-      <text class="dk" x="80" y="340" font-size="13" font-weight="700" text-anchor="middle">套模板</text><text class="mut" x="80" y="358" font-size="10.5" text-anchor="middle">规整稳定一致</text>
+      <text class="dk" x="14" y="339" font-size="13" font-weight="700">HTML 页面</text><text class="mut" x="14" y="357" font-size="10.5">单页长文</text>
       <rect x="169" y="316" width="161" height="52" rx="10" fill="#fff" stroke="#E0E6E2"/>
-      <text class="dk" x="249" y="340" font-size="13" font-weight="700" text-anchor="middle">自由版式</text><text class="mut" x="249" y="358" font-size="10.5" text-anchor="middle">AI 直出·丰富</text>
+      <text class="dk" x="183" y="339" font-size="13" font-weight="700">PPT 幻灯片</text><text class="mut" x="183" y="357" font-size="10.5">.pptx · 可编辑</text>
+      <!-- 版式 -->
+      <text class="sub" x="0" y="398" font-size="12">版式</text>
+      <rect x="0" y="408" width="161" height="52" rx="10" fill="#E8F7EE" stroke="#00AA4F" stroke-width="1.5"/>
+      <text class="dk" x="80" y="432" font-size="13" font-weight="700" text-anchor="middle">套模板</text><text class="mut" x="80" y="450" font-size="10.5" text-anchor="middle">规整稳定一致</text>
+      <rect x="169" y="408" width="161" height="52" rx="10" fill="#fff" stroke="#E0E6E2"/>
+      <text class="dk" x="249" y="432" font-size="13" font-weight="700" text-anchor="middle">自由版式</text><text class="mut" x="249" y="450" font-size="10.5" text-anchor="middle">AI 直出·丰富</text>
       <!-- templates -->
-      <text class="sub" x="0" y="398" font-size="12">页面模板</text>
-      <rect x="0" y="408" width="330" height="46" rx="10" fill="#E8F7EE" stroke="#00AA4F" stroke-width="1.5"/>
-      <circle cx="22" cy="431" r="7" fill="none" stroke="#00AA4F" stroke-width="2"/><circle cx="22" cy="431" r="3.5" class="grn"/>
-      <text class="dk" x="40" y="428" font-size="13" font-weight="700">内部知识页</text><text class="mut" x="40" y="444" font-size="10.5">专题 Wiki / 制度说明 / FAQ</text>
-      <rect x="0" y="462" width="330" height="42" rx="10" fill="#fff" stroke="#E0E6E2"/>
-      <circle cx="22" cy="483" r="7" fill="none" stroke="#CBD3CE" stroke-width="2"/>
-      <text class="dk" x="40" y="480" font-size="13">项目展示页</text><text class="mut" x="40" y="495" font-size="10.5">项目介绍 / 阶段汇报 / 看板</text>
-      <rect x="0" y="512" width="330" height="42" rx="10" fill="#fff" stroke="#E0E6E2"/>
-      <circle cx="22" cy="533" r="7" fill="none" stroke="#CBD3CE" stroke-width="2"/>
-      <text class="dk" x="40" y="530" font-size="13">公告 / 活动页</text><text class="mut" x="40" y="545" font-size="10.5">活动方案 / 公告 / 通知</text>
+      <text class="sub" x="0" y="490" font-size="12">页面模板</text>
+      <rect x="0" y="500" width="330" height="46" rx="10" fill="#E8F7EE" stroke="#00AA4F" stroke-width="1.5"/>
+      <circle cx="22" cy="523" r="7" fill="none" stroke="#00AA4F" stroke-width="2"/><circle cx="22" cy="523" r="3.5" class="grn"/>
+      <text class="dk" x="40" y="520" font-size="13" font-weight="700">内部知识页</text><text class="mut" x="40" y="536" font-size="10.5">专题 Wiki / 制度说明 / FAQ</text>
+      <rect x="0" y="554" width="330" height="42" rx="10" fill="#fff" stroke="#E0E6E2"/>
+      <circle cx="22" cy="575" r="7" fill="none" stroke="#CBD3CE" stroke-width="2"/>
+      <text class="dk" x="40" y="572" font-size="13">项目展示页</text><text class="mut" x="40" y="587" font-size="10.5">项目介绍 / 阶段汇报 / 看板</text>
+      <rect x="0" y="604" width="330" height="42" rx="10" fill="#fff" stroke="#E0E6E2"/>
+      <circle cx="22" cy="625" r="7" fill="none" stroke="#CBD3CE" stroke-width="2"/>
+      <text class="dk" x="40" y="622" font-size="13">公告 / 活动页</text><text class="mut" x="40" y="637" font-size="10.5">活动方案 / 公告 / 通知</text>
       <!-- buttons -->
-      <rect x="0" y="576" width="230" height="44" rx="11" class="grn"/>
-      <text class="t" x="115" y="603" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">✧ 生成 HTML 页面</text>
-      <rect x="240" y="576" width="90" height="44" rx="11" fill="#fff" stroke="#E0E6E2"/>
-      <text class="sub" x="285" y="603" font-size="13" text-anchor="middle">⇩ 下载</text>
+      <rect x="0" y="668" width="230" height="44" rx="11" class="grn"/>
+      <text class="t" x="115" y="695" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">✧ 生成 HTML 页面</text>
+      <rect x="240" y="668" width="90" height="44" rx="11" fill="#fff" stroke="#E0E6E2"/>
+      <text class="sub" x="285" y="695" font-size="13" text-anchor="middle">⇩ 下载</text>
     </g>
 
     <!-- preview -->

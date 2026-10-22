@@ -21,7 +21,7 @@
       <rect x="22" y="22" width="40" height="40" rx="11" class="grn"/>
       <text class="t" x="42" y="48" font-size="20" font-weight="800" fill="#fff" text-anchor="middle">本</text>
       <text class="t dk" x="74" y="40" font-size="15" font-weight="800">本地 Agent 工作台</text>
-      <text class="t mut" x="74" y="57" font-size="10" letter-spacing="1">LOCAL AGENT HUB · v7.5</text>
+      <text class="t mut" x="74" y="57" font-size="10" letter-spacing="1">LOCAL AGENT HUB · v8.5</text>
       <text class="t mut" x="24" y="96" font-size="11" letter-spacing="2">导航</text>
       <rect x="14" y="312" width="220" height="30" rx="8" fill="#E8F7EE"/>
       <g class="t sub" font-size="13.5">
@@ -34,19 +34,19 @@
         <text class="t grn" x="30" y="332" font-size="13.5" font-weight="700">⋔  组织架构</text>
         <text x="30" y="366">△  本地邮箱</text>
         <text x="30" y="400">▽  个人提炼</text>
+        <text x="30" y="434">◉  语音速记</text>
       </g>
-      <text class="t mut" x="24" y="442" font-size="11" letter-spacing="2">AGENTS</text>
+      <text class="t mut" x="24" y="476" font-size="11" letter-spacing="2">AGENTS</text>
       <g class="t" font-size="13">
-        <g><circle cx="30" cy="468" r="5" fill="#22C55E"/><text class="dk" x="46" y="472">HTML 页面生成</text><text class="mut" x="196" y="472" font-size="11">就绪</text></g>
-        <g><circle cx="30" cy="498" r="5" fill="#3B82F6"/><text class="dk" x="46" y="502">文档地图</text><text class="mut" x="196" y="502" font-size="11">就绪</text></g>
-        <g><circle cx="30" cy="528" r="5" fill="#EC4899"/><text class="dk" x="46" y="532">摘要标签回填</text><text class="mut" x="196" y="532" font-size="11">就绪</text></g>
-        <g><circle cx="30" cy="558" r="5" fill="#22C55E"/><text class="dk" x="46" y="562">知识治理</text><text class="mut" x="196" y="562" font-size="11">就绪</text></g>
-        <g><circle cx="30" cy="588" r="5" fill="#EAB308"/><text class="dk" x="46" y="592">多维表格分析</text><text class="mut" x="196" y="592" font-size="11">就绪</text></g>
-        <g><circle cx="30" cy="618" r="5" fill="#8B5CF6"/><text class="dk" x="46" y="622">PDF 识别</text><text class="mut" x="196" y="622" font-size="11">就绪</text></g>
-        <g><circle cx="30" cy="648" r="5" fill="#F97316"/><text class="dk" x="46" y="652">会议纪要</text><text class="mut" x="196" y="652" font-size="11">就绪</text></g>
-        <g><circle cx="30" cy="678" r="5" fill="#EF4444"/><text class="dk" x="46" y="682">协作分发</text><text class="mut" x="196" y="682" font-size="11">就绪</text></g>
-        <g><circle cx="30" cy="708" r="5" fill="#0EA5E9"/><text class="dk" x="46" y="712">AIHot 模型榜</text><text class="mut" x="196" y="712" font-size="11">就绪</text></g>
-        <g><circle cx="30" cy="738" r="5" fill="#14B8A6"/><text class="dk" x="46" y="742">AIHot 新闻简报</text><text class="mut" x="196" y="742" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="502" r="5" fill="#16A34A"/><text class="dk" x="46" y="506">HTML 与 PPT 生成</text><text class="mut" x="196" y="506" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="532" r="5" fill="#2563EB"/><text class="dk" x="46" y="536">文档地图</text><text class="mut" x="196" y="536" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="562" r="5" fill="#0D9488"/><text class="dk" x="46" y="566">知识治理</text><text class="mut" x="196" y="566" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="592" r="5" fill="#F0A800"/><text class="dk" x="46" y="596">多维表格分析</text><text class="mut" x="196" y="596" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="622" r="5" fill="#6A4DD4"/><text class="dk" x="46" y="626">PDF 识别</text><text class="mut" x="196" y="626" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="652" r="5" fill="#EA580C"/><text class="dk" x="46" y="656">会议纪要</text><text class="mut" x="196" y="656" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="682" r="5" fill="#C83A3A"/><text class="dk" x="46" y="686">协作分发</text><text class="mut" x="196" y="686" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="712" r="5" fill="#4F46E5"/><text class="dk" x="46" y="716">AIHot 模型榜</text><text class="mut" x="196" y="716" font-size="11">就绪</text></g>
+        <g><circle cx="30" cy="742" r="5" fill="#0891B2"/><text class="dk" x="46" y="746">AIHot 新闻简报</text><text class="mut" x="196" y="746" font-size="11">就绪</text></g>
       </g>
       <rect x="14" y="784" width="220" height="44" rx="10" fill="#F2FAF5" stroke="#DCEDE3"/>
       <circle cx="40" cy="806" r="14" class="grn"/>
@@ -132,17 +132,44 @@
     <!-- center -->
     <circle cx="650" cy="430" r="42" fill="#1F2430"/><text class="cnt" x="650" y="428" font-size="20">320</text><text x="650" y="450" font-size="11" fill="#C9D1D9" text-anchor="middle" class="t">全员</text>
 
-    <!-- legend -->
-    <g transform="translate(16,556)" class="t">
-      <rect class="card" width="190" height="210" rx="12"/>
+    <!-- legend：8.5 起上下拉满，部门平均铺开，开关钉在底部 -->
+    <g transform="translate(16,138)" class="t">
+      <rect class="card" width="190" height="652" rx="12"/>
       <text class="mut" x="16" y="28" font-size="11" letter-spacing="1">一级部门</text>
       <g font-size="12.5">
-        <circle cx="24" cy="52" r="6" fill="#22C55E"/><text class="dk" x="40" y="56">研发中心</text>
-        <circle cx="24" cy="80" r="6" fill="#3B82F6"/><text class="dk" x="40" y="84">产品部</text>
-        <circle cx="24" cy="108" r="6" fill="#F59E0B"/><text class="dk" x="40" y="112">市场部</text>
-        <circle cx="24" cy="136" r="6" fill="#8B5CF6"/><text class="dk" x="40" y="140">运营中心</text>
-        <circle cx="24" cy="164" r="6" fill="#EC4899"/><text class="dk" x="40" y="168">职能中台</text>
-        <circle cx="24" cy="192" r="6" fill="#14B8A6"/><text class="dk" x="40" y="196">数据平台</text>
+        <circle cx="24" cy="54" r="6" fill="#22C55E"/><text class="dk" x="40" y="58">研发中心</text>
+        <circle cx="24" cy="84" r="6" fill="#3B82F6"/><text class="dk" x="40" y="88">产品部</text>
+        <circle cx="24" cy="114" r="6" fill="#F59E0B"/><text class="dk" x="40" y="118">市场部</text>
+        <circle cx="24" cy="144" r="6" fill="#8B5CF6"/><text class="dk" x="40" y="148">运营中心</text>
+        <circle cx="24" cy="174" r="6" fill="#EC4899"/><text class="dk" x="40" y="178">职能中台</text>
+        <circle cx="24" cy="204" r="6" fill="#14B8A6"/><text class="dk" x="40" y="208">数据平台</text>
+      </g>
+      <line x1="14" y1="562" x2="176" y2="562" stroke="#E8ECF0"/>
+      <rect x="18" y="578" width="12" height="12" rx="3" fill="#fff" stroke="#9BAAA2"/>
+      <text class="sub" x="38" y="589" font-size="12">显示全部部门名</text>
+      <text class="sub" x="52" y="630" font-size="12" text-anchor="middle">展开全部</text>
+      <text class="sub" x="134" y="630" font-size="12" text-anchor="middle">收起到二级</text>
+    </g>
+
+    <!-- 人数变化：钉在右下角，左上角拖动调整大小（8.5） -->
+    <g transform="translate(928,649)" class="t">
+      <rect class="card" width="234" height="150" rx="12"/>
+      <path d="M8 16 V11 a3 3 0 0 1 3 -3 H16" stroke="#C8D0D8" stroke-width="2" fill="none"/>
+      <text class="mut" x="16" y="28" font-size="11" letter-spacing="1">人数变化</text>
+      <text class="mut" x="74" y="28" font-size="10.5">较 01-08 09:30</text>
+      <rect x="168" y="14" width="54" height="20" rx="6" fill="#E3F5EA"/><text class="grn" x="195" y="28" font-size="10.5" font-weight="700" text-anchor="middle">全员 ▲3</text>
+      <g font-size="12">
+        <rect x="16" y="46" width="8" height="8" rx="2" fill="#22C55E"/>
+        <text class="sub" x="32" y="52">研发中心</text><text class="mut" x="32" y="66" font-size="10">一级部门</text>
+        <rect x="186" y="44" width="36" height="20" rx="6" fill="#E3F5EA"/><text class="grn" x="204" y="58" font-size="10.5" font-weight="700" text-anchor="middle">▲2</text>
+        <rect x="16" y="82" width="8" height="8" rx="2" fill="#3B82F6"/>
+        <text class="sub" x="32" y="88">体验组</text>
+        <rect x="74" y="78" width="28" height="14" rx="4" fill="#F0F1F3"/><text class="mut" x="88" y="89" font-size="9.5" font-weight="700" text-anchor="middle">新增</text>
+        <text class="mut" x="32" y="102" font-size="10">产品部</text>
+        <rect x="186" y="80" width="36" height="20" rx="6" fill="#E3F5EA"/><text class="grn" x="204" y="94" font-size="10.5" font-weight="700" text-anchor="middle">▲2</text>
+        <rect x="16" y="118" width="8" height="8" rx="2" fill="#F59E0B"/>
+        <text class="sub" x="32" y="124">渠道组</text><text class="mut" x="32" y="138" font-size="10">市场部</text>
+        <rect x="186" y="116" width="36" height="20" rx="6" fill="#FDECEC"/><text x="204" y="130" font-size="10.5" font-weight="700" fill="#C83A3A" text-anchor="middle">▼1</text>
       </g>
     </g>
 
